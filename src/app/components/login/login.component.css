@@ -180,6 +180,7 @@
 .forgot-password-link {
   position: absolute;
   right: 0;
+  padding-top: 65px;
   top: -0.5rem;
   font-size: 0.875rem;
   color: #666;
@@ -304,8 +305,19 @@
     padding: 1.5rem;
   }
 
+  .left-panel-content {
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+
+  .institucion-logo-large {
+    max-height: 300px;
+    max-width: 90%;
+  }
+
   .institucion-name-large {
     font-size: 2rem;
+    line-height: 1.3;
   }
 
   .logo-icon-large {
@@ -322,6 +334,54 @@
   .right-panel-content {
     max-width: 100%;
   }
+
+  .logo-as-image {
+    height: 45px;
+    max-width: 180px;
+  }
+
+  .welcome-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-left-panel {
+    min-height: 180px;
+    padding: 1.25rem;
+  }
+
+  .institucion-logo-large {
+    max-height: 250px;
+    max-width: 85%;
+  }
+
+  .institucion-name-large {
+    font-size: 1.75rem;
+  }
+
+  .logo-icon-large {
+    font-size: 70px !important;
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .login-right-panel {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .logo-as-image {
+    height: 40px;
+    max-width: 150px;
+  }
+
+  .welcome-title {
+    font-size: 1.5rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -330,8 +390,18 @@
     padding: 1rem;
   }
 
+  .left-panel-content {
+    gap: 1rem;
+  }
+
+  .institucion-logo-large {
+    max-height: 200px;
+    max-width: 80%;
+  }
+
   .institucion-name-large {
     font-size: 1.5rem;
+    line-height: 1.2;
   }
 
   .logo-icon-large {
@@ -340,20 +410,107 @@
     height: 60px !important;
   }
 
+  .change-institucion-btn {
+    font-size: 0.8rem !important;
+    padding: 0.6rem 1.25rem !important;
+    margin-top: 0.75rem;
+  }
+
   .login-right-panel {
     padding: 1.5rem 1rem;
   }
 
-  .welcome-title {
-    font-size: 1.5rem;
+  .right-panel-content {
+    gap: 1.5rem;
   }
 
-  .welcome-subtitle {
-    font-size: 0.9rem;
+  .logo-as-small {
+    margin-bottom: 0.75rem;
   }
 
   .logo-as-image {
-    height: 40px;
+    height: 35px;
+    max-width: 120px;
+  }
+
+  .logo-as-icon {
+    font-size: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .logo-as-text {
+    font-size: 1.25rem;
+  }
+
+  .welcome-section {
+    margin-bottom: 0.25rem;
+  }
+
+  .welcome-title {
+    font-size: 1.35rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .login-form {
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+  }
+
+  .login-button {
+    height: 48px;
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+  }
+
+  .register-section {
+    margin-top: 0.75rem;
+  }
+
+  .register-text {
+    font-size: 0.85rem;
+  }
+
+  .copyright-section {
+    padding-top: 1.5rem;
+  }
+
+  .copyright-text {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-left-panel {
+    min-height: 130px;
+    padding: 0.75rem;
+  }
+
+  .institucion-name-large {
+    font-size: 1.25rem;
+  }
+
+  .logo-icon-large {
+    font-size: 50px !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .login-right-panel {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .logo-as-image {
+    height: 30px;
+    max-width: 100px;
+  }
+
+  .welcome-title {
+    font-size: 1.2rem;
   }
 }
 

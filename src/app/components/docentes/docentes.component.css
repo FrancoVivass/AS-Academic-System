@@ -170,14 +170,199 @@
   margin-bottom: 1rem;
 }
 
+@media (max-width: 968px) {
+  .header-section h1 {
+    font-size: 2rem;
+  }
+
+  .header-section p {
+    font-size: 1rem;
+  }
+
+  .filters-section {
+    flex-wrap: wrap;
+  }
+
+  .search-field {
+    min-width: 250px;
+  }
+}
+
 @media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
+  .docentes-container {
+    padding: 0;
   }
 
   .header-section {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .header-section h1 {
+    font-size: 1.75rem;
+    gap: 0.75rem;
+  }
+
+  .header-section p {
+    font-size: 0.95rem;
+  }
+
+  .filters-section {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .search-field {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .filters-card {
+    margin-bottom: 1.25rem;
+  }
+
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .docentes-table {
+    min-width: 600px;
+    font-size: 0.85rem;
+  }
+
+  .cell-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .cell-docente {
+    gap: 0.75rem;
+  }
+
+  .docente-name {
+    font-size: 0.95rem;
+  }
+
+  .docente-username {
+    font-size: 0.8rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .modal-form {
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  .empty-state {
+    padding: 3rem 1.5rem;
+  }
+
+  .empty-state mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-section h1 {
+    font-size: 1.5rem;
+    gap: 0.5rem;
+  }
+
+  .header-section p {
+    font-size: 0.9rem;
+  }
+
+  .docentes-table {
+    min-width: 500px;
+    font-size: 0.8rem;
+  }
+
+  .cell-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .cell-docente {
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .docente-name {
+    font-size: 0.9rem;
+  }
+
+  .docente-username {
+    font-size: 0.75rem;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .modal-header {
+    padding: 1.25rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .modal-form {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-state mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
   }
 }
 

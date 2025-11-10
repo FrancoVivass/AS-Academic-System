@@ -77,3 +77,4 @@ Vercel y Cloudflare Pages desplegarán automáticamente los cambios.
 - 📖 [DEPLOY.md](./DEPLOY.md) - Guía completa de deployment
 - 📖 [README.md](./README.md) - Documentación del proyecto
 
+

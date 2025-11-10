@@ -2,8 +2,11 @@
   <app-encabezado></app-encabezado>
   
   <!-- Sidenav flotante -->
-  <button mat-raised-button class="floating-menu-button" (click)="toggleSidenav()" [class.menu-open]="sidenavOpened">
-    <mat-icon>{{ sidenavOpened ? 'close' : 'menu' }}</mat-icon>
+  <button mat-raised-button 
+          class="floating-menu-button" 
+          [class.hidden]="sidenavOpened"
+          (click)="toggleSidenav()">
+    <mat-icon>menu</mat-icon>
   </button>
 
   <mat-sidenav-container class="sidenav-container">

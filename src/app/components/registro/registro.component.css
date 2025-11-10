@@ -110,8 +110,7 @@
 
 /* Header Section */
 .registro-header-section {
-  background: linear-gradient(135deg, var(--institucion-primary, #800020), var(--institucion-secondary, #722F37));
-  color: white;
+  color: black;
   padding: 2rem 3rem;
   margin: -3rem -3rem 0 -3rem;
   text-align: center;
@@ -121,7 +120,7 @@
   font-size: 2rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
-  color: white;
+  color: black;
 }
 
 .registro-subtitle {

@@ -6,6 +6,18 @@
   padding-top: 70px; /* Espacio para el header fijo */
 }
 
+@media (max-width: 768px) {
+  .layout-container {
+    padding-top: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-container {
+    padding-top: 55px;
+  }
+}
+
 .sidenav-container {
   flex: 1;
   min-height: calc(100vh - 70px);
@@ -18,15 +30,76 @@
   left: 0 !important;
   height: calc(100vh - 70px) !important;
   z-index: 999 !important;
-  box-shadow: var(--shadow-xl) !important;
-  border-radius: 0 16px 16px 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0 24px 24px 0 !important;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.floating-sidenav::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Estilos para el scrollbar del sidenav - Oculto completamente */
+.sidenav mat-nav-list,
+.floating-sidenav mat-nav-list,
+.sidenav .mat-nav-list,
+.floating-sidenav .mat-nav-list {
+  scrollbar-width: none !important; /* Firefox - ocultar */
+  -ms-overflow-style: none !important; /* IE y Edge - ocultar */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: calc(100vh - 200px) !important;
+}
+
+.sidenav mat-nav-list::-webkit-scrollbar,
+.floating-sidenav mat-nav-list::-webkit-scrollbar,
+.sidenav .mat-nav-list::-webkit-scrollbar,
+.floating-sidenav .mat-nav-list::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari - ocultar completamente */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Asegurar que no se vea el scrollbar en ningún caso, incluso en hover */
+.sidenav:hover mat-nav-list,
+.floating-sidenav:hover mat-nav-list,
+.sidenav:hover .mat-nav-list,
+.floating-sidenav:hover .mat-nav-list {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.sidenav:hover mat-nav-list::-webkit-scrollbar,
+.floating-sidenav:hover mat-nav-list::-webkit-scrollbar,
+.sidenav:hover .mat-nav-list::-webkit-scrollbar,
+.floating-sidenav:hover .mat-nav-list::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .sidenav {
   width: 300px;
   background: var(--bg-card);
-  box-shadow: var(--shadow-md);
-  border-right: 1px solid var(--gray-light);
+  box-shadow: var(--shadow-xl);
+  border-right: none;
+  border-radius: 0 24px 24px 0;
+  overflow: hidden;
+}
+
+/* Asegurar que el sidenav oculte el contenido que se desborde */
+.sidenav-content {
+  overflow: hidden;
 }
 
 .sidenav.mobile {
@@ -34,11 +107,25 @@
 }
 
 .sidenav-header {
-  padding: 1.75rem 1.5rem;
+  padding: 2rem 1.5rem;
   background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
   color: white;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
   animation: slideDown 0.5s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidenav-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
 }
 
 .user-info {
@@ -51,11 +138,21 @@
   font-size: 56px !important;
   width: 56px;
   height: 56px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 50%;
   padding: 0.5rem;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .user-details {
@@ -65,28 +162,58 @@
 .user-name {
   font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 0.25rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.3px;
 }
 
 .user-role {
-  font-size: 0.9rem;
-  opacity: 0.95;
+  font-size: 0.85rem;
+  opacity: 0.98;
   text-transform: capitalize;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
   display: inline-block;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.user-role:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .mat-mdc-list-item {
-  border-radius: 12px;
-  margin: 0.4rem 1rem;
+  border-radius: 16px;
+  margin: 0.5rem 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  padding: 0.75rem 1rem !important;
+  padding: 0.875rem 1.25rem !important;
+  border: 1px solid transparent;
+}
+
+.mat-mdc-list-item::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 60%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1));
+  border-radius: 16px 0 0 16px;
+  transition: width 0.3s ease;
 }
 
 .nav-item {
@@ -98,38 +225,77 @@
   content: '';
   position: absolute;
   left: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
+  top: 50%;
+  transform: translateY(-50%) scaleX(0);
+  height: 70%;
+  width: 5px;
   background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
+  border-radius: 0 8px 8px 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nav-item:hover {
-  background: rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.1) !important;
-  transform: translateX(4px);
+  background: linear-gradient(90deg, rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.12), rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.05)) !important;
+  transform: translateX(6px);
+  border-color: rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .nav-item:hover::before {
-  transform: scaleY(1);
+  transform: translateY(-50%) scaleX(1);
+}
+
+.nav-item:hover::after {
+  width: 30%;
 }
 
 .nav-item.active {
-  background: linear-gradient(90deg, var(--institucion-primary), var(--institucion-secondary)) !important;
+  background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary)) !important;
   color: white !important;
-  box-shadow: var(--shadow-md);
-  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 20px rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.3) !important;
+  transform: translateX(8px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .nav-item.active::before {
-  transform: scaleY(1);
-  width: 4px;
+  transform: translateY(-50%) scaleX(1);
+  width: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+
+.nav-item.active::after {
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2));
 }
 
 .nav-item.active mat-icon {
   color: white !important;
-  animation: pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transform: scale(1.1);
+}
+
+.nav-item.active span {
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.nav-item mat-icon {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.nav-item:hover mat-icon {
+  transform: scale(1.1);
+  background: rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.1);
+}
+
+.nav-item.active mat-icon {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px;
+  border-radius: 10px;
 }
 
 .main-content {
@@ -159,29 +325,72 @@
   z-index: 1000 !important;
   background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary)) !important;
   color: var(--white) !important;
-  box-shadow: var(--shadow-xl) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.4) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   width: 56px !important;
   height: 56px !important;
-  border-radius: 50% !important;
   min-width: 56px !important;
+  max-width: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  border-radius: 50% !important;
   padding: 0 !important;
+  margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  border: 3px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  aspect-ratio: 1 / 1 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  overflow: hidden;
+  line-height: 1 !important;
+}
+
+/* Ocultar botón cuando el sidenav está abierto */
+.floating-menu-button.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.floating-menu-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.4s ease;
 }
 
 .floating-menu-button:hover {
   transform: scale(1.1) !important;
-  box-shadow: 0 12px 32px rgba(25, 118, 210, 0.4) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.floating-menu-button.menu-open {
-  background: linear-gradient(135deg, var(--institucion-secondary), var(--institucion-primary)) !important;
+.floating-menu-button:hover::before {
+  width: 100%;
+  height: 100%;
 }
+
 
 .floating-menu-button mat-icon {
   color: var(--white) !important;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.floating-menu-button:hover mat-icon {
+  transform: scale(1.1);
 }
 
 .menu-header {
@@ -219,33 +428,211 @@
 }
 
 @media (max-width: 960px) {
+  .sidenav-container {
+    min-height: calc(100vh - 60px);
+  }
+
+  .floating-sidenav {
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    border-radius: 0 20px 20px 0 !important;
+  }
+
+  .main-content {
+    min-height: calc(100vh - 60px);
+  }
+
   .content-wrapper {
     padding: 1.5rem;
   }
 
   .sidenav {
     width: 280px;
+    border-radius: 0 20px 20px 0;
   }
 
   .floating-menu-button {
-    bottom: 24px !important;
-    left: 24px !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    border-width: 2.5px;
+  }
+
+  .floating-menu-button:hover {
+    transform: scale(1.08) !important;
+  }
+
+  .sidenav-header {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .user-avatar {
+    font-size: 48px !important;
+    width: 48px;
+    height: 48px;
+  }
+
+  .user-name {
+    font-size: 1rem;
+  }
+
+  .user-role {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.9rem;
+  }
+
+  .mat-mdc-list-item {
+    margin: 0.45rem 0.875rem;
+    border-radius: 14px;
   }
 }
 
 @media (max-width: 600px) {
+  .sidenav-container {
+    min-height: calc(100vh - 55px);
+  }
+
+  .floating-sidenav {
+    top: 55px !important;
+    height: calc(100vh - 55px) !important;
+    border-radius: 0 18px 18px 0 !important;
+  }
+
+  .main-content {
+    min-height: calc(100vh - 55px);
+  }
+
   .content-wrapper {
     padding: 1rem;
   }
 
   .sidenav {
     width: 260px;
+    border-radius: 0 18px 18px 0;
+  }
+
+  .sidenav-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .user-avatar {
+    font-size: 44px !important;
+    width: 44px;
+    height: 44px;
+    border-width: 2.5px;
+  }
+
+  .user-name {
+    font-size: 0.95rem;
+  }
+
+  .user-role {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+  }
+
+  .mat-mdc-list-item {
+    margin: 0.4rem 0.75rem;
+    padding: 0.75rem 1rem !important;
+    border-radius: 14px;
+  }
+
+  .nav-item::before {
+    width: 4px;
+  }
+
+  .nav-item.active::before {
+    width: 5px;
   }
 
   .floating-menu-button {
-    width: 48px !important;
-    height: 48px !important;
-    bottom: 20px !important;
-    left: 20px !important;
+    bottom: 18px !important;
+    left: 18px !important;
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    border-width: 2.5px;
+  }
+
+  .floating-menu-button:hover {
+    transform: scale(1.08) !important;
+  }
+
+  .floating-menu-button mat-icon {
+    font-size: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    padding: 0.75rem;
+  }
+
+  .sidenav {
+    width: 240px;
+    border-radius: 0 16px 16px 0;
+  }
+
+  .floating-sidenav {
+    border-radius: 0 16px 16px 0 !important;
+  }
+
+  .sidenav-header {
+    padding: 1.25rem 0.875rem;
+  }
+
+  .user-avatar {
+    font-size: 40px !important;
+    width: 40px;
+    height: 40px;
+  }
+
+  .user-name {
+    font-size: 0.9rem;
+  }
+
+  .user-role {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 14px;
+  }
+
+  .mat-mdc-list-item {
+    margin: 0.35rem 0.625rem;
+    padding: 0.7rem 0.9rem !important;
+    border-radius: 12px;
+  }
+
+  .floating-menu-button {
+    bottom: 16px !important;
+    left: 16px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    border-width: 2px;
+  }
+
+  .floating-menu-button mat-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .floating-menu-button:hover {
+    transform: scale(1.08) !important;
   }
 }

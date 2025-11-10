@@ -105,3 +105,4 @@ Antes de hacer push, verifica:
 
 Una vez que hayas subido el código a GitHub, puedes proceder con el deployment en Vercel o Cloudflare Pages siguiendo las instrucciones en [DEPLOY.md](./DEPLOY.md).
 
+

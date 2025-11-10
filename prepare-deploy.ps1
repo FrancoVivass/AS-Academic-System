@@ -34,3 +34,4 @@ if (Test-Path "dist/gestion-academica/browser") {
 
 Write-Host "✨ Proyecto listo para deployment!" -ForegroundColor Green
 
+
