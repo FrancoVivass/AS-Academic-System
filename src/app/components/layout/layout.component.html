@@ -1,0 +1,83 @@
+<div class="layout-container">
+  <app-encabezado></app-encabezado>
+  
+  <!-- Sidenav flotante -->
+  <button mat-raised-button class="floating-menu-button" (click)="toggleSidenav()" [class.menu-open]="sidenavOpened">
+    <mat-icon>{{ sidenavOpened ? 'close' : 'menu' }}</mat-icon>
+  </button>
+
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav 
+      #sidenav 
+      mode="over" 
+      [opened]="sidenavOpened"
+      class="sidenav floating-sidenav"
+      [class.mobile]="isMobile"
+      (closedStart)="sidenavOpened = false">
+      <div class="sidenav-header">
+        <div class="user-info">
+          <mat-icon class="user-avatar">account_circle</mat-icon>
+          <div class="user-details">
+            <div class="user-name">{{ authService.getCurrentUser()?.nombre }}</div>
+            <div class="user-role">{{ authService.getCurrentUser()?.rol }}</div>
+          </div>
+        </div>
+      </div>
+
+      <mat-nav-list>
+        @for (item of navItems; track item.route) {
+          @if (item.visible !== false) {
+            <a 
+              mat-list-item 
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{exact: item.route === '/app/dashboard'}"
+              (click)="closeSidenavOnMobile()"
+              class="nav-item">
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle>{{ item.label }}</span>
+              @if (item.badge && item.badge > 0) {
+                <mat-icon matListItemMeta class="badge-icon">{{ item.badge }}</mat-icon>
+              }
+            </a>
+          }
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="main-content">
+      <div class="content-wrapper">
+        <router-outlet />
+      </div>
+      <app-footer></app-footer>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+
+<mat-menu #themeMenu="matMenu">
+  <button mat-menu-item (click)="toggleTheme()">
+    <mat-icon>{{ themeService.getTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+    <span>Modo {{ themeService.getTheme() === 'light' ? 'Oscuro' : 'Claro' }}</span>
+  </button>
+</mat-menu>
+
+<mat-menu #userMenu="matMenu">
+  <div class="menu-header">
+    <div class="menu-user-info">
+      <mat-icon>account_circle</mat-icon>
+      <div>
+        <div class="menu-user-name">{{ authService.getCurrentUser()?.nombre }}</div>
+        <div class="menu-user-email">{{ authService.getCurrentUser()?.email }}</div>
+      </div>
+    </div>
+  </div>
+  <mat-divider></mat-divider>
+  <button mat-menu-item [routerLink]="['/configuracion']">
+    <mat-icon>settings</mat-icon>
+    <span>Configuración</span>
+  </button>
+  <button mat-menu-item (click)="logout()">
+    <mat-icon>logout</mat-icon>
+    <span>Cerrar Sesión</span>
+  </button>
+</mat-menu>

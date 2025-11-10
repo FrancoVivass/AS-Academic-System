@@ -1,0 +1,109 @@
+<div class="login-container">
+  <!-- Panel Izquierdo - Logo de Institución -->
+  <div class="login-left-panel">
+    <div class="left-panel-content">
+      @if (currentInstitucion) {
+        @if (currentInstitucion.logo) {
+          <img [src]="currentInstitucion.logo" [alt]="currentInstitucion.nombre" 
+               class="institucion-logo-large"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="logo-fallback-large" style="display: none;">
+            <mat-icon class="logo-icon-large">school</mat-icon>
+            <h1 class="institucion-name-large">{{ currentInstitucion.nombre }}</h1>
+          </div>
+        } @else {
+          <div class="logo-fallback-large">
+            <mat-icon class="logo-icon-large">school</mat-icon>
+            <h1 class="institucion-name-large">{{ currentInstitucion.nombre }}</h1>
+          </div>
+        }
+      } @else {
+        <div class="logo-fallback-large">
+          <mat-icon class="logo-icon-large">school</mat-icon>
+          <h1 class="institucion-name-large">Gestión Académica</h1>
+        </div>
+      }
+      @if (currentInstitucion) {
+        <button mat-stroked-button class="change-institucion-btn" [routerLink]="['/instituciones']">
+          <mat-icon>swap_horiz</mat-icon>
+          Cambiar Institución
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Panel Derecho - Formulario de Login -->
+  <div class="login-right-panel">
+    <div class="right-panel-content">
+      <!-- Logo AS pequeño arriba -->
+      <div class="logo-as-small">
+        <img src="assets/logo.png" alt="AsistentStudent" class="logo-as-image" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <div class="logo-as-fallback" style="display: none;">
+          <mat-icon class="logo-as-icon">school</mat-icon>
+          <span class="logo-as-text">AS</span>
+        </div>
+      </div>
+
+      <!-- Mensaje de Bienvenida -->
+      <div class="welcome-section">
+        <h1 class="welcome-title">Bienvenido Devuelta!</h1>
+        <p class="welcome-subtitle">Ingresa con una cuenta existente o puedes crearte una</p>
+      </div>
+
+      <!-- Formulario de Login -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Usuario o Correo electrónico</mat-label>
+          <input matInput formControlName="username" placeholder="Usuario o Correo electrónico" autocomplete="username">
+          <mat-icon matPrefix>person</mat-icon>
+          @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+            <mat-error>{{ getErrorMessage('username') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="password-field-wrapper">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contraseña</mat-label>
+            <input 
+              matInput 
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password" 
+              placeholder="Contraseña"
+              autocomplete="current-password">
+            <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button" tabindex="-1">
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+              <mat-error>{{ getErrorMessage('password') }}</mat-error>
+            }
+          </mat-form-field>
+          <a href="#" class="forgot-password-link">Forgot Password?</a>
+        </div>
+
+          <button 
+            mat-raised-button 
+            type="submit" 
+            class="login-button"
+            [disabled]="loginForm.invalid || loading">
+            @if (loading) {
+              <span>Iniciando sesión...</span>
+            } @else {
+              <span>INGRESAR</span>
+            }
+          </button>
+      </form>
+
+      <!-- Link de Registro -->
+      <div class="register-section">
+        <p class="register-text">¿Eres nuevo? <a routerLink="/registro" class="register-link">Regístrate Aquí</a></p>
+      </div>
+
+      <!-- Copyright -->
+      <div class="copyright-section">
+        <p class="copyright-text">© 2023 ALL RIGHTS RESERVED</p>
+      </div>
+    </div>
+  </div>
+</div>

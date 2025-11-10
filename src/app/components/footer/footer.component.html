@@ -1,0 +1,43 @@
+<footer>
+  <div class="container__footer">
+    <div class="box__footer">
+      <div class="logo">
+        <img src="assets/logo.png" alt="AsistentStudent" class="logo-footer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <div class="logo-fallback-footer" style="display: none;">
+          <mat-icon class="logo-icon-footer">school</mat-icon>
+          <span>AsistentStudent</span>
+        </div>
+      </div>
+      <div class="terms">
+        <p><strong>AsistentStudent</strong> - Plataforma integral de gestión académica para instituciones educativas. Simplifica la administración de alumnos, docentes, materias, notas y asistencias. Todo en un solo lugar, accesible desde cualquier dispositivo.</p>
+      </div>
+    </div>
+    <div class="box__footer">
+      <h2>Enlaces Rápidos</h2>
+      <a [routerLink]="['/app/dashboard']">Dashboard</a>
+      <a [routerLink]="['/app/alumnos']">Alumnos</a>
+      <a [routerLink]="['/app/materias']">Materias</a>
+      <a [routerLink]="['/app/reportes']">Reportes</a>
+    </div>
+    <div class="box__footer">
+      <h2>Módulos</h2>
+      <a [routerLink]="['/app/notas']">Notas</a>
+      <a [routerLink]="['/app/asistencia']">Asistencia</a>
+      <a [routerLink]="['/app/calendario']">Calendario</a>
+      <a [routerLink]="['/app/biblioteca']">Biblioteca</a>
+    </div>
+    <div class="box__footer">
+      <h2>Soporte</h2>
+      <a [routerLink]="['/app/configuracion']">Configuración</a>
+      <a [routerLink]="['/app/mensajes']">Mensajes</a>
+      <a [routerLink]="['/app/ayuda']">Ayuda</a>
+      <a [routerLink]="['/app/contacto']">Contacto</a>
+    </div>
+  </div>
+
+  <div class="box__copyright">
+    <hr>
+    <p>Todos los derechos reservados © 2024 <b>AsistentStudent</b></p>
+  </div>
+</footer>
+

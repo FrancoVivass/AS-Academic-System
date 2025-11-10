@@ -1,0 +1,159 @@
+<div class="calendario-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>calendar_today</mat-icon>
+        Calendario Académico
+      </h1>
+      <p>Gestiona eventos, exámenes y actividades</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
+      <mat-icon>add</mat-icon>
+      Nuevo Evento
+    </button>
+  </div>
+
+  <div class="calendario-content">
+    <mat-card class="calendario-card">
+      <mat-card-header>
+        <div class="calendario-header">
+          <button mat-icon-button (click)="cambiarMes(-1)">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <h2>{{ getNombreMes() }} {{ anioActual }}</h2>
+          <button mat-icon-button (click)="cambiarMes(1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="calendario-grid">
+          @for (dia of ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; track dia) {
+            <div class="dia-header">{{ dia }}</div>
+          }
+          @for (dia of getDiasDelMes(); track dia.getTime()) {
+            <div class="dia-cell" [class.today]="esHoy(dia)" [class.has-events]="getEventosDelDia(dia).length > 0">
+              <div class="dia-numero">{{ dia.getDate() }}</div>
+              <div class="eventos-mini">
+                @for (evento of getEventosDelDia(dia).slice(0, 3); track evento.id) {
+                  <div class="evento-dot" [style.background-color]="evento.color"></div>
+                }
+                @if (getEventosDelDia(dia).length > 3) {
+                  <span class="mas-eventos">+{{ getEventosDelDia(dia).length - 3 }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="eventos-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          Próximos Eventos
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="eventos-list">
+          @for (evento of eventosProximos; track evento.id) {
+            <div class="evento-item" [style.border-left-color]="evento.color">
+              <div class="evento-info">
+                <div class="evento-fecha">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span>{{ evento.fecha | date:'shortDate' }}</span>
+                  @if (evento.hora) {
+                    <span class="evento-hora">{{ evento.hora }}</span>
+                  }
+                </div>
+                <div class="evento-titulo">{{ evento.titulo }}</div>
+                @if (evento.descripcion) {
+                  <div class="evento-descripcion">{{ evento.descripcion }}</div>
+                }
+                @if (evento.materiaId) {
+                  <mat-chip>{{ getNombreMateria(evento.materiaId) }}</mat-chip>
+                }
+              </div>
+              <div class="evento-acciones">
+                <button mat-icon-button (click)="abrirModalEditar(evento)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="eliminarEvento(evento.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+          @if (eventosProximos.length === 0) {
+            <div class="empty-state">
+              <p>No hay eventos próximos</p>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  @if (mostrarModal) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Evento' : 'Nuevo Evento' }}</h2>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <form [formGroup]="eventoForm" (ngSubmit)="guardarEvento()" class="modal-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Título *</mat-label>
+            <input matInput formControlName="titulo" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcion" rows="3"></textarea>
+          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Fecha *</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="fecha" required>
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Hora</mat-label>
+              <input matInput type="time" formControlName="hora">
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo *</mat-label>
+              <mat-select formControlName="tipo" required>
+                @for (tipo of tiposEvento; track tipo.value) {
+                  <mat-option [value]="tipo.value">
+                    <mat-icon>{{ tipo.icon }}</mat-icon>
+                    <span>{{ tipo.label }}</span>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Materia</mat-label>
+              <mat-select formControlName="materiaId">
+                <mat-option value="">Ninguna</mat-option>
+                @for (materia of getMaterias(); track materia.id) {
+                  <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

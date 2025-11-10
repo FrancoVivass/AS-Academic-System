@@ -1,0 +1,163 @@
+<div class="alumnos-container">
+  <div class="header-section">
+    <div>
+      <h1>Gestión de Alumnos</h1>
+      <p>Administra la información de los estudiantes</p>
+    </div>
+    @if (permissionsService.puedeVer('editarAlumnos')) {
+      <button class="btn-primary" (click)="abrirModalNuevo()">+ Asociar Alumno</button>
+    }
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        (input)="onBusquedaChange()"
+        placeholder="Buscar por nombre, apellido o DNI..."
+        class="search-input"
+      />
+    </div>
+    <div class="filter-box">
+      <select [(ngModel)]="filtroCurso" (change)="onFiltroCursoChange()" class="filter-select">
+        <option value="">Todos los cursos</option>
+        @for (curso of getCursosUnicos(); track curso) {
+          <option [value]="curso">{{ curso }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (alumnosFiltrados.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>DNI</th>
+            <th>Curso</th>
+            <th>Email</th>
+            <th>Promedio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alumno of alumnosFiltrados; track alumno.id) {
+            <tr>
+              <td><strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong></td>
+              <td>{{ alumno.dni }}</td>
+              <td><span class="badge">{{ alumno.curso }}</span></td>
+              <td>{{ alumno.email }}</td>
+              <td>
+                <span class="promedio-badge">{{ getPromedioAlumno(alumno.id) }}</span>
+              </td>
+              <td>
+                @if (permissionsService.puedeVer('editarAlumnos')) {
+                  <div class="action-buttons">
+                    <button class="btn-edit" (click)="abrirModalEditar(alumno)">✏️ Editar</button>
+                    <button class="btn-delete" (click)="eliminarAlumno(alumno.id)">🗑️ Desasociar</button>
+                  </div>
+                } @else {
+                  <span class="text-muted">Solo lectura</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <p>No se encontraron alumnos</p>
+      </div>
+    }
+  </div>
+
+  @if (mostrarModal) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Alumno' : 'Asociar Alumno' }}</h2>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        
+        @if (mostrarUsuarios && !modoEdicion) {
+          <div class="usuarios-disponibles">
+            <h3>Usuarios Registrados Disponibles</h3>
+            @if (usuariosDisponibles.length > 0) {
+              <div class="usuarios-list">
+                @for (usuario of usuariosDisponibles; track usuario.id) {
+                  <div class="usuario-item" (click)="asociarUsuario(usuario)">
+                    <div class="usuario-info">
+                      <mat-icon>person</mat-icon>
+                      <div>
+                        <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+                        <div class="usuario-details">
+                          <span>Email: {{ usuario.email }}</span>
+                          @if (usuario.dni) {
+                            <span>DNI: {{ usuario.dni }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <mat-icon>add_circle</mat-icon>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="no-usuarios">No hay usuarios registrados disponibles para asociar</p>
+            }
+          </div>
+        } @else {
+          <form [formGroup]="alumnoForm" (ngSubmit)="guardarAlumno()" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre *</label>
+              <input type="text" formControlName="nombre" required />
+            </div>
+            <div class="form-group">
+              <label>Apellido *</label>
+              <input type="text" formControlName="apellido" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>DNI *</label>
+              <input type="text" formControlName="dni" required />
+            </div>
+            <div class="form-group">
+              <label>Curso *</label>
+              <input type="text" formControlName="curso" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" formControlName="email" required />
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" formControlName="telefono" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Fecha de Nacimiento</label>
+            <input type="date" formControlName="fechaNacimiento" />
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" formControlName="direccion" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary">Guardar</button>
+          </div>
+        </form>
+        }
+      </div>
+    </div>
+  }
+</div>
+

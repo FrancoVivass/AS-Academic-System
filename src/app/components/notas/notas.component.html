@@ -1,0 +1,172 @@
+<div class="notas-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>grade</mat-icon>
+        Gestión de Notas
+      </h1>
+      <p>Registra y administra las calificaciones</p>
+    </div>
+    @if (permissionsService.puedeVer('editarNotas')) {
+      <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
+        <mat-icon>add</mat-icon>
+        Nueva Nota
+      </button>
+    }
+  </div>
+
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar por Materia</mat-label>
+          <mat-select [(ngModel)]="filtroMateria" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todas las materias</mat-option>
+            @for (materia of getMaterias(); track materia.id) {
+              <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar por Alumno</mat-label>
+          <mat-select [(ngModel)]="filtroAlumno" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todos los alumnos</mat-option>
+            @for (alumno of getAlumnos(); track alumno.id) {
+              <mat-option [value]="alumno.id">{{ alumno.nombre }} {{ alumno.apellido }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <mat-card-content>
+      <table mat-table [dataSource]="notasFiltradas" class="notas-table">
+        <ng-container matColumnDef="alumno">
+          <th mat-header-cell *matHeaderCellDef>Alumno</th>
+          <td mat-cell *matCellDef="let nota">
+            <div class="cell-alumno">
+              <mat-icon>person</mat-icon>
+              <span>{{ getNombreAlumno(nota.alumnoId) }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="materia">
+          <th mat-header-cell *matHeaderCellDef>Materia</th>
+          <td mat-cell *matCellDef="let nota">
+            <mat-chip>{{ getNombreMateria(nota.materiaId) }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="calificacion">
+          <th mat-header-cell *matHeaderCellDef>Calificación</th>
+          <td mat-cell *matCellDef="let nota">
+            <span class="calificacion-badge" [class.excelente]="nota.calificacion >= 9" 
+                  [class.bueno]="nota.calificacion >= 7 && nota.calificacion < 9"
+                  [class.regular]="nota.calificacion < 7">
+              {{ nota.calificacion }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let nota">
+            <mat-chip>{{ nota.tipo }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let nota">
+            {{ nota.fecha | date:'shortDate' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let nota">
+            @if (permissionsService.puedeVer('editarNotas')) {
+              <div class="action-buttons">
+                <button mat-icon-button color="primary" (click)="abrirModalEditar(nota)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="eliminarNota(nota.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <span class="text-muted">Solo lectura</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  @if (mostrarModal) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Nota' : 'Nueva Nota' }}</h2>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <form [formGroup]="notaForm" (ngSubmit)="guardarNota()" class="modal-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Alumno *</mat-label>
+            <mat-select formControlName="alumnoId" required>
+              @for (alumno of getAlumnos(); track alumno.id) {
+                <mat-option [value]="alumno.id">{{ alumno.nombre }} {{ alumno.apellido }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Materia *</mat-label>
+            <mat-select formControlName="materiaId" required>
+              @for (materia of getMaterias(); track materia.id) {
+                <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Calificación *</mat-label>
+            <input matInput type="number" formControlName="calificacion" min="0" max="10" step="0.1" required>
+          </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo *</mat-label>
+              <mat-select formControlName="tipo" required>
+                <mat-option value="parcial">Parcial</mat-option>
+                <mat-option value="final">Final</mat-option>
+                <mat-option value="trabajo">Trabajo Práctico</mat-option>
+                <mat-option value="practico">Práctico</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha *</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="fecha" required>
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput formControlName="observaciones" rows="3"></textarea>
+          </mat-form-field>
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

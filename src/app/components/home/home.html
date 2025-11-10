@@ -1,0 +1,238 @@
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1 class="hero-title animate-fade-in">
+        <span class="gradient-text">AsistentStudent</span>
+      </h1>
+      <p class="hero-subtitle animate-fade-in-delay">
+        Plataforma integral de gestión académica para instituciones educativas
+      </p>
+      <p class="hero-description animate-fade-in-delay-2">
+        Simplifica la administración de alumnos, docentes, materias, notas y asistencias. 
+        Todo en un solo lugar, accesible desde cualquier dispositivo.
+      </p>
+      <div class="hero-buttons animate-fade-in-delay-3">
+        <button mat-raised-button color="primary" class="cta-primary" [routerLink]="['/instituciones']">
+          <mat-icon>school</mat-icon>
+          Ver Instituciones
+        </button>
+        <button mat-stroked-button class="cta-secondary" (click)="scrollToSection('contacto')">
+          <mat-icon>contact_mail</mat-icon>
+          Contáctanos
+        </button>
+      </div>
+    </div>
+    <div class="hero-image animate-slide-in">
+      <div class="floating-card">
+        <mat-icon class="card-icon">dashboard</mat-icon>
+        <h3>Dashboard Intuitivo</h3>
+      </div>
+      <div class="floating-card delay-1">
+        <mat-icon class="card-icon">people</mat-icon>
+        <h3>Gestión Completa</h3>
+      </div>
+      <div class="floating-card delay-2">
+        <mat-icon class="card-icon">analytics</mat-icon>
+        <h3>Reportes Detallados</h3>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <mat-icon>keyboard_arrow_down</mat-icon>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="caracteristicas">
+  <div class="container">
+    <h2 class="section-title">Características Principales</h2>
+    <div class="features-grid">
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>group</mat-icon>
+        </div>
+        <h3>Gestión de Alumnos</h3>
+        <p>Administra toda la información académica y personal de tus estudiantes de manera eficiente.</p>
+      </div>
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>person</mat-icon>
+        </div>
+        <h3>Gestión de Docentes</h3>
+        <p>Asigna materias, controla horarios y gestiona el personal docente de tu institución.</p>
+      </div>
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <h3>Calificaciones y Notas</h3>
+        <p>Registra y gestiona las calificaciones con cálculo automático de promedios.</p>
+      </div>
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <h3>Control de Asistencia</h3>
+        <p>Sistema completo de registro de asistencia con reportes y estadísticas.</p>
+      </div>
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>calendar_today</mat-icon>
+        </div>
+        <h3>Calendario Académico</h3>
+        <p>Organiza eventos, exámenes y actividades académicas en un calendario integrado.</p>
+      </div>
+      <div class="feature-card animate-on-scroll">
+        <div class="feature-icon">
+          <mat-icon>library_books</mat-icon>
+        </div>
+        <h3>Biblioteca Digital</h3>
+        <p>Comparte recursos educativos y materiales de estudio con estudiantes y docentes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section" id="acerca-de">
+  <div class="container">
+    <div class="about-content">
+      <div class="about-text">
+        <h2 class="section-title">Quiénes Somos</h2>
+        <p class="about-description">
+          <strong>AsistentStudent</strong> es una plataforma tecnológica desarrollada para revolucionar 
+          la gestión académica en instituciones educativas de todos los niveles.
+        </p>
+        <p>
+          Nuestro objetivo es proporcionar herramientas modernas, intuitivas y eficientes que permitan 
+          a las instituciones educativas optimizar sus procesos administrativos y académicos, 
+          permitiendo que docentes y administradores se enfoquen en lo más importante: la educación.
+        </p>
+        <div class="about-stats">
+          <div class="stat-item">
+            <h3>100+</h3>
+            <p>Instituciones</p>
+          </div>
+          <div class="stat-item">
+            <h3>50K+</h3>
+            <p>Usuarios Activos</p>
+          </div>
+          <div class="stat-item">
+            <h3>99.9%</h3>
+            <p>Uptime</p>
+          </div>
+        </div>
+      </div>
+      <div class="about-image">
+        <div class="image-placeholder">
+          <mat-icon>business</mat-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Institutions Section -->
+<section class="institutions-section" id="instituciones">
+  <div class="container">
+    <h2 class="section-title">Nuestras Instituciones</h2>
+    <p class="section-subtitle">
+      Únete a las instituciones que ya confían en AsistentStudent para gestionar su sistema académico
+    </p>
+    <div class="institutions-preview">
+      <div class="institution-preview-card">
+        <mat-icon>school</mat-icon>
+        <h3>Instituciones Activas</h3>
+        <p>Gestiona múltiples instituciones desde una sola plataforma</p>
+      </div>
+      <div class="institution-preview-card">
+        <mat-icon>palette</mat-icon>
+        <h3>Personalización</h3>
+        <p>Cada institución puede personalizar colores y branding</p>
+      </div>
+      <div class="institution-preview-card">
+        <mat-icon>security</mat-icon>
+        <h3>Seguridad</h3>
+        <p>Datos protegidos con credenciales de acceso por institución</p>
+      </div>
+    </div>
+    <div class="institutions-cta">
+      <button mat-raised-button color="primary" class="cta-large" [routerLink]="['/instituciones']">
+        <mat-icon>explore</mat-icon>
+        Ver Todas las Instituciones
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact-section" id="contacto">
+  <div class="container">
+    <h2 class="section-title">Contáctanos</h2>
+    <p class="section-subtitle">
+      ¿Quieres que tu institución use AsistentStudent? Contáctanos y te ayudamos a implementarlo.
+    </p>
+    <div class="contact-content">
+      <div class="contact-info">
+        <div class="contact-item">
+          <mat-icon>email</mat-icon>
+          <div>
+            <h3>Email</h3>
+            <p>contacto@asistentstudent.com</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <mat-icon>phone</mat-icon>
+          <div>
+            <h3>Teléfono</h3>
+            <p>+54 11 1234-5678</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <mat-icon>location_on</mat-icon>
+          <div>
+            <h3>Dirección</h3>
+            <p>Buenos Aires, Argentina</p>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form-container">
+        <form class="contact-form">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" placeholder="Tu nombre" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="tu@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Institución</label>
+            <input type="text" placeholder="Nombre de tu institución" />
+          </div>
+          <div class="form-group">
+            <label>Mensaje</label>
+            <textarea placeholder="Cuéntanos sobre tu institución..." rows="4"></textarea>
+          </div>
+          <button mat-raised-button color="primary" type="submit" class="submit-button">
+            <mat-icon>send</mat-icon>
+            Enviar Mensaje
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer CTA -->
+<section class="footer-cta">
+  <div class="container">
+    <h2>¿Listo para transformar la gestión de tu institución?</h2>
+    <p>Únete a las instituciones que ya están usando AsistentStudent</p>
+    <button mat-raised-button color="primary" class="cta-large" [routerLink]="['/instituciones']">
+      <mat-icon>rocket_launch</mat-icon>
+      Comenzar Ahora
+    </button>
+  </div>
+</section>

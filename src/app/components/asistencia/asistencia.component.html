@@ -1,0 +1,87 @@
+<div class="asistencia-container">
+  <div class="header-section">
+    <h1>Control de Asistencia</h1>
+    <p>Registra y consulta la asistencia de los alumnos</p>
+  </div>
+
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Materia *</label>
+      <select [(ngModel)]="materiaSeleccionada" (change)="onMateriaChange()" class="filter-select">
+        <option value="">Seleccione una materia</option>
+        @for (materia of materias; track materia.id) {
+          <option [value]="materia.id">{{ materia.nombre }} - {{ materia.curso }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Fecha *</label>
+      <input
+        type="date"
+        [(ngModel)]="fechaSeleccionada"
+        (change)="onFechaChange()"
+        class="filter-input"
+      />
+    </div>
+    @if (materiaSeleccionada) {
+      <div class="filter-group">
+        <label>Buscar Alumno</label>
+        <input
+          type="text"
+          [(ngModel)]="busqueda"
+          placeholder="Nombre o apellido..."
+          class="filter-input"
+        />
+      </div>
+    }
+  </div>
+
+  @if (materiaSeleccionada && fechaSeleccionada) {
+    <div class="info-banner">
+      <p><strong>Materia:</strong> {{ getNombreMateria(materiaSeleccionada) }}</p>
+      <p><strong>Fecha:</strong> {{ fechaSeleccionada }}</p>
+    </div>
+
+    <div class="asistencia-list">
+      @for (alumno of getAlumnosFiltrados(); track alumno.id) {
+        @let asistencia = getAsistenciaAlumno(alumno.id);
+        <div class="asistencia-item" [class.presente]="asistencia?.presente" [class.ausente]="asistencia && !asistencia.presente">
+          <div class="alumno-info">
+            <div>
+              <strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong>
+              <span class="curso-badge">{{ alumno.curso }}</span>
+            </div>
+            <div class="asistencia-stats">
+              <span>Asistencia: {{ getPorcentajeAsistencia(alumno.id) }}%</span>
+            </div>
+          </div>
+          <div class="asistencia-actions">
+            @if (permissionsService.puedeVer('editarAsistencias')) {
+              <button
+                class="btn-toggle"
+                [class.presente]="asistencia?.presente"
+                (click)="toggleAsistencia(alumno)"
+              >
+                {{ asistencia?.presente ? '✅ Presente' : '❌ Ausente' }}
+              </button>
+            } @else {
+              <span class="asistencia-readonly">
+                {{ asistencia?.presente ? '✅ Presente' : '❌ Ausente' }}
+              </span>
+            }
+          </div>
+        </div>
+      }
+      @if (getAlumnosFiltrados().length === 0) {
+        <div class="empty-state">
+          <p>No hay alumnos inscritos en esta materia o no se encontraron resultados</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>Por favor seleccione una materia y una fecha para comenzar</p>
+    </div>
+  }
+</div>
+

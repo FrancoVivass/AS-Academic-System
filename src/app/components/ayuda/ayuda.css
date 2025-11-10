@@ -1,0 +1,200 @@
+.ayuda-container {
+  min-height: calc(100vh - 200px);
+  padding: 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--bg-primary);
+}
+
+.ayuda-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.title-icon {
+  font-size: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  color: var(--institucion-primary) !important;
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tutoriales-section,
+.faq-section {
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.tutoriales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.tutorial-card {
+  border-radius: 16px !important;
+  transition: all 0.3s ease;
+  border: 1px solid var(--gray-light);
+}
+
+.tutorial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.tutorial-icon {
+  font-size: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  color: white !important;
+}
+
+.tutorial-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.tutorial-content {
+  padding: 1.5rem;
+}
+
+.pasos-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.pasos-list li {
+  margin-bottom: 0.75rem;
+}
+
+.faq-card {
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: 16px !important;
+}
+
+.faq-card mat-expansion-panel {
+  margin-bottom: 0.5rem;
+  border-radius: 8px !important;
+}
+
+.faq-card mat-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.faq-card mat-panel-title mat-icon {
+  color: var(--institucion-primary) !important;
+}
+
+.contacto-section {
+  margin-top: 4rem;
+}
+
+.contacto-card {
+  background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
+  color: white;
+  border-radius: 20px !important;
+  padding: 3rem;
+  text-align: center;
+}
+
+.contacto-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.contacto-icon {
+  font-size: 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  color: white !important;
+}
+
+.contacto-card h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.contacto-card p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+  max-width: 600px;
+}
+
+.contacto-button {
+  margin-top: 1rem;
+  padding: 1rem 2.5rem !important;
+  background: white !important;
+  color: var(--institucion-primary) !important;
+  border-radius: 12px !important;
+  font-size: 1.1rem !important;
+}
+
+.contacto-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+@media (max-width: 768px) {
+  .ayuda-container {
+    padding: 1.5rem;
+  }
+
+  .tutoriales-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .contacto-card {
+    padding: 2rem;
+  }
+}
+

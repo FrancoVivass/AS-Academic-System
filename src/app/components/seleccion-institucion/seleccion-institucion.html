@@ -1,0 +1,108 @@
+<div class="seleccion-container">
+  <div class="header-section">
+    <button mat-icon-button [routerLink]="['/']" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="page-title">Selecciona tu Institución</h1>
+    <p class="page-subtitle">
+      Elige la institución educativa a la que deseas acceder
+    </p>
+  </div>
+
+  @if (!mostrarCredencial) {
+    <div class="instituciones-grid">
+      @for (institucion of instituciones; track institucion.id) {
+        <mat-card class="institucion-card" (click)="seleccionarInstitucion(institucion)">
+          <div class="card-content">
+            <div class="logo-container">
+              @if (institucion.logo) {
+                <img [src]="institucion.logo" [alt]="institucion.nombre" class="institucion-logo" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="logo-fallback" style="display: none;">
+                  <mat-icon>school</mat-icon>
+                </div>
+              } @else {
+                <div class="logo-fallback">
+                  <mat-icon>school</mat-icon>
+                </div>
+              }
+            </div>
+            <h3 class="institucion-nombre">{{ institucion.nombre }}</h3>
+            <p class="institucion-descripcion">{{ institucion.descripcion }}</p>
+            <div class="institucion-colores">
+              <span class="color-dot" [style.background-color]="institucion.colorPrimario"></span>
+              <span class="color-dot" [style.background-color]="institucion.colorSecundario"></span>
+              <span class="color-dot" [style.background-color]="institucion.colorAcento"></span>
+            </div>
+            <button mat-raised-button color="primary" class="select-button">
+              <mat-icon>arrow_forward</mat-icon>
+              Seleccionar
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+
+    <div class="no-institucion-section">
+      <mat-card class="contact-card">
+        <div class="contact-content">
+          <mat-icon class="contact-icon">business_center</mat-icon>
+          <h2>¿Tu institución no está aquí?</h2>
+          <p>Contáctanos para implementar AsistentStudent en tu institución educativa</p>
+          <button mat-raised-button color="accent" class="contact-button" (click)="irAContacto()">
+            <mat-icon>email</mat-icon>
+            Contrátanos para tu Institución
+          </button>
+        </div>
+      </mat-card>
+    </div>
+  } @else {
+    <div class="credencial-section">
+      <mat-card class="credencial-card">
+        <div class="credencial-header">
+          <div class="institucion-info">
+            @if (institucionSeleccionada) {
+              @if (institucionSeleccionada.logo) {
+                <img [src]="institucionSeleccionada.logo" [alt]="institucionSeleccionada.nombre" 
+                     class="selected-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="logo-fallback" style="display: none;">
+                  <mat-icon>school</mat-icon>
+                </div>
+              } @else {
+                <div class="logo-fallback">
+                  <mat-icon>school</mat-icon>
+                </div>
+              }
+              <div>
+                <h2>{{ institucionSeleccionada.nombre }}</h2>
+                <p>Ingresa la credencial de acceso</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <form [formGroup]="credencialForm" (ngSubmit)="verificarCredencial()" class="credencial-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Credencial de Acceso</mat-label>
+            <input matInput type="password" formControlName="credencial" placeholder="Ingresa la credencial secreta" />
+            <mat-icon matPrefix>lock</mat-icon>
+            @if (credencialForm.get('credencial')?.hasError('required') && credencialForm.get('credencial')?.touched) {
+              <mat-error>La credencial es requerida</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-stroked-button type="button" (click)="cancelarSeleccion()">
+              <mat-icon>cancel</mat-icon>
+              Cancelar
+            </button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="credencialForm.invalid">
+              <mat-icon>check</mat-icon>
+              Verificar y Continuar
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    </div>
+  }
+</div>

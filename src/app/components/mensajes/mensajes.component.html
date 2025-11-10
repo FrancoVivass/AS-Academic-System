@@ -1,0 +1,95 @@
+<div class="mensajes-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>message</mat-icon>
+        Mensajería
+      </h1>
+      <p>Comunícate con alumnos y docentes</p>
+    </div>
+    <mat-chip class="badge-chip">
+      <mat-icon>mail</mat-icon>
+      {{ mensajesNoLeidos.length }} sin leer
+    </mat-chip>
+  </div>
+
+  <div class="mensajes-content">
+    <mat-card class="mensajes-list-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>inbox</mat-icon>
+          Bandeja de Entrada
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          @for (mensaje of mensajes; track mensaje.id) {
+            <mat-list-item 
+              class="mensaje-item"
+              [class.no-leido]="!mensaje.leido && !esRemitente(mensaje)"
+              [class.importante]="mensaje.importante"
+              (click)="marcarComoLeido(mensaje.id)">
+              <mat-icon matListItemIcon class="mensaje-icon">
+                {{ esRemitente(mensaje) ? 'send' : 'mail' }}
+              </mat-icon>
+              <div matListItemTitle class="mensaje-header">
+                <div>
+                  <strong>{{ esRemitente(mensaje) ? 'Para: ' : 'De: ' }}{{ getNombreUsuario(esRemitente(mensaje) ? mensaje.destinatarioId : mensaje.remitenteId) }}</strong>
+                  @if (!mensaje.leido && !esRemitente(mensaje)) {
+                    <mat-chip class="nuevo-chip">Nuevo</mat-chip>
+                  }
+                </div>
+                <span class="mensaje-fecha">{{ mensaje.fecha | date:'short' }}</span>
+              </div>
+              <div matListItemLine class="mensaje-asunto">{{ mensaje.asunto }}</div>
+              <div matListItemLine class="mensaje-contenido">{{ mensaje.contenido }}</div>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+          }
+          @if (mensajes.length === 0) {
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <p>No hay mensajes</p>
+            </div>
+          }
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="nuevo-mensaje-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>send</mat-icon>
+          Nuevo Mensaje
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form (ngSubmit)="enviarMensaje()" class="mensaje-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Destinatario</mat-label>
+            <mat-select [(ngModel)]="destinatarioSeleccionado" name="destinatario" required>
+              @for (alumno of getAlumnos(); track alumno.id) {
+                <mat-option [value]="alumno.id">
+                  {{ alumno.nombre }} {{ alumno.apellido }} - {{ alumno.curso }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Asunto</mat-label>
+            <input matInput [(ngModel)]="nuevoMensaje.asunto" name="asunto" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mensaje</mat-label>
+            <textarea matInput [(ngModel)]="nuevoMensaje.contenido" name="contenido" rows="6" required></textarea>
+          </mat-form-field>
+          <button mat-raised-button color="primary" type="submit" class="send-button">
+            <mat-icon>send</mat-icon>
+            Enviar Mensaje
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+

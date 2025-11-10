@@ -1,0 +1,96 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { institucionGuard } from './guards/institucion.guard';
+
+export const routes: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./components/home/home').then(m => m.HomeComponent)
+  },
+  {
+    path: 'instituciones',
+    loadComponent: () => import('./components/seleccion-institucion/seleccion-institucion').then(m => m.SeleccionInstitucionComponent)
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
+    canActivate: [institucionGuard]
+  },
+  {
+    path: 'registro',
+    loadComponent: () => import('./components/registro/registro.component').then(m => m.RegistroComponent),
+    canActivate: [institucionGuard]
+  },
+  {
+    path: 'app',
+    loadComponent: () => import('./components/layout/layout.component').then(m => m.LayoutComponent),
+    canActivate: [authGuard, institucionGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'alumnos',
+        loadComponent: () => import('./components/alumnos/alumnos.component').then(m => m.AlumnosComponent)
+      },
+      {
+        path: 'docentes',
+        loadComponent: () => import('./components/docentes/docentes.component').then(m => m.DocentesComponent)
+      },
+      {
+        path: 'materias',
+        loadComponent: () => import('./components/materias/materias.component').then(m => m.MateriasComponent)
+      },
+      {
+        path: 'cursos',
+        loadComponent: () => import('./components/cursos/cursos.component').then(m => m.CursosComponent)
+      },
+      {
+        path: 'asistencia',
+        loadComponent: () => import('./components/asistencia/asistencia.component').then(m => m.AsistenciaComponent)
+      },
+      {
+        path: 'notas',
+        loadComponent: () => import('./components/notas/notas.component').then(m => m.NotasComponent)
+      },
+      {
+        path: 'calendario',
+        loadComponent: () => import('./components/calendario/calendario.component').then(m => m.CalendarioComponent)
+      },
+      {
+        path: 'biblioteca',
+        loadComponent: () => import('./components/biblioteca/biblioteca.component').then(m => m.BibliotecaComponent)
+      },
+      {
+        path: 'mensajes',
+        loadComponent: () => import('./components/mensajes/mensajes.component').then(m => m.MensajesComponent)
+      },
+      {
+        path: 'reportes',
+        loadComponent: () => import('./components/reportes/reportes.component').then(m => m.ReportesComponent)
+      },
+      {
+        path: 'configuracion',
+        loadComponent: () => import('./components/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)
+      },
+      {
+        path: 'ayuda',
+        loadComponent: () => import('./components/ayuda/ayuda').then(m => m.AyudaComponent)
+      },
+      {
+        path: 'contacto',
+        loadComponent: () => import('./components/contacto/contacto').then(m => m.ContactoComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
+  },
+  {
+    path: '**',
+    redirectTo: ''
+  }
+];

@@ -1,0 +1,210 @@
+<div class="registro-container">
+  <!-- Panel Izquierdo - Logo de Institución -->
+  <div class="registro-left-panel">
+    <div class="left-panel-content">
+      @if (currentInstitucion) {
+        @if (currentInstitucion.logo) {
+          <img [src]="currentInstitucion.logo" [alt]="currentInstitucion.nombre" 
+               class="institucion-logo-large"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="logo-fallback-large" style="display: none;">
+            <mat-icon class="logo-icon-large">school</mat-icon>
+            <h1 class="institucion-name-large">{{ currentInstitucion.nombre }}</h1>
+          </div>
+        } @else {
+          <div class="logo-fallback-large">
+            <mat-icon class="logo-icon-large">school</mat-icon>
+            <h1 class="institucion-name-large">{{ currentInstitucion.nombre }}</h1>
+          </div>
+        }
+      } @else {
+        <div class="logo-fallback-large">
+          <mat-icon class="logo-icon-large">school</mat-icon>
+          <h1 class="institucion-name-large">Gestión Académica</h1>
+        </div>
+      }
+      @if (currentInstitucion) {
+        <button mat-stroked-button class="change-institucion-btn" [routerLink]="['/instituciones']">
+          <mat-icon>swap_horiz</mat-icon>
+          Cambiar Institución
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Panel Derecho - Formulario de Registro -->
+  <div class="registro-right-panel">
+    <div class="right-panel-content">
+      <!-- Header con título -->
+      <div class="registro-header-section">
+        <h1 class="registro-title">Registro de Usuarios</h1>
+        <p class="registro-subtitle">Crea una cuenta</p>
+      </div>
+
+      <!-- Logo AS pequeño -->
+      <div class="logo-as-small">
+        <img src="assets/logo.png" alt="AsistentStudent" class="logo-as-image" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <div class="logo-as-fallback" style="display: none;">
+          <mat-icon class="logo-as-icon">school</mat-icon>
+          <span class="logo-as-text">AS</span>
+        </div>
+      </div>
+
+      <!-- Formulario de Registro -->
+      <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="registro-form">
+        <!-- Fila 1: Nombre y Apellido -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" placeholder="Nombre">
+            <mat-icon matPrefix>person</mat-icon>
+            @if (registroForm.get('nombre')?.invalid && registroForm.get('nombre')?.touched) {
+              <mat-error>{{ getErrorMessage('nombre') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Apellido</mat-label>
+            <input matInput formControlName="apellido" placeholder="Apellido">
+            <mat-icon matPrefix>person_outline</mat-icon>
+            @if (registroForm.get('apellido')?.invalid && registroForm.get('apellido')?.touched) {
+              <mat-error>{{ getErrorMessage('apellido') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Fila 2: DNI y Usuario -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Número de documento</mat-label>
+            <input matInput formControlName="dni" placeholder="Número de documento">
+            <mat-icon matPrefix>badge</mat-icon>
+            @if (registroForm.get('dni')?.invalid && registroForm.get('dni')?.touched) {
+              <mat-error>{{ getErrorMessage('dni') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Usuario</mat-label>
+            <input matInput formControlName="username" placeholder="Usuario">
+            <mat-icon matPrefix>account_circle</mat-icon>
+            @if (registroForm.get('username')?.invalid && registroForm.get('username')?.touched) {
+              <mat-error>{{ getErrorMessage('username') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Fila 3: Email y Repetir Email -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Correo electrónico</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="Correo electrónico">
+            <mat-icon matPrefix>email</mat-icon>
+            @if (registroForm.get('email')?.invalid && registroForm.get('email')?.touched) {
+              <mat-error>{{ getErrorMessage('email') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Repetir correo electrónico</mat-label>
+            <input matInput type="email" formControlName="confirmEmail" placeholder="Repetir correo electrónico">
+            <mat-icon matPrefix>email</mat-icon>
+            @if (registroForm.get('confirmEmail')?.invalid && registroForm.get('confirmEmail')?.touched) {
+              <mat-error>{{ getErrorMessage('confirmEmail') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Fila 4: Contraseña y Repetir Contraseña -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contraseña</mat-label>
+            <input 
+              matInput 
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password" 
+              placeholder="Contraseña">
+            <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button" tabindex="-1">
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (registroForm.get('password')?.invalid && registroForm.get('password')?.touched) {
+              <mat-error>{{ getErrorMessage('password') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Repetir Contraseña</mat-label>
+            <input 
+              matInput 
+              [type]="hideConfirmPassword ? 'password' : 'text'"
+              formControlName="confirmPassword" 
+              placeholder="Confirm Password">
+            <mat-icon matPrefix>lock_outline</mat-icon>
+            <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button" tabindex="-1">
+              <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            @if (registroForm.get('confirmPassword')?.invalid && registroForm.get('confirmPassword')?.touched) {
+              <mat-error>{{ getErrorMessage('confirmPassword') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Fila 5: Teléfono y Rol -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" placeholder="Opcional">
+            <mat-icon matPrefix>phone</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Rol</mat-label>
+            <mat-select formControlName="rol">
+              @for (rol of roles; track rol.value) {
+                <mat-option [value]="rol.value">
+                  <mat-icon>{{ rol.icon }}</mat-icon>
+                  <span>{{ rol.label }}</span>
+                </mat-option>
+              }
+            </mat-select>
+            <mat-icon matPrefix>admin_panel_settings</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Fila 6: Fecha de Nacimiento -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Fecha de Nacimiento</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="fechaNacimiento">
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-icon matPrefix>calendar_today</mat-icon>
+        </mat-form-field>
+
+        <!-- Botón de Registro -->
+        <button 
+          mat-raised-button 
+          type="submit" 
+          class="registro-button"
+          [disabled]="registroForm.invalid || loading">
+          @if (loading) {
+            <span>Registrando...</span>
+          } @else {
+            <span>REGISTRARSE</span>
+          }
+        </button>
+      </form>
+
+      <!-- Link de Login -->
+      <div class="login-section">
+        <p class="login-text">¿Ya tienes una cuenta? <a routerLink="/login" class="login-link">Ingresa aqui</a></p>
+      </div>
+
+      <!-- Copyright -->
+      <div class="copyright-section">
+        <p class="copyright-text">© 2023 ALL RIGHTS RESERVED</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,164 @@
+<div class="biblioteca-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>library_books</mat-icon>
+        Biblioteca Digital
+      </h1>
+      <p>Recursos y materiales de estudio</p>
+    </div>
+    @if (!permissionsService.esAlumno()) {
+      <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
+        <mat-icon>upload</mat-icon>
+        Subir Recurso
+      </button>
+    }
+  </div>
+
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar recursos</mat-label>
+          <input matInput [(ngModel)]="busqueda" (input)="onBusquedaChange()" placeholder="Título, descripción o etiquetas...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Materia</mat-label>
+          <mat-select [(ngModel)]="filtroMateria" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todas</mat-option>
+            @for (materia of getMaterias(); track materia.id) {
+              <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Tipo</mat-label>
+          <mat-select [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todos</mat-option>
+            @for (tipo of tiposRecurso; track tipo.value) {
+              <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="recursos-grid">
+    @for (recurso of recursosFiltrados; track recurso.id) {
+      <mat-card class="recurso-card hover-lift">
+        <mat-card-header>
+          <div class="recurso-header">
+            <mat-icon class="tipo-icon">{{ getIconoTipo(recurso.tipo) }}</mat-icon>
+            <div class="recurso-info">
+              <mat-card-title>{{ recurso.titulo }}</mat-card-title>
+              <mat-card-subtitle>{{ getNombreMateria(recurso.materiaId) }}</mat-card-subtitle>
+            </div>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          @if (recurso.descripcion) {
+            <p class="recurso-descripcion">{{ recurso.descripcion }}</p>
+          }
+          <div class="recurso-meta">
+            <span><mat-icon>download</mat-icon> {{ recurso.descargas }} descargas</span>
+            @if (recurso.tamano) {
+              <span><mat-icon>storage</mat-icon> {{ recurso.tamano }}</span>
+            }
+          </div>
+          <div class="recurso-etiquetas">
+            @for (etiqueta of recurso.etiquetas; track etiqueta) {
+              <mat-chip>{{ etiqueta }}</mat-chip>
+            }
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button color="primary" (click)="descargarRecurso(recurso)">
+            <mat-icon>download</mat-icon>
+            Descargar
+          </button>
+          @if (!permissionsService.esAlumno()) {
+            <button mat-button (click)="abrirModalEditar(recurso)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+            <button mat-button color="warn" (click)="eliminarRecurso(recurso.id)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          }
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+
+  @if (recursosFiltrados.length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <div class="empty-state">
+          <mat-icon>folder_open</mat-icon>
+          <p>No se encontraron recursos</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (mostrarModal && !permissionsService.esAlumno()) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Recurso' : 'Nuevo Recurso' }}</h2>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <form [formGroup]="recursoForm" (ngSubmit)="guardarRecurso()" class="modal-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Título *</mat-label>
+            <input matInput formControlName="titulo" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcion" rows="3"></textarea>
+          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo *</mat-label>
+              <mat-select formControlName="tipo" required>
+                @for (tipo of tiposRecurso; track tipo.value) {
+                  <mat-option [value]="tipo.value">
+                    <mat-icon>{{ tipo.icon }}</mat-icon>
+                    <span>{{ tipo.label }}</span>
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Materia</mat-label>
+              <mat-select formControlName="materiaId">
+                <mat-option value="">General</mat-option>
+                @for (materia of getMaterias(); track materia.id) {
+                  <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>URL o Enlace *</mat-label>
+            <input matInput formControlName="url" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Etiquetas (separadas por comas)</mat-label>
+            <input matInput formControlName="etiquetas" placeholder="matemáticas, álgebra, parcial">
+          </mat-form-field>
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

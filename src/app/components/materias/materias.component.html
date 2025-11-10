@@ -1,0 +1,175 @@
+<div class="materias-container">
+  <div class="header-section">
+    <div>
+      @if (permissionsService.esAlumno()) {
+        <h1>Mis Materias</h1>
+        <p>Materias en las que estás inscrito</p>
+      } @else if (permissionsService.esProfesor()) {
+        <h1>Mis Materias</h1>
+        <p>Materias asignadas</p>
+      } @else {
+        <h1>Gestión de Materias</h1>
+        <p>Administra las materias y sus inscripciones</p>
+      }
+    </div>
+    @if (permissionsService.esSecretario() || permissionsService.esAdmin() || permissionsService.puedeVer('editarMaterias')) {
+      <button class="btn-primary" (click)="abrirModalNuevo()">+ Nueva Materia</button>
+    }
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        (input)="onBusquedaChange()"
+        placeholder="Buscar por nombre, código o profesor..."
+        class="search-input"
+      />
+    </div>
+    <div class="filter-box">
+      <select [(ngModel)]="filtroCurso" (change)="onFiltroCursoChange()" class="filter-select">
+        <option value="">Todos los cursos</option>
+        @for (curso of getCursosUnicos(); track curso) {
+          <option [value]="curso">{{ curso }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="cards-grid">
+    @for (materia of materiasFiltradas; track materia.id) {
+      <div class="materia-card">
+        <div class="materia-header">
+          <h3>{{ materia.nombre }}</h3>
+          <span class="codigo-badge">{{ materia.codigo }}</span>
+        </div>
+        <div class="materia-info">
+          <p><strong>Profesor:</strong> {{ materia.profesor }}</p>
+          <p><strong>Curso:</strong> <span class="badge">{{ materia.curso }}</span></p>
+          <p><strong>Horario:</strong> {{ materia.horario }}</p>
+          <p><strong>Créditos:</strong> {{ materia.creditos }}</p>
+          <p><strong>Inscritos:</strong> {{ getCantidadInscritos(materia.id) }} alumnos</p>
+          @if (materia.descripcion) {
+            <p class="descripcion">{{ materia.descripcion }}</p>
+          }
+        </div>
+        <div class="materia-actions">
+          @if (permissionsService.esAlumno()) {
+            <!-- Alumno: Solo ver información, no puede editar -->
+            <span class="readonly-badge">Solo lectura</span>
+          } @else {
+            @if (permissionsService.esSecretario() || permissionsService.esAdmin()) {
+              <button class="btn-secondary" (click)="abrirInscripciones(materia)">👥 Inscripciones</button>
+            }
+            @if (permissionsService.puedeVer('editarMaterias')) {
+              <button class="btn-edit" (click)="abrirModalEditar(materia)">✏️ Editar</button>
+              <button class="btn-delete" (click)="eliminarMateria(materia.id)">🗑️ Eliminar</button>
+            }
+          }
+        </div>
+      </div>
+    }
+    @if (materiasFiltradas.length === 0) {
+      <div class="empty-state">
+        <p>No se encontraron materias</p>
+      </div>
+    }
+  </div>
+
+  @if (mostrarModal && materiaSeleccionada !== null && !mostrarInscripciones) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Materia' : 'Nueva Materia' }}</h2>
+          <button class="btn-close" (click)="cerrarModal()">×</button>
+        </div>
+        <form (ngSubmit)="guardarMateria()" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre *</label>
+              <input type="text" [(ngModel)]="formData.nombre" name="nombre" required />
+            </div>
+            <div class="form-group">
+              <label>Código *</label>
+              <input type="text" [(ngModel)]="formData.codigo" name="codigo" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Profesor *</label>
+              <input type="text" [(ngModel)]="formData.profesor" name="profesor" required />
+            </div>
+            <div class="form-group">
+              <label>Curso *</label>
+              <input type="text" [(ngModel)]="formData.curso" name="curso" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Horario</label>
+              <input type="text" [(ngModel)]="formData.horario" name="horario" />
+            </div>
+            <div class="form-group">
+              <label>Créditos</label>
+              <input type="number" [(ngModel)]="formData.creditos" name="creditos" min="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea [(ngModel)]="formData.descripcion" name="descripcion" rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (mostrarInscripciones && materiaSeleccionada) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Inscripciones - {{ materiaSeleccionada.nombre }}</h2>
+          <button class="btn-close" (click)="cerrarModal()">×</button>
+        </div>
+        <div class="inscripciones-content">
+          <div class="inscripciones-section">
+            <h3>Alumnos Inscritos ({{ alumnosInscritos.length }})</h3>
+            <div class="alumnos-list">
+              @for (alumno of alumnosInscritos; track alumno.id) {
+                <div class="alumno-item">
+                  <span>{{ alumno.nombre }} {{ alumno.apellido }} - {{ alumno.curso }}</span>
+                  <button class="btn-small btn-danger" (click)="desinscribirAlumno(alumno.id)">Desinscribir</button>
+                </div>
+              }
+              @if (alumnosInscritos.length === 0) {
+                <p class="empty-text">No hay alumnos inscritos</p>
+              }
+            </div>
+          </div>
+          <div class="inscripciones-section">
+            <h3>Alumnos Disponibles ({{ alumnosDisponibles.length }})</h3>
+            <div class="alumnos-list">
+              @for (alumno of alumnosDisponibles; track alumno.id) {
+                <div class="alumno-item">
+                  <span>{{ alumno.nombre }} {{ alumno.apellido }} - {{ alumno.curso }}</span>
+                  <button class="btn-small btn-success" (click)="inscribirAlumno(alumno.id)">Inscribir</button>
+                </div>
+              }
+              @if (alumnosDisponibles.length === 0) {
+                <p class="empty-text">Todos los alumnos están inscritos</p>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

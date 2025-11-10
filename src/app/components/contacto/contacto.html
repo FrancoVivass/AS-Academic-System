@@ -1,0 +1,279 @@
+<div class="contacto-container">
+  <div class="contacto-header">
+    <h1 class="page-title">
+      <mat-icon class="title-icon">contact_mail</mat-icon>
+      Contáctanos
+    </h1>
+    <p class="page-subtitle">
+      ¿Quieres que tu institución use AsistentStudent? Contáctanos y te ayudamos a implementarlo.
+    </p>
+  </div>
+
+  <div class="contacto-content">
+    <div class="contacto-info-section">
+      <mat-card class="info-card">
+        <h2>Información de Contacto</h2>
+        <div class="contact-items">
+          <div class="contact-item">
+            <mat-icon class="contact-icon">email</mat-icon>
+            <div>
+              <h3>Email</h3>
+              <p>contacto@asistentstudent.com</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <mat-icon class="contact-icon">phone</mat-icon>
+            <div>
+              <h3>Teléfono</h3>
+              <p>+54 11 1234-5678</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <mat-icon class="contact-icon">location_on</mat-icon>
+            <div>
+              <h3>Dirección</h3>
+              <p>Buenos Aires, Argentina</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <mat-icon class="contact-icon">schedule</mat-icon>
+            <div>
+              <h3>Horario de Atención</h3>
+              <p>Lunes a Viernes: 9:00 - 18:00</p>
+              <p>Sábados: 9:00 - 13:00</p>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="contacto-form-section">
+      <mat-card class="form-card">
+        <mat-card-header>
+          <h2>Envíanos un Mensaje</h2>
+          <p>Completa el formulario y te responderemos lo antes posible</p>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="contactoForm" (ngSubmit)="onSubmit()" class="contacto-form">
+            
+            <!-- Información Personal -->
+            <h3 class="form-section-title">Información Personal</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre Completo *</mat-label>
+                <input matInput formControlName="nombre" placeholder="Tu nombre completo">
+                <mat-icon matPrefix>person</mat-icon>
+                @if (contactoForm.get('nombre')?.invalid && contactoForm.get('nombre')?.touched) {
+                  <mat-error>{{ getErrorMessage('nombre') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email *</mat-label>
+                <input matInput type="email" formControlName="email" placeholder="tu@email.com">
+                <mat-icon matPrefix>email</mat-icon>
+                @if (contactoForm.get('email')?.invalid && contactoForm.get('email')?.touched) {
+                  <mat-error>{{ getErrorMessage('email') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Teléfono</mat-label>
+                <input matInput formControlName="telefono" placeholder="+54 11 1234-5678">
+                <mat-icon matPrefix>phone</mat-icon>
+                @if (contactoForm.get('telefono')?.invalid && contactoForm.get('telefono')?.touched) {
+                  <mat-error>{{ getErrorMessage('telefono') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Cargo/Rol *</mat-label>
+                <mat-select formControlName="cargo">
+                  @for (cargo of cargos; track cargo.value) {
+                    <mat-option [value]="cargo.value">{{ cargo.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>badge</mat-icon>
+                @if (contactoForm.get('cargo')?.invalid && contactoForm.get('cargo')?.touched) {
+                  <mat-error>{{ getErrorMessage('cargo') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <!-- Información de la Institución -->
+            <h3 class="form-section-title">Información de la Institución</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre de la Institución *</mat-label>
+                <input matInput formControlName="institucion" placeholder="Nombre de tu institución">
+                <mat-icon matPrefix>school</mat-icon>
+                @if (contactoForm.get('institucion')?.invalid && contactoForm.get('institucion')?.touched) {
+                  <mat-error>{{ getErrorMessage('institucion') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipo de Institución *</mat-label>
+                <mat-select formControlName="tipoInstitucion">
+                  @for (tipo of tiposInstituciones; track tipo.value) {
+                    <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>category</mat-icon>
+                @if (contactoForm.get('tipoInstitucion')?.invalid && contactoForm.get('tipoInstitucion')?.touched) {
+                  <mat-error>{{ getErrorMessage('tipoInstitucion') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Número de Estudiantes *</mat-label>
+                <mat-select formControlName="numeroEstudiantes">
+                  @for (rango of rangosEstudiantes; track rango.value) {
+                    <mat-option [value]="rango.value">{{ rango.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>people</mat-icon>
+                @if (contactoForm.get('numeroEstudiantes')?.invalid && contactoForm.get('numeroEstudiantes')?.touched) {
+                  <mat-error>{{ getErrorMessage('numeroEstudiantes') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Número de Docentes *</mat-label>
+                <mat-select formControlName="numeroDocentes">
+                  @for (rango of rangosDocentes; track rango.value) {
+                    <mat-option [value]="rango.value">{{ rango.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>person</mat-icon>
+                @if (contactoForm.get('numeroDocentes')?.invalid && contactoForm.get('numeroDocentes')?.touched) {
+                  <mat-error>{{ getErrorMessage('numeroDocentes') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Ubicación/País</mat-label>
+                <input matInput formControlName="ubicacion" placeholder="Buenos Aires, Argentina">
+                <mat-icon matPrefix>location_on</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Sitio Web</mat-label>
+                <input matInput formControlName="sitioWeb" placeholder="https://www.ejemplo.edu">
+                <mat-icon matPrefix>language</mat-icon>
+                @if (contactoForm.get('sitioWeb')?.invalid && contactoForm.get('sitioWeb')?.touched) {
+                  <mat-error>{{ getErrorMessage('sitioWeb') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <!-- Información de la Consulta -->
+            <h3 class="form-section-title">Información de la Consulta</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipo de Consulta *</mat-label>
+                <mat-select formControlName="tipoConsulta">
+                  @for (tipo of tiposConsultas; track tipo.value) {
+                    <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>help_outline</mat-icon>
+                @if (contactoForm.get('tipoConsulta')?.invalid && contactoForm.get('tipoConsulta')?.touched) {
+                  <mat-error>{{ getErrorMessage('tipoConsulta') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Asunto *</mat-label>
+                <input matInput formControlName="asunto" placeholder="Asunto de tu consulta">
+                <mat-icon matPrefix>subject</mat-icon>
+                @if (contactoForm.get('asunto')?.invalid && contactoForm.get('asunto')?.touched) {
+                  <mat-error>{{ getErrorMessage('asunto') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Mensaje *</mat-label>
+              <textarea matInput formControlName="mensaje" placeholder="Cuéntanos sobre tu institución y tus necesidades..." rows="6"></textarea>
+              <mat-icon matPrefix>message</mat-icon>
+              @if (contactoForm.get('mensaje')?.invalid && contactoForm.get('mensaje')?.touched) {
+                <mat-error>{{ getErrorMessage('mensaje') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Preferencia de Contacto *</mat-label>
+              <mat-select formControlName="preferenciaContacto">
+                @for (pref of preferenciasContacto; track pref.value) {
+                  <mat-option [value]="pref.value">{{ pref.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-icon matPrefix>contact_mail</mat-icon>
+              @if (contactoForm.get('preferenciaContacto')?.invalid && contactoForm.get('preferenciaContacto')?.touched) {
+                <mat-error>{{ getErrorMessage('preferenciaContacto') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Información Adicional -->
+            <h3 class="form-section-title">Información Adicional</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>¿Cómo nos conoció?</mat-label>
+                <mat-select formControlName="comoConocio">
+                  @for (opcion of comoConocio; track opcion.value) {
+                    <mat-option [value]="opcion.value">{{ opcion.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>public</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Presupuesto Estimado</mat-label>
+                <mat-select formControlName="presupuesto">
+                  @for (rango of rangosPresupuesto; track rango.value) {
+                    <mat-option [value]="rango.value">{{ rango.label }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>attach_money</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Fecha de Inicio Deseada</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fechaInicio" placeholder="Selecciona una fecha">
+                <mat-hint>MM/DD/YYYY</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-icon matPrefix>event</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Necesidades Específicas</mat-label>
+              <textarea matInput formControlName="necesidadesEspecificas" placeholder="Describe necesidades específicas de tu institución..." rows="4"></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+
+            <button 
+              mat-raised-button 
+              color="primary" 
+              type="submit" 
+              class="submit-button"
+              [disabled]="contactoForm.invalid || loading">
+              <mat-icon [class.spinning]="loading">{{ loading ? 'refresh' : 'send' }}</mat-icon>
+              <span>{{ loading ? 'Enviando...' : 'Enviar Mensaje' }}</span>
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

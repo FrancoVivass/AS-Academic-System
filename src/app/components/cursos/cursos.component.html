@@ -1,0 +1,111 @@
+<div class="cursos-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>class</mat-icon>
+        Gestión de Cursos
+      </h1>
+      <p>Administra los cursos y comisiones</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
+      <mat-icon>add</mat-icon>
+      Nuevo Curso
+    </button>
+  </div>
+
+  <div class="cursos-grid">
+    @for (curso of cursos; track curso.id) {
+      <mat-card class="curso-card hover-lift">
+        <mat-card-header>
+          <div class="curso-header">
+            <div>
+              <mat-card-title>{{ curso.nombre }}</mat-card-title>
+              <mat-card-subtitle>Código: {{ curso.codigo }}</mat-card-subtitle>
+            </div>
+            <mat-chip class="turno-chip">{{ curso.turno }}</mat-chip>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="curso-stats">
+            <div class="stat-item">
+              <mat-icon>people</mat-icon>
+              <span>{{ getCantidadAlumnos(curso) }} alumnos</span>
+            </div>
+            <div class="stat-item">
+              <mat-icon>menu_book</mat-icon>
+              <span>{{ getCantidadMaterias(curso) }} materias</span>
+            </div>
+            <div class="stat-item">
+              <mat-icon>event_seat</mat-icon>
+              <span>Capacidad: {{ curso.capacidad }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button color="primary" (click)="abrirModalEditar(curso)">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+          <button mat-button color="warn" (click)="eliminarCurso(curso.id)">
+            <mat-icon>delete</mat-icon>
+            Eliminar
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+
+  @if (modalAbierto) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Curso' : 'Nuevo Curso' }}</h2>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <form [formGroup]="cursoForm" (ngSubmit)="guardarCurso()" class="modal-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre *</mat-label>
+              <input matInput formControlName="nombre" required>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Código *</mat-label>
+              <input matInput formControlName="codigo" required>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Año *</mat-label>
+              <input matInput type="number" formControlName="año" required>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>División *</mat-label>
+              <input matInput formControlName="division" required>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Turno *</mat-label>
+              <mat-select formControlName="turno" required>
+                <mat-option value="mañana">Mañana</mat-option>
+                <mat-option value="tarde">Tarde</mat-option>
+                <mat-option value="vespertino">Vespertino</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Capacidad *</mat-label>
+              <input matInput type="number" formControlName="capacidad" required>
+            </mat-form-field>
+          </div>
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

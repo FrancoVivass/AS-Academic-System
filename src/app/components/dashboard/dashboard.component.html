@@ -1,0 +1,394 @@
+<div class="dashboard-container">
+  <!-- Dashboard para Alumno -->
+  @if (permissionsService.esAlumno()) {
+    <div class="dashboard-header">
+      <h1>Mi Dashboard</h1>
+      <p class="subtitle">Resumen de tu rendimiento académico</p>
+    </div>
+
+    <!-- Advertencias y Alertas -->
+    @if (advertencias.length > 0) {
+      <div class="advertencias-section">
+        <h2 class="section-title">
+          <mat-icon>notifications</mat-icon>
+          Alertas y Advertencias
+        </h2>
+        <div class="advertencias-grid">
+          @for (advertencia of advertencias; track advertencia.titulo) {
+            <mat-card class="advertencia-card" [class]="'advertencia-' + advertencia.tipo">
+              <mat-card-content>
+                <div class="advertencia-content">
+                  <mat-icon [class]="'icon-' + advertencia.tipo">{{ getIconoAdvertencia(advertencia.tipo) }}</mat-icon>
+                  <div class="advertencia-text">
+                    <h3>{{ advertencia.titulo }}</h3>
+                    <p>{{ advertencia.mensaje }}</p>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Estadísticas del Alumno -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper primary">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ promedioGeneral }}</div>
+              <div class="stat-label">Mi Promedio General</div>
+              <div class="stat-progress">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="(promedioGeneral / 10) * 100"
+                  [color]="promedioGeneral >= 6 ? 'primary' : 'warn'">
+                </mat-progress-bar>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper info">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ porcentajeAsistencia }}%</div>
+              <div class="stat-label">Mi Asistencia General</div>
+              <div class="stat-progress">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="porcentajeAsistencia"
+                  [color]="porcentajeAsistencia >= 75 ? 'primary' : 'warn'">
+                </mat-progress-bar>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper success">
+              <mat-icon>menu_book</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalMaterias }}</div>
+              <div class="stat-label">Materias Inscritas</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Resumen por Materia -->
+    @if (materiasResumen.length > 0) {
+      <div class="materias-resumen-section">
+        <h2 class="section-title">
+          <mat-icon>menu_book</mat-icon>
+          Resumen por Materia
+        </h2>
+        <div class="materias-resumen-grid">
+          @for (materia of materiasResumen; track materia.id) {
+            <mat-card class="materia-resumen-card">
+              <mat-card-header>
+                <mat-card-title>{{ materia.nombre }}</mat-card-title>
+                <mat-chip [color]="getColorEstado(materia.estado)">{{ materia.estado }}</mat-chip>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="materia-stats">
+                  <div class="stat-item">
+                    <mat-icon>star</mat-icon>
+                    <span>Promedio: <strong>{{ materia.promedio }}</strong></span>
+                  </div>
+                  <div class="stat-item">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Asistencia: <strong>{{ materia.asistencia }}%</strong></span>
+                  </div>
+                  @if (materia.ultimaNota) {
+                    <div class="stat-item">
+                      <mat-icon>grade</mat-icon>
+                      <span>Última nota: <strong>{{ materia.ultimaNota.calificacion }}</strong> ({{ materia.ultimaNota.tipo }})</span>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Dashboard para Profesor -->
+  @else if (permissionsService.esProfesor()) {
+    <div class="dashboard-header">
+      <h1>Dashboard Profesor</h1>
+      <p class="subtitle">Resumen de tus materias y alumnos</p>
+    </div>
+
+    <!-- Advertencias -->
+    @if (advertencias.length > 0) {
+      <div class="advertencias-section">
+        <h2 class="section-title">
+          <mat-icon>notifications</mat-icon>
+          Alertas
+        </h2>
+        <div class="advertencias-grid">
+          @for (advertencia of advertencias; track advertencia.titulo) {
+            <mat-card class="advertencia-card" [class]="'advertencia-' + advertencia.tipo">
+              <mat-card-content>
+                <div class="advertencia-content">
+                  <mat-icon [class]="'icon-' + advertencia.tipo">{{ getIconoAdvertencia(advertencia.tipo) }}</mat-icon>
+                  <div class="advertencia-text">
+                    <h3>{{ advertencia.titulo }}</h3>
+                    <p>{{ advertencia.mensaje }}</p>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Estadísticas del Profesor -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper primary">
+              <mat-icon>people</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalAlumnos }}</div>
+              <div class="stat-label">Total Alumnos</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper success">
+              <mat-icon>menu_book</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalMaterias }}</div>
+              <div class="stat-label">Materias Asignadas</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Alumnos por Materia -->
+    @if (alumnosPorMateria.length > 0) {
+      <div class="alumnos-materia-section">
+        <h2 class="section-title">
+          <mat-icon>people</mat-icon>
+          Alumnos por Materia
+        </h2>
+        <div class="alumnos-materia-grid">
+          @for (item of alumnosPorMateria; track item.materia) {
+            <mat-card class="materia-alumnos-card">
+              <mat-card-header>
+                <mat-card-title>{{ item.materia }}</mat-card-title>
+                <mat-chip>{{ item.cantidad }} alumnos</mat-chip>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="alumnos-list">
+                  @for (alumno of item.alumnos; track alumno.nombre) {
+                    <div class="alumno-item">
+                      <span class="alumno-name">{{ alumno.nombre }}</span>
+                      <div class="alumno-stats">
+                        <span>Promedio: {{ alumno.promedio }}</span>
+                        <span>Asistencia: {{ alumno.asistencia }}%</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Dashboard para Admin/Secretario -->
+  @else {
+    <div class="dashboard-header">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Resumen general del sistema académico</p>
+    </div>
+
+    <!-- Estadísticas principales -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper primary">
+              <mat-icon>people</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalAlumnos }}</div>
+              <div class="stat-label">Total Alumnos</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper success">
+              <mat-icon>menu_book</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalMaterias }}</div>
+              <div class="stat-label">Total Materias</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper warning">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ promedioGeneral }}</div>
+              <div class="stat-label">Promedio General</div>
+              <div class="stat-progress">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="(promedioGeneral / 10) * 100"
+                  color="accent">
+                </mat-progress-bar>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon-wrapper info">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ porcentajeAsistencia }}%</div>
+              <div class="stat-label">Asistencia Global</div>
+              <div class="stat-progress">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="porcentajeAsistencia"
+                  color="primary">
+                </mat-progress-bar>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tablas de información -->
+    <div class="tables-grid">
+      <mat-card class="table-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>emoji_events</mat-icon>
+            Top 5 Alumnos
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="topAlumnos" class="mat-elevation-z0">
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Alumno</th>
+              <td mat-cell *matCellDef="let alumno">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">person</mat-icon>
+                  <span>{{ alumno.nombre }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="curso">
+              <th mat-header-cell *matHeaderCellDef>Curso</th>
+              <td mat-cell *matCellDef="let alumno">
+                <mat-chip>{{ alumno.curso }}</mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="promedio">
+              <th mat-header-cell *matHeaderCellDef>Promedio</th>
+              <td mat-cell *matCellDef="let alumno">
+                <span class="promedio-badge">{{ alumno.promedio }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="asistencia">
+              <th mat-header-cell *matHeaderCellDef>Asistencia</th>
+              <td mat-cell *matCellDef="let alumno">
+                <div class="asistencia-cell">
+                  <mat-progress-bar 
+                    mode="determinate" 
+                    [value]="alumno.asistencia"
+                    [color]="alumno.asistencia >= 80 ? 'primary' : 'warn'">
+                  </mat-progress-bar>
+                  <span class="asistencia-value">{{ alumno.asistencia }}%</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="table-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>trending_up</mat-icon>
+            Materias Más Populares
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="materias-list">
+            @for (materia of materiasPopulares; track materia.nombre) {
+              <div class="materia-item">
+                <div class="materia-info">
+                  <mat-icon>menu_book</mat-icon>
+                  <div>
+                    <div class="materia-name">{{ materia.nombre }}</div>
+                    <div class="materia-stats">
+                      <span>{{ materia.inscritos }} inscritos</span>
+                      <span>•</span>
+                      <span>Promedio: {{ materia.promedio }}</span>
+                    </div>
+                  </div>
+                </div>
+                <mat-chip class="inscritos-chip">{{ materia.inscritos }}</mat-chip>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>
