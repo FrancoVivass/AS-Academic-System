@@ -36,9 +36,11 @@ export class ThemeService {
   private applyTheme(theme: 'light' | 'dark'): void {
     document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'dark') {
-      document.body.classList.add('dark-theme');
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
     } else {
-      document.body.classList.remove('dark-theme');
+      document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
     }
   }
 }

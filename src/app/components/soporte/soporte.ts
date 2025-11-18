@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,7 +14,11 @@ import { FooterPrincipal } from '../footer-principal/footer-principal';
   templateUrl: './soporte.html',
   styleUrl: './soporte.css'
 })
-export class SoporteComponent {
+export class SoporteComponent implements OnInit {
+  isDarkMode = false;
+  showScrollTop = false;
+  whatsappNumber = '5491112345678';
+  whatsappMessage = 'Hola, me interesa conocer más sobre AcademicSystem';
   faqs = [
     {
       pregunta: '¿Cómo puedo registrarme en AcademicSystem?',
@@ -41,6 +45,43 @@ export class SoporteComponent {
       respuesta: 'Puedes contactarnos a través del formulario de contacto en nuestra página web, por email a soporte@academicsystem.com, o utilizando la sección de ayuda dentro de la plataforma si ya tienes una cuenta activa.'
     }
   ];
+
+  ngOnInit(): void {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkMode = true;
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+    }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.showScrollTop = window.pageYOffset > 300;
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openWhatsApp(): void {
+    const message = encodeURIComponent(this.whatsappMessage);
+    const url = `https://wa.me/${this.whatsappNumber}?text=${message}`;
+    window.open(url, '_blank');
+  }
 }
 
 

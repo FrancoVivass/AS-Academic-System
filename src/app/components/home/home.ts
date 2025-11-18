@@ -107,6 +107,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (savedTheme === 'dark') {
       this.isDarkMode = true;
       document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
     }
     
     // Verificar cookies
@@ -148,9 +149,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isDarkMode = !this.isDarkMode;
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
       localStorage.setItem('theme', 'light');
     }
   }

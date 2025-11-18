@@ -29,29 +29,35 @@ export class EncabezadoPrincipal implements AfterViewInit {
   }
 
   private initMobileMenu() {
-    const menuButton = document.querySelector('.link-col-mobile');
-    const closeButton = document.querySelector('.close-button p');
-    const mobileOverlay = document.querySelector('.mobile-overlay');
-    const mobileMenu = document.querySelector('.mobile-menu');
+    // Usar setTimeout para asegurar que el DOM esté listo
+    setTimeout(() => {
+      const menuButton = document.querySelector('.link-col-mobile') || document.querySelector('.menu-button') || document.getElementById('menuButton');
+      const closeButton = document.querySelector('.close-button p') || document.getElementById('closeButton');
+      const mobileOverlay = document.querySelector('.mobile-overlay') || document.getElementById('mobileOverlay');
+      const mobileMenu = document.querySelector('.mobile-menu') || document.getElementById('mobileMenu');
 
-    if (menuButton && closeButton && mobileOverlay && mobileMenu) {
-      menuButton.addEventListener('click', () => {
-        mobileOverlay.classList.add('show');
-        mobileMenu.classList.add('show');
-      });
+      if (menuButton && closeButton && mobileOverlay && mobileMenu) {
+        menuButton.addEventListener('click', () => {
+          (mobileOverlay as HTMLElement).classList.add('show');
+          (mobileMenu as HTMLElement).classList.add('show');
+          document.body.style.overflow = 'hidden';
+        });
 
-      closeButton.addEventListener('click', () => {
-        mobileOverlay.classList.remove('show');
-        mobileMenu.classList.remove('show');
-      });
+        closeButton.addEventListener('click', () => {
+          (mobileOverlay as HTMLElement).classList.remove('show');
+          (mobileMenu as HTMLElement).classList.remove('show');
+          document.body.style.overflow = '';
+        });
 
-      mobileOverlay.addEventListener('click', (event) => {
-        if (event.target === mobileOverlay) {
-          mobileOverlay.classList.remove('show');
-          mobileMenu.classList.remove('show');
-        }
-      });
-    }
+        mobileOverlay.addEventListener('click', (event) => {
+          if (event.target === mobileOverlay) {
+            (mobileOverlay as HTMLElement).classList.remove('show');
+            (mobileMenu as HTMLElement).classList.remove('show');
+            document.body.style.overflow = '';
+          }
+        });
+      }
+    }, 100);
   }
 
   private initScrollBehavior() {

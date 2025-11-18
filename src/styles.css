@@ -43,7 +43,9 @@
 
 /* Modo oscuro - Gris oscuro en vez de blanco */
 [data-theme="dark"],
-body.dark-theme {
+body.dark-theme,
+:root.dark-mode,
+html.dark-mode {
   /* Colores principales - Modo Oscuro */
   --primary-blue: #42a5f5;
   --primary-blue-dark: #2196f3;
@@ -92,6 +94,12 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root.dark-mode body,
+html.dark-mode body {
+  background: #000000;
+  color: #e8e8e8;
 }
 
 /* Material Design Overrides con paleta azul */

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -36,7 +36,7 @@ import { RouterModule } from '@angular/router';
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.css'
 })
-export class RegistroComponent {
+export class RegistroComponent implements OnInit {
   registroForm: FormGroup;
   hidePassword = true;
   hideConfirmPassword = true;
@@ -157,6 +157,48 @@ export class RegistroComponent {
       return 'Los correos no coinciden';
     }
     return '';
+  }
+
+  isDarkMode = false;
+  showScrollTop = false;
+  whatsappNumber = '5491112345678';
+  whatsappMessage = 'Hola, me interesa conocer más sobre AcademicSystem';
+
+  ngOnInit(): void {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkMode = true;
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+    }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.showScrollTop = window.pageYOffset > 300;
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openWhatsApp(): void {
+    const message = encodeURIComponent(this.whatsappMessage);
+    const url = `https://wa.me/${this.whatsappNumber}?text=${message}`;
+    window.open(url, '_blank');
   }
 }
 
