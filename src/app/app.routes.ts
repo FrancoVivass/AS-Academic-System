@@ -12,6 +12,18 @@ export const routes: Routes = [
     loadComponent: () => import('./components/seleccion-institucion/seleccion-institucion').then(m => m.SeleccionInstitucionComponent)
   },
   {
+    path: 'como-funciona',
+    loadComponent: () => import('./components/como-funciona/como-funciona').then(m => m.ComoFuncionaComponent)
+  },
+  {
+    path: 'acerca-de',
+    loadComponent: () => import('./components/acerca-de/acerca-de').then(m => m.AcercaDeComponent)
+  },
+  {
+    path: 'soporte',
+    loadComponent: () => import('./components/soporte/soporte').then(m => m.SoporteComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
     canActivate: [institucionGuard]

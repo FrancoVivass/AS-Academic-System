@@ -1,0 +1,249 @@
+.page-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 140px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 60px;
+  padding: 40px 20px;
+}
+
+.page-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #1a3be2;
+  margin-bottom: 16px;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.support-options {
+  margin-bottom: 80px;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.option-card {
+  padding: 35px 28px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.option-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.option-card mat-icon {
+  font-size: 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: #1a3be2;
+  margin-bottom: 20px;
+}
+
+.option-card h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #212121;
+  margin-bottom: 12px;
+}
+
+.option-card p {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.option-card a {
+  color: #1a3be2;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.option-card a:hover {
+  color: #007BFF;
+  text-decoration: underline;
+}
+
+.coming-soon {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #f0f0f0;
+  color: #666;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.faq-section {
+  margin-bottom: 80px;
+}
+
+.faq-section h2 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #212121;
+  margin-bottom: 40px;
+}
+
+.faq-list {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.faq-item ::ng-deep .mat-expansion-panel-header {
+  padding: 20px 24px;
+  font-weight: 600;
+}
+
+.faq-item ::ng-deep .mat-expansion-panel-body {
+  padding: 0 24px 20px;
+}
+
+.faq-item p {
+  color: #666;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.contact-section {
+  text-align: center;
+  padding: 60px 40px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  margin-bottom: 80px;
+}
+
+.contact-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212121;
+  margin-bottom: 12px;
+}
+
+.contact-section p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.contact-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+}
+
+.resources-section {
+  margin-bottom: 60px;
+}
+
+.resources-section h2 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #212121;
+  margin-bottom: 40px;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.resource-card {
+  padding: 35px 28px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.resource-card mat-icon {
+  font-size: 3rem;
+  width: 3rem;
+  height: 3rem;
+  color: #1a3be2;
+  margin-bottom: 16px;
+}
+
+.resource-card h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #212121;
+  margin-bottom: 12px;
+}
+
+.resource-card p {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding-top: 120px;
+  }
+
+  .options-grid,
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-buttons {
+    flex-direction: column;
+  }
+
+  .contact-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+
+
+
+

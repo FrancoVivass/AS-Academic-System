@@ -1,0 +1,42 @@
+<!-- Header -->
+<section class="header">
+    <div class="announcement-bar">
+        <p>Bienvenido al futuro de la educación. <a href="#">Leer más.</a></p>
+    </div>
+    <div class="navigation-bar">
+      <a [routerLink]="['/']" class="logo-link">
+        <div class="company-col"></div>
+        <span class="company-name">AcademicSystem</span>
+      </a>
+        <div class="link-col">
+            <ul>
+                <li><a [routerLink]="['/']">Inicio</a></li>
+                <li><a [routerLink]="['/como-funciona']">Cómo Funciona</a></li>
+                <li><a [routerLink]="['/acerca-de']">Acerca De</a></li>
+                <li><a [routerLink]="['/soporte']">Soporte</a></li>
+                <li><a class="cta-button" [routerLink]="['/instituciones']">Comenzar a Gestionar</a></li>
+            </ul>
+        </div>
+        <div class="link-col-mobile">
+            <div class="menu-button" id="menuButton">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mobile Overlay -->
+<section class="mobile-overlay" id="mobileOverlay">
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="close-button" id="closeButton"><p>Cerrar</p></div>
+        <ul>
+            <li><a [routerLink]="['/']">Inicio</a></li>
+            <li><a [routerLink]="['/como-funciona']">Cómo Funciona</a></li>
+            <li><a [routerLink]="['/acerca-de']">Acerca De</a></li>
+            <li><a [routerLink]="['/soporte']">Soporte</a></li>
+            <li><a class="cta-button" [routerLink]="['/instituciones']">Comenzar a Gestionar</a></li>
+        </ul>
+    </div>
+</section>

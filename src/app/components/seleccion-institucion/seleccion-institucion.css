@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 2rem;
+  padding-top: 140px; /* Espacio para el header fijo */
 }
 
 .header-section {

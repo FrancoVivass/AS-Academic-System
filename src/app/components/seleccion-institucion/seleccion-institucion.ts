@@ -12,6 +12,8 @@ import { InstitucionService } from '../../services/institucion.service';
 import { Institucion } from '../../models/institucion.model';
 import { NotificationService } from '../../services/notification.service';
 import { Subscription } from 'rxjs';
+import { EncabezadoPrincipal } from '../encabezado-principal/encabezado-principal';
+import { FooterPrincipal } from '../footer-principal/footer-principal';
 
 @Component({
   selector: 'app-seleccion-institucion',
@@ -25,7 +27,9 @@ import { Subscription } from 'rxjs';
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
-    MatDialogModule
+    MatDialogModule,
+    EncabezadoPrincipal,
+    FooterPrincipal
   ],
   templateUrl: './seleccion-institucion.html',
   styleUrl: './seleccion-institucion.css'

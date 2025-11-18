@@ -1,0 +1,359 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+}
+
+.header {
+  z-index: 1000;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.header a,
+.header p,
+.header button {
+  font-size: 0.95rem;
+}
+
+.announcement-bar {
+  background-color: #1a3be2;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.announcement-bar p {
+  margin: 0;
+  text-align: center;
+}
+
+.announcement-bar a {
+  color: #fff;
+  text-decoration: underline;
+  margin-left: 5px;
+  font-weight: 500;
+  transition: opacity 0.3s ease;
+}
+
+.announcement-bar a:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+.navigation-bar {
+  height: 70px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media only screen and (max-width: 1000px) {
+  .announcement-bar {
+    padding: 0.3rem 0.8rem;
+  }
+  .announcement-bar a,
+.announcement-bar p {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  
+  .navigation-bar {
+    padding: 0 1rem;
+  }
+  
+  .company-col {
+    height: 45px;
+    width: 150px;
+  }
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.logo-link:hover {
+  transform: scale(1.02);
+}
+
+.company-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary-blue, #1a3be2);
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+}
+
+.company-col {
+  height: 50px;
+  width: 180px;
+  background-image: url(/assets/img/logo.png);
+  background-size: contain;
+  background-position: left center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.navigation-bar a {
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: #212121;
+}
+
+.link-col {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+.link-col ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.link-col li {
+  display: flex;
+  align-items: center;
+}
+
+.link-col li a {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0.6rem 1rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  color: #212121;
+  position: relative;
+}
+
+.link-col li a:not(.cta-button)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background-color: #1a3be2;
+  transition: width 0.3s ease;
+}
+
+.link-col li a:not(.cta-button):hover::after {
+  width: 60%;
+}
+
+.link-col li a:not(.cta-button):hover {
+  color: #1a3be2;
+  background-color: rgba(26, 59, 226, 0.05);
+}
+@media only screen and (max-width: 1000px) {
+  .link-col {
+    display: none;
+  }
+}
+
+.cta-button {
+  background-color: #1a3be2;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  color: #fff !important;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(26, 59, 226, 0.25);
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.cta-button:hover {
+  background-color: #007BFF;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(26, 59, 226, 0.35);
+  color: #fff !important;
+}
+
+.cta-button:active {
+  transform: translateY(0);
+}
+
+.menu-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-button:hover {
+  opacity: 0.7;
+}
+
+.menu-button > div {
+  width: 25px;
+  height: 3px;
+  background-color: #212121;
+  margin: 3px 0;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.link-col-mobile {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+}
+
+
+@media only screen and (min-width: 1000px) {
+  .link-col-mobile {
+    display: none;
+  }
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 320px;
+  max-width: 85%;
+  height: 100vh;
+  background-color: #fff;
+  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu.show {
+  right: 0;
+}
+
+.mobile-menu ul {
+  list-style: none;
+  padding: 2rem 1.5rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mobile-menu li {
+  margin: 0;
+}
+
+.mobile-menu a {
+  display: block;
+  padding: 1rem 1.25rem;
+  color: #212121;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu a:not(.cta-button):hover {
+  background-color: rgba(26, 59, 226, 0.05);
+  color: #1a3be2;
+}
+
+.mobile-menu .cta-button {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.close-button {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.close-button p {
+  color: #212121;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.close-button p:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media only screen and (max-width: 1000px) {
+  .navigation-bar {
+    padding: 0 1.5rem;
+  }
+
+  .company-col {
+    height: 45px;
+    width: 150px;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .navigation-bar {
+    padding: 0 1rem;
+  }
+
+  .announcement-bar {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+}
+
+/*# sourceMappingURL=header.css.map */

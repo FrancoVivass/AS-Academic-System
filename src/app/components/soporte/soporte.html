@@ -1,0 +1,92 @@
+<app-encabezado-principal></app-encabezado-principal>
+<div class="page-container">
+  <div class="page-header">
+    <h1>Centro de Soporte</h1>
+    <p>Estamos aquí para ayudarte. Encuentra respuestas a tus preguntas o contáctanos directamente</p>
+  </div>
+
+  <section class="support-options">
+    <div class="options-grid">
+      <div class="option-card">
+        <mat-icon>help_outline</mat-icon>
+        <h3>Preguntas Frecuentes</h3>
+        <p>Encuentra respuestas rápidas a las preguntas más comunes</p>
+      </div>
+      <div class="option-card">
+        <mat-icon>email</mat-icon>
+        <h3>Contacto por Email</h3>
+        <p>Envíanos un email y te responderemos en menos de 24 horas</p>
+        <a href="mailto:soporte@academicsystem.com">soporte@academicsystem.com</a>
+      </div>
+      <div class="option-card">
+        <mat-icon>chat</mat-icon>
+        <h3>Chat en Vivo</h3>
+        <p>Habla directamente con nuestro equipo de soporte</p>
+        <span class="coming-soon">Próximamente</span>
+      </div>
+      <div class="option-card">
+        <mat-icon>video_library</mat-icon>
+        <h3>Tutoriales</h3>
+        <p>Accede a guías paso a paso y videos tutoriales</p>
+        <a [routerLink]="['/app/ayuda']">Ver Tutoriales</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <h2>Preguntas Frecuentes</h2>
+    <div class="faq-list">
+      <mat-expansion-panel *ngFor="let faq of faqs" class="faq-item">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{ faq.pregunta }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <p>{{ faq.respuesta }}</p>
+      </mat-expansion-panel>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <h2>¿No encuentras lo que buscas?</h2>
+    <p>Nuestro equipo está listo para ayudarte. Contáctanos y te responderemos lo antes posible.</p>
+    <div class="contact-buttons">
+      <a [routerLink]="['/']" fragment="contacto" mat-raised-button color="primary" class="contact-btn">
+        <mat-icon>mail</mat-icon>
+        Formulario de Contacto
+      </a>
+      <a href="mailto:soporte@academicsystem.com" mat-stroked-button class="contact-btn">
+        <mat-icon>email</mat-icon>
+        Enviar Email
+      </a>
+    </div>
+  </section>
+
+  <section class="resources-section">
+    <h2>Recursos Adicionales</h2>
+    <div class="resources-grid">
+      <div class="resource-card">
+        <mat-icon>description</mat-icon>
+        <h3>Documentación</h3>
+        <p>Guías completas y documentación técnica</p>
+      </div>
+      <div class="resource-card">
+        <mat-icon>update</mat-icon>
+        <h3>Actualizaciones</h3>
+        <p>Mantente al día con las últimas novedades</p>
+      </div>
+      <div class="resource-card">
+        <mat-icon>forum</mat-icon>
+        <h3>Comunidad</h3>
+        <p>Únete a nuestra comunidad de usuarios</p>
+      </div>
+    </div>
+  </section>
+</div>
+<app-footer-principal></app-footer-principal>
+
+
+
+
+
+
