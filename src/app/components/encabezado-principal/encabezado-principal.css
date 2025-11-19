@@ -9,16 +9,33 @@ body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  background-color: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  background-color: var(--primary-blue);
+  color: #ffffff;
+  box-shadow: none;
+  transition: background-color 0.35s ease, box-shadow 0.35s ease, color 0.25s ease, transform 0.25s ease;
+  backdrop-filter: none;
+}
+
+.header.scrolled {
+  background-color: #ffffff;
+  color: #212121;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 :root.dark-mode .header,
 html.dark-mode .header {
+  background-color: rgba(0, 0, 0, 0.4);
+  box-shadow: none;
+}
+
+:root.dark-mode .header.scrolled,
+html.dark-mode .header.scrolled {
   background-color: #000000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 .header a,
@@ -102,9 +119,13 @@ html.dark-mode .header {
 .company-name {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--primary-blue, #1a3be2);
+  color: #ffffff;
   white-space: nowrap;
   letter-spacing: -0.5px;
+}
+
+.header.scrolled .company-name {
+  color: black;
 }
 
 .company-col {
@@ -119,9 +140,25 @@ html.dark-mode .header {
   transition: all 0.3s ease;
 }
 
-.navigation-bar a {
+.header .company-col {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+.header.scrolled .company-col {
+  filter: none;
+  opacity: 1;
+}
+
+.header .navigation-bar a,
+.header .link-col li a {
   transition: all 0.3s ease;
   text-decoration: none;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.header.scrolled .navigation-bar a,
+.header.scrolled .link-col li a {
   color: #212121;
 }
 
@@ -158,7 +195,6 @@ html.dark-mode .navigation-bar a {
   white-space: nowrap;
   transition: all 0.3s ease;
   border-radius: 8px;
-  color: #212121;
   position: relative;
 }
 
@@ -175,8 +211,12 @@ html.dark-mode .link-col li a {
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background-color: #1a3be2;
+  background-color: rgba(255, 255, 255, 0.85);
   transition: width 0.3s ease;
+}
+
+.header.scrolled .link-col li a:not(.cta-button)::after {
+  background-color: #1a3be2;
 }
 
 .link-col li a:not(.cta-button):hover::after {
@@ -184,8 +224,13 @@ html.dark-mode .link-col li a {
 }
 
 .link-col li a:not(.cta-button):hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.header.scrolled .link-col li a:not(.cta-button):hover {
   color: #1a3be2;
-  background-color: rgba(26, 59, 226, 0.05);
+  background-color: rgba(26, 59, 226, 0.08);
 }
 
 :root.dark-mode .link-col li a:not(.cta-button):hover,
@@ -200,27 +245,44 @@ html.dark-mode .link-col li a:not(.cta-button):hover {
 }
 
 .cta-button {
-  background-color: #1a3be2;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.65rem 1.6rem;
   color: #fff !important;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(26, 59, 226, 0.25);
-  border: none;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
 }
 
 .cta-button:hover {
-  background-color: #007BFF;
+  background-color: rgba(255, 255, 255, 0.3);
+  color: #0f172a !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(26, 59, 226, 0.35);
-  color: #fff !important;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.25);
 }
 
 .cta-button:active {
   transform: translateY(0);
+}
+
+.header.scrolled .cta-button {
+  background-color: #1a3be2;
+  color: #fff !important;
+  border: none;
+  box-shadow: 0 8px 20px rgba(26, 59, 226, 0.3);
+}
+
+.header.scrolled .cta-button:hover {
+  background-color: #0f2fd6;
+  color: #fff !important;
+  box-shadow: 0 12px 28px rgba(26, 59, 226, 0.35);
 }
 
 .menu-button {
@@ -250,6 +312,14 @@ html.dark-mode .link-col li a:not(.cta-button):hover {
 :root.dark-mode .menu-button > div,
 html.dark-mode .menu-button > div {
   background-color: #e8e8e8;
+}
+
+.header .menu-button > div {
+  background-color: #ffffff;
+}
+
+.header.scrolled .menu-button > div {
+  background-color: #212121;
 }
 
 .link-col-mobile {

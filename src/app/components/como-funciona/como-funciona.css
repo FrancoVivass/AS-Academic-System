@@ -7,6 +7,8 @@
 }
 
 :root {
+  --color-cuadrado-funciona: white;
+  --cuadrado-funciona: #1a3be2;
   --primary-blue: #1a3be2;
   --secondary-blue: #007BFF;
   --accent-green: #28a745;
@@ -23,9 +25,24 @@
   --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.hero-section {
+  background: var(--primary-blue);
+  color: #fff;
+  padding: 160px 0;
+  text-align: center;
+  border-radius: 0;
+  margin-bottom: 140px;
+  position: relative;
+  overflow: hidden;
+  margin-left: calc(-50vw + 50%);
+}
+
+
 /* Modo Oscuro */
 :root.dark-mode,
 html.dark-mode {
+  --color-cuadrado-funciona: black;
+  --cuadrado-funciona:white;
   --text-dark: #e8e8e8;
   --text-gray: #b0b0b0;
   --text-light: #888888;
@@ -163,6 +180,7 @@ body {
 }
 
 .page-header {
+
   text-align: center;
   margin-bottom: 80px;
   padding: 60px 20px;
@@ -171,7 +189,7 @@ body {
 .page-header h1 {
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 700;
-  color: var(--primary-blue);
+  color: #fff;
   margin-bottom: 24px;
   letter-spacing: -0.02em;
 }
@@ -211,8 +229,8 @@ body {
 .step-number {
   width: 80px;
   height: 80px;
-  background: var(--primary-blue);
-  color: #fff;
+  background: var(--cuadrado-funciona);
+  color: var(--color-cuadrado-funciona);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -312,10 +330,9 @@ body {
 .cta-section {
   text-align: center;
   padding: 80px 60px;
-  background: var(--primary-blue);
-  color: #fff;
+  color: var(--boton-comenzar);
   margin-bottom: 80px;
-  border: 1px solid var(--primary-blue);
+
 }
 
 .cta-section h2 {
@@ -332,24 +349,34 @@ body {
 }
 
 .cta-button {
-  padding: 16px 40px;
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 40px;
+  font-size: 0.9375rem;
   font-weight: 600;
-  background: #fff;
-  color: var(--primary-blue);
   border-radius: 0;
   text-decoration: none;
-  display: inline-block;
-  transition: all 0.3s ease;
-  border: 2px solid #fff;
-  letter-spacing: 0.05em;
-}
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  transition: all 1s ease;
+  border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.25);
+  }
+
 
 .cta-button:hover {
-  background: transparent;
-  color: #fff;
+  transition: all 1s ease;
+  background: var(--accent-green);
+  color: var(--color-de-blanco-a-negro);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 24px rgba(40, 167, 69, 0.35);
 }
 
 /* ==================== RESPONSIVE ==================== */

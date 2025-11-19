@@ -18,12 +18,12 @@
 <!-- Widget de redes sociales mejorado -->
 <div class="social-widget" [class.collapsed]="isSocialCollapsed">
   <button class="social-toggle-expand" *ngIf="isSocialCollapsed" (click)="toggleSocialCollapse()" title="Expandir redes sociales">
-    <mat-icon>chevron_right</mat-icon>
+    <mat-icon>subdirectory_arrow_right<</mat-icon>
   </button>
   <div class="social-widget-header" *ngIf="!isSocialCollapsed">
     <span class="social-text">Síguenos</span>
     <button class="social-toggle" (click)="toggleSocialCollapse()" title="Colapsar">
-      <mat-icon>chevron_left</mat-icon>
+      <mat-icon>arrow_downward</mat-icon>
     </button>
   </div>
   <div class="social-buttons" *ngIf="!isSocialCollapsed">
@@ -60,7 +60,6 @@
 <section class="hero-section">
     <div class="hero-background"></div>
     <div class="hero-content fade-in-up">
-      <div class="hero-badge">✨ Plataforma Profesional</div>
       <h1 class="hero-title">
         <span class="gradient-text">Bienvenidos a AcademicSystem</span>
       </h1>
@@ -76,30 +75,6 @@
           <span>Saber Más</span>
         </a>
       </div>
-      <div class="hero-stats">
-        <div class="stat-item">
-          <div class="stat-number">100+</div>
-          <div class="stat-label">Instituciones</div>
-    </div>
-        <div class="stat-item">
-          <div class="stat-number">50K+</div>
-          <div class="stat-label">Usuarios Activos</div>
-      </div>
-        <div class="stat-item">
-          <div class="stat-number">99.9%</div>
-          <div class="stat-label">Uptime</div>
-      </div>
-    </div>
-  </div>
-  <div class="scroll-indicator">
-      <div class="mouse">
-        <div class="wheel"></div>
-  </div>
-      <div class="arrow">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
   </div>
 </section>
 
@@ -116,21 +91,18 @@
         <p>Proporciona herramientas intuitivas y eficientes para administrar alumnos, docentes, materias, notas y asistencias, todo en un solo lugar. Nuestra misión es simplificar los procesos administrativos para que puedas enfocarte en lo más importante: la educación.</p>
         <div class="about-features">
           <div class="about-feature-item">
-            <div class="feature-icon">🎯</div>
             <div>
               <h4>Enfoque en la Educación</h4>
               <p>Diseñado por educadores para educadores</p>
           </div>
           </div>
           <div class="about-feature-item">
-            <div class="feature-icon">⚡</div>
             <div>
               <h4>Alto Rendimiento</h4>
               <p>Tecnología de última generación</p>
           </div>
         </div>
           <div class="about-feature-item">
-            <div class="feature-icon">🔒</div>
             <div>
               <h4>Seguridad Total</h4>
               <p>Datos protegidos y encriptados</p>
@@ -331,7 +303,7 @@
       </div>
     <div class="map-container fade-in-up">
       <iframe 
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284.016713276849!2d-58.38157042345678!3d-34.60373887295503!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bccacf004cacab%3A0x98611fa994e6910f!2sBuenos%20Aires%2C%20CABA!5e0!3m2!1ses!2sar!4v1234567890123!5m2!1ses!2sar"
+        src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d1607.2035839161101!2d-57.68518171057669!3d-36.326680556496456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2s!5e0!3m2!1ses-419!2sar!4v1763541723499!5m2!1ses-419!2sar" 
         width="100%" 
         height="450" 
         style="border:0; border-radius: 16px;" 

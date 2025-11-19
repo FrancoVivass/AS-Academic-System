@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,18 +14,16 @@ import { MatDividerModule } from '@angular/material/divider';
   styleUrl: './encabezado-principal.css'
 })
 export class EncabezadoPrincipal implements AfterViewInit {
+  isScrolled = false;
+
   ngAfterViewInit() {
-    // Cargar el script del encabezado
-    this.loadScript();
     this.initMobileMenu();
-    this.initScrollBehavior();
+    this.updateScrollState();
   }
 
-  private loadScript() {
-    const script = document.createElement('script');
-    script.src = '/assets/js/script.encabezado.js';
-    script.async = true;
-    document.body.appendChild(script);
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.updateScrollState();
   }
 
   private initMobileMenu() {
@@ -60,19 +58,7 @@ export class EncabezadoPrincipal implements AfterViewInit {
     }, 100);
   }
 
-  private initScrollBehavior() {
-    let prevScroll = window.pageYOffset;
-    window.onscroll = () => {
-      let curScroll = window.pageYOffset;
-      const headerElement = document.getElementsByClassName('header')[0] as HTMLElement;
-      if (headerElement) {
-        if (prevScroll > curScroll) {
-          headerElement.style.top = '0';
-        } else {
-          headerElement.style.top = '-25vh';
-        }
-      }
-      prevScroll = curScroll;
-    };
+  private updateScrollState(): void {
+    this.isScrolled = window.scrollY > 10;
   }
 }

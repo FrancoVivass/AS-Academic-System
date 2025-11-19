@@ -17,7 +17,7 @@ import { FooterPrincipal } from '../footer-principal/footer-principal';
 export class SoporteComponent implements OnInit {
   isDarkMode = false;
   showScrollTop = false;
-  whatsappNumber = '5491112345678';
+  whatsappNumber = '542245421367';
   whatsappMessage = 'Hola, me interesa conocer más sobre AcademicSystem';
   faqs = [
     {

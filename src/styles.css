@@ -4,7 +4,15 @@
 /* Paleta de Colores Azul y Blanco */
 :root {
   /* Colores principales - Modo Claro (Default AsistentStudent) */
-  --primary-blue: #1976d2;
+  --color-cuadrado-funciona: white;
+  --cuadrado-funciona: #1a3be2;
+  --member-role: #1a3be2;
+  --timeline-background:black;
+  --timeline-color:white;
+  --timeline-colorr:#2c7ddad5;
+  --accent-green: #000000;
+  --divisor-de-secciones: #2b7bcc;
+  --primary-blue: #2b7bcc;
   --primary-blue-dark: #1565c0;
   --primary-blue-light: #42a5f5;
   --secondary-blue: #0d47a1;
@@ -17,7 +25,7 @@
   --text-primary: #212121;
   --text-secondary: #616161;
   --text-on-blue: #ffffff;
-  
+  --color-de-blanco-a-negro: #ffffff;
   /* Colores de institución (se actualizan dinámicamente) */
   --institucion-primary: var(--primary-blue);
   --institucion-secondary: var(--primary-blue-dark);
@@ -47,7 +55,14 @@ body.dark-theme,
 :root.dark-mode,
 html.dark-mode {
   /* Colores principales - Modo Oscuro */
-  --primary-blue: #42a5f5;
+  --color-cuadrado-funciona:black;
+  --cuadrado-funciona:white;
+  --timeline-background:white;
+  --timeline-color:black;
+  --accent-green: #ffffff;
+  --color-de-blanco-a-negro: #000000;
+  --divisor-de-secciones: #2b7bcc;
+  --primary-blue: #000000;
   --primary-blue-dark: #2196f3;
   --primary-blue-light: #64b5f6;
   --secondary-blue: #90caf9;
@@ -72,7 +87,9 @@ html.dark-mode {
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.6);
 }
-
+html.dark-mode .box__footer .logo{
+  filter:brightness(0) invert(1)
+}
 /* Reset y estilos base */
 * {
   margin: 0;

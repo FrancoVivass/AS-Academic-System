@@ -64,13 +64,13 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   socialLinks = {
-    facebook: 'https://facebook.com/academicsystem',
+    facebook: 'https://www.facebook.com/academicsystem',
     twitter: 'https://twitter.com/academicsystem',
     linkedin: 'https://linkedin.com/company/academicsystem',
     instagram: 'https://instagram.com/academicsystem'
   };
 
-  whatsappNumber = '5491112345678'; // Reemplazar con tu número
+  whatsappNumber = '542245421367'; // Reemplazar con tu número
   whatsappMessage = 'Hola, me interesa conocer más sobre AcademicSystem';
 
 
@@ -78,17 +78,19 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   currentScreenshotIndex = 0;
   showLightbox = false;
   screenshots = [
-    { src: '/assets/img/cover.png', title: 'Dashboard Principal', description: 'Vista general del panel de control' },
-    { src: '/assets/img/cover.png', title: 'Gestión de Alumnos', description: 'Administración completa de estudiantes' },
-    { src: '/assets/img/cover.png', title: 'Reportes y Estadísticas', description: 'Análisis detallado de datos' }
+    { src: '/assets/img/dashboard.png', title: 'Dashboard Principal', description: 'Vista general del panel de control' },
+    { src: '/assets/img/AlumnosGestion.png', title: 'Gestión de Alumnos', description: 'Administración completa de estudiantes' },
+    { src: '/assets/img/reportes.png', title: 'Reportes y Estadísticas', description: 'Análisis detallado de datos' }
   ];
 
   // Timeline
   timelineSteps = [
     { step: 1, title: 'Consulta Inicial', description: 'Contacto y evaluación de necesidades', duration: '1 día', completed: true },
     { step: 2, title: 'Configuración', description: 'Personalización de la plataforma', duration: '3-5 días', completed: true },
-    { step: 3, title: 'Capacitación', description: 'Entrenamiento del equipo', duration: '2-3 días', completed: false },
-    { step: 4, title: 'Lanzamiento', description: 'Puesta en marcha del sistema', duration: '1 día', completed: false }
+    { step: 3, title: 'Creacion de modelo', description: 'Dedicado a que vos me digas como crearlo', duration: '2-3 días', completed: true },
+    { step: 4, title: 'Implementacion', description: 'Imprementar los requerimientos', duration: '7 días', completed: true },
+    { step: 5, title: 'Capacitación', description: 'Entrenamiento del equipo', duration: '2-3 días', completed: false },
+    { step: 6, title: 'Lanzamiento', description: 'Puesta en marcha del sistema', duration: '1 día', completed: false }
   ];
 
   // Clima
