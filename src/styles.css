@@ -121,26 +121,47 @@ html.dark-mode body {
 
 /* Material Design Overrides con paleta azul */
 .mat-mdc-card {
-  box-shadow: var(--shadow-md) !important;
-  border-radius: 16px !important;
-  background: var(--bg-card) !important;
-  border: 1px solid var(--gray-medium) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
   color: var(--text-primary) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.mat-mdc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1976d2, #1565c0, #0d47a1);
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .mat-mdc-card:hover {
-  box-shadow: var(--shadow-lg) !important;
-  transform: translateY(-2px);
-  border-color: var(--primary-blue) !important;
+  box-shadow: 0 12px 32px rgba(25, 118, 210, 0.2), 0 0 0 1px rgba(25, 118, 210, 0.1) !important;
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(25, 118, 210, 0.2) !important;
+}
+
+.mat-mdc-card:hover::before {
+  opacity: 1;
 }
 
 .mat-mdc-button, .mat-mdc-raised-button {
-  border-radius: 12px !important;
-  font-weight: 600 !important;
+  border-radius: 16px !important;
+  font-weight: 700 !important;
   text-transform: none !important;
-  padding: 10px 24px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 12px 28px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  letter-spacing: 0.3px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .mat-mdc-raised-button.mat-primary {
@@ -149,9 +170,9 @@ html.dark-mode body {
 }
 
 .mat-mdc-raised-button.mat-primary:hover {
-  background: var(--institucion-secondary) !important;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg) !important;
+  background: linear-gradient(135deg, #1e88e5, #1976d2) !important;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.4) !important;
 }
 
 .mat-mdc-button.mat-primary {
@@ -160,9 +181,10 @@ html.dark-mode body {
 
 /* Toolbar personalizado */
 .mat-toolbar {
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark)) !important;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%) !important;
   color: var(--text-on-blue) !important;
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: blur(20px);
 }
 
 /* Sidenav personalizado */
@@ -182,8 +204,16 @@ html.dark-mode body {
 }
 
 .mat-mdc-text-field-wrapper {
-  background: var(--bg-card) !important;
-  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s ease !important;
+}
+
+.mat-mdc-text-field-wrapper:hover {
+  border-color: rgba(25, 118, 210, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1) !important;
 }
 
 .mat-mdc-form-field-focus-overlay {
@@ -219,9 +249,13 @@ html.dark-mode body {
 }
 
 .mat-mdc-header-cell {
-  background: var(--primary-blue) !important;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
   color: var(--text-on-blue) !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  padding: 1.25rem 1rem !important;
 }
 
 .mat-mdc-row {
@@ -229,7 +263,10 @@ html.dark-mode body {
 }
 
 .mat-mdc-row:hover {
-  background: var(--light-blue) !important;
+  background: linear-gradient(90deg, rgba(25, 118, 210, 0.08), rgba(25, 118, 210, 0.04)) !important;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1) !important;
+  transition: all 0.3s ease !important;
 }
 
 .mat-mdc-cell {
@@ -238,8 +275,18 @@ html.dark-mode body {
 
 /* Chips */
 .mat-mdc-chip {
-  background: var(--light-blue) !important;
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.15), rgba(25, 118, 210, 0.1)) !important;
   color: var(--primary-blue) !important;
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 1rem !important;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15) !important;
+  transition: all 0.3s ease !important;
+}
+
+.mat-mdc-chip:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25) !important;
 }
 
 /* Icons */

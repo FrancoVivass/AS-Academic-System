@@ -164,5 +164,15 @@ export class DocentesComponent implements OnInit {
     }
     return docente.materiasAsignadas.length + ' materia(s)';
   }
+
+  getTotalMateriasAsignadas(): number {
+    return this.docentes.reduce((total, docente) => {
+      return total + (docente.materiasAsignadas?.length || 0);
+    }, 0);
+  }
+
+  getCantidadConMaterias(): number {
+    return this.docentes.filter(d => d.materiasAsignadas && d.materiasAsignadas.length > 0).length;
+  }
 }
 

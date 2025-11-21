@@ -27,25 +27,26 @@
         </div>
       </div>
 
-      <mat-nav-list>
-        @for (item of navItems; track item.route) {
-          @if (item.visible !== false) {
-            <a 
-              mat-list-item 
-              [routerLink]="item.route"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{exact: item.route === '/app/dashboard'}"
-              (click)="closeSidenavOnMobile()"
-              class="nav-item">
-              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-              <span matListItemTitle>{{ item.label }}</span>
-              @if (item.badge && item.badge > 0) {
-                <mat-icon matListItemMeta class="badge-icon">{{ item.badge }}</mat-icon>
-              }
-            </a>
+      <div class="nav-list-container">
+        <mat-nav-list>
+          @for (item of navItems; track item.route) {
+            @if (item.visible !== false) {
+              <a 
+                mat-list-item 
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact: item.route === '/app/dashboard'}"
+                (click)="closeSidenavOnMobile()"
+                class="nav-item"
+                [matBadge]="item.badge && item.badge > 0 ? item.badge : null"
+                [matBadgeHidden]="!item.badge || item.badge === 0">
+                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ item.label }}</span>
+              </a>
+            }
           }
-        }
-      </mat-nav-list>
+        </mat-nav-list>
+      </div>
     </mat-sidenav>
 
     <mat-sidenav-content class="main-content">

@@ -1,5 +1,17 @@
 .notas-container {
-  animation: fadeIn 0.5s ease-out;
+  padding: 2rem;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .header-section {
@@ -15,10 +27,18 @@
   color: var(--text-primary);
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.header-section h1 mat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #1976d2;
 }
 
 .header-section p {

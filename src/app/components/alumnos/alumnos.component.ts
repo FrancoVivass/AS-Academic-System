@@ -11,6 +11,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
 import { AlumnoService } from '../../services/alumno.service';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
@@ -34,7 +35,8 @@ import { Usuario } from '../../models/usuario.model';
     MatDialogModule,
     MatChipsModule,
     MatProgressBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSelectModule
   ],
   templateUrl: './alumnos.component.html',
   styleUrl: './alumnos.component.css'
@@ -216,6 +218,29 @@ export class AlumnosComponent implements OnInit {
 
   getPromedioAlumno(id: string): number {
     return this.alumnoService.getPromedioAlumno(id);
+  }
+
+  getPorcentajeAsistenciaAlumno(id: string): number {
+    return this.alumnoService.getPorcentajeAsistencia(id);
+  }
+
+  getCantidadRegulares(): number {
+    return this.alumnos.filter(a => {
+      const promedio = this.getPromedioAlumno(a.id);
+      const asistencia = this.getPorcentajeAsistenciaAlumno(a.id);
+      return promedio >= 6 && asistencia >= 75;
+    }).length;
+  }
+
+  getCantidadIrregulares(): number {
+    return this.alumnos.length - this.getCantidadRegulares();
+  }
+
+  getPromedioGeneral(): number {
+    if (this.alumnos.length === 0) return 0;
+    const promedios = this.alumnos.map(a => this.getPromedioAlumno(a.id)).filter(p => p > 0);
+    if (promedios.length === 0) return 0;
+    return Math.round((promedios.reduce((a, b) => a + b, 0) / promedios.length) * 100) / 100;
   }
 }
 

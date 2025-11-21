@@ -1,77 +1,178 @@
 <div class="alumnos-container">
   <div class="header-section">
     <div>
-      <h1>Gestión de Alumnos</h1>
+      <h1>
+        <mat-icon>people</mat-icon>
+        Gestión de Alumnos
+      </h1>
       <p>Administra la información de los estudiantes</p>
     </div>
     @if (permissionsService.puedeVer('editarAlumnos')) {
-      <button class="btn-primary" (click)="abrirModalNuevo()">+ Asociar Alumno</button>
+      <button mat-raised-button color="primary" class="btn-primary" (click)="abrirModalNuevo()">
+        <mat-icon>person_add</mat-icon>
+        Asociar Alumno
+      </button>
     }
   </div>
 
-  <div class="filters-section">
-    <div class="search-box">
-      <input
-        type="text"
-        [(ngModel)]="busqueda"
-        (input)="onBusquedaChange()"
-        placeholder="Buscar por nombre, apellido o DNI..."
-        class="search-input"
-      />
-    </div>
-    <div class="filter-box">
-      <select [(ngModel)]="filtroCurso" (change)="onFiltroCursoChange()" class="filter-select">
-        <option value="">Todos los cursos</option>
-        @for (curso of getCursosUnicos(); track curso) {
-          <option [value]="curso">{{ curso }}</option>
-        }
-      </select>
-    </div>
+  <!-- Estadísticas rápidas -->
+  <div class="stats-section">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon primary">people</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ alumnos.length }}</div>
+            <div class="stat-label">Total Alumnos</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon success">check_circle</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ getCantidadRegulares() }}</div>
+            <div class="stat-label">Alumnos Regulares</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon warning">warning</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ getCantidadIrregulares() }}</div>
+            <div class="stat-label">Alumnos Irregulares</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon info">star</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ getPromedioGeneral() }}</div>
+            <div class="stat-label">Promedio General</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 
-  <div class="table-container">
-    @if (alumnosFiltrados.length > 0) {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>DNI</th>
-            <th>Curso</th>
-            <th>Email</th>
-            <th>Promedio</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (alumno of alumnosFiltrados; track alumno.id) {
-            <tr>
-              <td><strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong></td>
-              <td>{{ alumno.dni }}</td>
-              <td><span class="badge">{{ alumno.curso }}</span></td>
-              <td>{{ alumno.email }}</td>
-              <td>
-                <span class="promedio-badge">{{ getPromedioAlumno(alumno.id) }}</span>
-              </td>
-              <td>
-                @if (permissionsService.puedeVer('editarAlumnos')) {
-                  <div class="action-buttons">
-                    <button class="btn-edit" (click)="abrirModalEditar(alumno)">✏️ Editar</button>
-                    <button class="btn-delete" (click)="eliminarAlumno(alumno.id)">🗑️ Desasociar</button>
-                  </div>
-                } @else {
-                  <span class="text-muted">Solo lectura</span>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    } @else {
-      <div class="empty-state">
-        <p>No se encontraron alumnos</p>
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar alumno</mat-label>
+          <input matInput
+            type="text"
+            [(ngModel)]="busqueda"
+            (input)="onBusquedaChange()"
+            placeholder="Nombre, apellido o DNI..."
+          />
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar por curso</mat-label>
+          <mat-select [(ngModel)]="filtroCurso" (selectionChange)="onFiltroCursoChange()">
+            <mat-option value="">Todos los cursos</mat-option>
+            @for (curso of getCursosUnicos(); track curso) {
+              <mat-option [value]="curso">{{ curso }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
-    }
-  </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <mat-card-content>
+      @if (alumnosFiltrados.length > 0) {
+        <table mat-table [dataSource]="alumnosFiltrados" class="alumnos-table">
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>Alumno</th>
+            <td mat-cell *matCellDef="let alumno">
+              <div class="cell-alumno">
+                <mat-icon class="cell-icon">person</mat-icon>
+                <div>
+                  <div class="alumno-name">{{ alumno.nombre }} {{ alumno.apellido }}</div>
+                  <div class="alumno-email">{{ alumno.email }}</div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dni">
+            <th mat-header-cell *matHeaderCellDef>DNI</th>
+            <td mat-cell *matCellDef="let alumno">{{ alumno.dni }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="curso">
+            <th mat-header-cell *matHeaderCellDef>Curso</th>
+            <td mat-cell *matCellDef="let alumno">
+              <mat-chip>{{ alumno.curso }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="promedio">
+            <th mat-header-cell *matHeaderCellDef>Promedio</th>
+            <td mat-cell *matCellDef="let alumno">
+              <span class="promedio-badge" 
+                    [class.excelente]="getPromedioAlumno(alumno.id) >= 9"
+                    [class.bueno]="getPromedioAlumno(alumno.id) >= 7 && getPromedioAlumno(alumno.id) < 9"
+                    [class.regular]="getPromedioAlumno(alumno.id) < 7">
+                {{ getPromedioAlumno(alumno.id) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="asistencia">
+            <th mat-header-cell *matHeaderCellDef>Asistencia</th>
+            <td mat-cell *matCellDef="let alumno">
+              <div class="asistencia-cell">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="getPorcentajeAsistenciaAlumno(alumno.id)"
+                  [color]="getPorcentajeAsistenciaAlumno(alumno.id) >= 75 ? 'primary' : 'warn'">
+                </mat-progress-bar>
+                <span class="asistencia-value">{{ getPorcentajeAsistenciaAlumno(alumno.id) }}%</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let alumno">
+              @if (permissionsService.puedeVer('editarAlumnos')) {
+                <div class="action-buttons">
+                  <button mat-icon-button color="primary" (click)="abrirModalEditar(alumno)" matTooltip="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="eliminarAlumno(alumno.id)" matTooltip="Desasociar">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              } @else {
+                <span class="text-muted">Solo lectura</span>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>person_off</mat-icon>
+          <p>No se encontraron alumnos</p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
 
   @if (mostrarModal) {
     <div class="modal-overlay" (click)="cerrarModal()">

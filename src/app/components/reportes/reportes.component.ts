@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,62 +32,286 @@ import { MateriaService } from '../../services/materia.service';
   styleUrl: './reportes.component.css'
 })
 export class ReportesComponent implements OnInit {
+
   reportesAlumnos: ReporteAlumno[] = [];
   reportesMaterias: ReporteMateria[] = [];
 
   displayedColumnsAlumnos: string[] = ['alumno', 'curso', 'promedio', 'asistencia', 'notas', 'materias'];
   displayedColumnsMaterias: string[] = ['materia', 'profesor', 'inscritos', 'promedio', 'asistencia'];
 
-  // Gráficos
+  // Gráfico de Barras - Promedios por Curso
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
-        position: 'top'
+        position: 'top',
+        labels: {
+          font: {
+            size: 12,
+            weight: 500
+          },
+          padding: 15
+        }
+      },
+      title: {
+        display: true,
+        text: 'Promedio General por Curso',
+        font: {
+          size: 16,
+          weight: 600
+        },
+        padding: {
+          bottom: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: {
+          size: 14,
+          weight: 600
+        },
+        bodyFont: {
+          size: 13
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 10,
+        ticks: {
+          stepSize: 1,
+          font: {
+            size: 11
+          }
+        },
+        title: {
+          display: true,
+          text: 'Promedio',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 11
+          }
+        }
       }
     }
   };
   public barChartType: ChartType = 'bar';
   public barChartData: ChartData<'bar'> = {
     labels: [],
-    datasets: []
+    datasets: [{
+      label: 'Promedio',
+      data: [],
+      backgroundColor: 'rgba(25, 118, 210, 0.8)',
+      borderColor: 'rgba(25, 118, 210, 1)',
+      borderWidth: 2,
+      borderRadius: 8,
+      borderSkipped: false
+    }]
   };
 
+  // Gráfico de Pastel - Distribución de Regularidad
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
-        position: 'top'
+        position: 'right',
+        labels: {
+          font: {
+            size: 12,
+            weight: 500
+          },
+          padding: 15,
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: true,
+        text: 'Distribución de Regularidad',
+        font: {
+          size: 16,
+          weight: 600
+        },
+        padding: {
+          bottom: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        callbacks: {
+          label: (context) => {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((a: any, b: any) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
       }
     }
   };
   public pieChartType: ChartType = 'pie';
   public pieChartData: ChartData<'pie'> = {
-    labels: [],
-    datasets: []
+    labels: ['Alumnos Regulares', 'Alumnos Irregulares'],
+    datasets: [{
+      data: [],
+      backgroundColor: [
+        'rgba(76, 175, 80, 0.8)',
+        'rgba(244, 67, 54, 0.8)'
+      ],
+      borderColor: [
+        'rgba(76, 175, 80, 1)',
+        'rgba(244, 67, 54, 1)'
+      ],
+      borderWidth: 2,
+      hoverOffset: 8
+    }]
   };
 
+  // Gráfico de Línea - Top 5 Materias
   public lineChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
-        position: 'top'
+        position: 'top',
+        labels: {
+          font: {
+            size: 12,
+            weight: 500
+          },
+          padding: 15
+        }
+      },
+      title: {
+        display: true,
+        text: 'Top 5 Materias por Cantidad de Inscritos',
+        font: {
+          size: 16,
+          weight: 600
+        },
+        padding: {
+          bottom: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12
       }
     },
     scales: {
       y: {
         beginAtZero: true,
-        max: 10
+        ticks: {
+          stepSize: 1,
+          font: {
+            size: 11
+          }
+        },
+        title: {
+          display: true,
+          text: 'Cantidad de Inscritos',
+          font: {
+            size: 12,
+            weight: 600
+          }
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 11
+          }
+        }
       }
     }
   };
   public lineChartType: ChartType = 'line';
   public lineChartData: ChartData<'line'> = {
     labels: [],
-    datasets: []
+    datasets: [{
+      label: 'Alumnos Inscritos',
+      data: [],
+      borderColor: 'rgba(156, 39, 176, 1)',
+      backgroundColor: 'rgba(156, 39, 176, 0.2)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 6,
+      pointHoverRadius: 8
+    }]
+  };
+
+  // Gráfico de Dona - Distribución de Asistencia
+  public doughnutChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'right',
+        labels: {
+          font: {
+            size: 12,
+            weight: 500
+          },
+          padding: 15,
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: true,
+        text: 'Distribución de Asistencia',
+        font: {
+          size: 16,
+          weight: 600
+        },
+        padding: {
+          bottom: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12
+      }
+    }
+  };
+  public doughnutChartType: ChartType = 'doughnut';
+  public doughnutChartData: ChartData<'doughnut'> = {
+    labels: ['Excelente (90-100%)', 'Buena (75-89%)', 'Regular (60-74%)', 'Baja (<60%)'],
+    datasets: [{
+      data: [],
+      backgroundColor: [
+        'rgba(76, 175, 80, 0.8)',
+        'rgba(33, 150, 243, 0.8)',
+        'rgba(255, 152, 0, 0.8)',
+        'rgba(244, 67, 54, 0.8)'
+      ],
+      borderColor: [
+        'rgba(76, 175, 80, 1)',
+        'rgba(33, 150, 243, 1)',
+        'rgba(255, 152, 0, 1)',
+        'rgba(244, 67, 54, 1)'
+      ],
+      borderWidth: 2,
+      hoverOffset: 8
+    }]
   };
 
   // Estadísticas
@@ -152,18 +376,20 @@ export class ReportesComponent implements OnInit {
       const alumnosCurso = this.reportesAlumnos.filter(r => r.alumno.curso === curso);
       const promedios = alumnosCurso.map(r => r.promedio).filter(p => p > 0);
       return promedios.length > 0
-        ? promedios.reduce((a, b) => a + b, 0) / promedios.length
+        ? Math.round((promedios.reduce((a, b) => a + b, 0) / promedios.length) * 100) / 100
         : 0;
     });
 
     this.barChartData = {
-      labels: cursos,
+      labels: cursos.length > 0 ? cursos : ['Sin datos'],
       datasets: [{
-        label: 'Promedio por Curso',
-        data: promediosPorCurso,
+        label: 'Promedio',
+        data: promediosPorCurso.length > 0 ? promediosPorCurso : [0],
         backgroundColor: 'rgba(25, 118, 210, 0.8)',
         borderColor: 'rgba(25, 118, 210, 1)',
-        borderWidth: 1
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false
       }]
     };
 
@@ -171,8 +397,20 @@ export class ReportesComponent implements OnInit {
     this.pieChartData = {
       labels: ['Alumnos Regulares', 'Alumnos Irregulares'],
       datasets: [{
-        data: [this.estadisticas.alumnosRegulares, this.estadisticas.alumnosIrregulares],
-        backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(244, 67, 54, 0.8)']
+        data: [
+          this.estadisticas.alumnosRegulares || 0,
+          this.estadisticas.alumnosIrregulares || 0
+        ],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(244, 67, 54, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(244, 67, 54, 1)'
+        ],
+        borderWidth: 2,
+        hoverOffset: 8
       }]
     };
 
@@ -182,15 +420,52 @@ export class ReportesComponent implements OnInit {
       .slice(0, 5);
 
     this.lineChartData = {
-      labels: topMaterias.map(m => m.materia.nombre),
+      labels: topMaterias.length > 0 
+        ? topMaterias.map(m => m.materia.nombre.length > 20 ? m.materia.nombre.substring(0, 20) + '...' : m.materia.nombre)
+        : ['Sin datos'],
       datasets: [{
         label: 'Alumnos Inscritos',
-        data: topMaterias.map(m => m.cantidadInscritos),
+        data: topMaterias.length > 0 ? topMaterias.map(m => m.cantidadInscritos) : [0],
         borderColor: 'rgba(156, 39, 176, 1)',
         backgroundColor: 'rgba(156, 39, 176, 0.2)',
-        tension: 0.4
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8
       }]
     };
+
+    // Gráfico de dona - Distribución de asistencia
+    const asistencias = this.reportesAlumnos.map(r => r.porcentajeAsistencia).filter(a => a > 0);
+    const excelente = asistencias.filter(a => a >= 90).length;
+    const buena = asistencias.filter(a => a >= 75 && a < 90).length;
+    const regular = asistencias.filter(a => a >= 60 && a < 75).length;
+    const baja = asistencias.filter(a => a < 60).length;
+
+    this.doughnutChartData = {
+      labels: ['Excelente (90-100%)', 'Buena (75-89%)', 'Regular (60-74%)', 'Baja (<60%)'],
+      datasets: [{
+        data: [excelente, buena, regular, baja],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',
+          'rgba(33, 150, 243, 0.8)',
+          'rgba(255, 152, 0, 0.8)',
+          'rgba(244, 67, 54, 0.8)'
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 152, 0, 1)',
+          'rgba(244, 67, 54, 1)'
+        ],
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
+    };
+
   }
 
   exportarReporte(): void {

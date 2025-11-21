@@ -13,6 +13,43 @@
     </button>
   </div>
 
+  <!-- Estadísticas rápidas -->
+  <div class="stats-section">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon primary">people</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ docentes.length }}</div>
+            <div class="stat-label">Total Docentes</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon success">menu_book</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ getTotalMateriasAsignadas() }}</div>
+            <div class="stat-label">Materias Asignadas</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon info">school</mat-icon>
+          <div class="stat-info">
+            <div class="stat-value">{{ getCantidadConMaterias() }}</div>
+            <div class="stat-label">Docentes Activos</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <mat-card class="filters-card">
     <mat-card-content>
       <div class="filters-section">
