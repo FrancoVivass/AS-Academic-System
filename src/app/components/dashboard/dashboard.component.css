@@ -77,6 +77,11 @@
   color: white;
 }
 
+.stat-icon-wrapper.error {
+  background: linear-gradient(135deg, #f44336, #e57373);
+  color: white;
+}
+
 .stat-icon-wrapper mat-icon {
   font-size: 32px;
   width: 32px;
@@ -632,5 +637,165 @@ table {
   .promedio-badge {
     font-size: 0.8rem;
     padding: 0.3rem 0.6rem;
+  }
+}
+
+/* Nuevas secciones */
+.atajos-section {
+  margin-bottom: 2rem;
+}
+
+.atajos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.atajo-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem !important;
+  min-height: 120px;
+  border-radius: 16px !important;
+  transition: all 0.3s ease;
+}
+
+.atajo-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.atajo-button mat-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.horario-section,
+.panel-dia-section {
+  margin-bottom: 2rem;
+}
+
+.clases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.clase-card {
+  transition: all 0.3s ease;
+  border-radius: 16px !important;
+}
+
+.clase-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.clase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.clase-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.clase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.clase-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.clase-item mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--primary-blue);
+}
+
+.clase-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.clase-actions button {
+  width: 100%;
+}
+
+.actividad-section {
+  margin-bottom: 2rem;
+}
+
+.actividad-card {
+  border-radius: 16px !important;
+}
+
+.actividad-card mat-list-item {
+  padding: 1rem 0;
+}
+
+.actividad-card mat-icon {
+  color: var(--primary-blue);
+}
+
+.advertencia-action {
+  margin-top: 0.5rem;
+}
+
+.estado-cursos-section {
+  margin-bottom: 2rem;
+}
+
+.graficos-section {
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  border-radius: 16px !important;
+  padding: 1rem;
+}
+
+.chart-card canvas {
+  max-height: 300px;
+}
+
+@media (max-width: 768px) {
+  .atajos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .clases-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .atajo-button {
+    min-height: 100px;
+    padding: 1rem !important;
+  }
+
+  .atajo-button mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
   }
 }

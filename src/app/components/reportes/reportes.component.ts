@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,17 +9,25 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { NgChartsModule } from 'ng2-charts';
 import { ReportService, ReporteAlumno, ReporteMateria } from '../../services/report.service';
 import { NotificationService } from '../../services/notification.service';
 import { AlumnoService } from '../../services/alumno.service';
 import { MateriaService } from '../../services/materia.service';
+import { AuthService } from '../../services/auth.service';
+import { PermissionsService } from '../../services/permissions.service';
+import { CursoService } from '../../services/curso.service';
+import { DocenteService } from '../../services/docente.service';
 
 @Component({
   selector: 'app-reportes',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -26,7 +35,10 @@ import { MateriaService } from '../../services/materia.service';
     MatTabsModule,
     MatChipsModule,
     MatProgressBarModule,
-    MatGridListModule
+    MatGridListModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    NgChartsModule
   ],
   templateUrl: './reportes.component.html',
   styleUrl: './reportes.component.css'
@@ -324,27 +336,153 @@ export class ReportesComponent implements OnInit {
     alumnosIrregulares: 0
   };
 
+  // Filtros
+  filtroCarrera: string = '';
+  filtroMateria: string = '';
+  filtroCurso: string = '';
+  carreras: any[] = [];
+  materiasFiltradas: any[] = [];
+  cursosFiltrados: any[] = [];
+
   constructor(
     private reportService: ReportService,
     private notificationService: NotificationService,
     private alumnoService: AlumnoService,
-    private materiaService: MateriaService
+    public materiaService: MateriaService,
+    private authService: AuthService,
+    public permissionsService: PermissionsService,
+    private cursoService: CursoService,
+    private docenteService: DocenteService
   ) {}
 
   ngOnInit(): void {
+    this.loadData();
     this.loadReportes();
     this.loadEstadisticas();
     this.loadChartData();
   }
 
+  loadData(): void {
+    // Cargar datos base según el rol
+    if (this.permissionsService.esAdmin() || this.permissionsService.esSecretario()) {
+      // Admin/Secretario: cargar todas las carreras, materias y cursos para filtros
+      // Esto se puede hacer si hay un servicio de carreras
+    } else if (this.permissionsService.esProfesor()) {
+      // Profesor: cargar solo sus materias
+      const usuario = this.authService.getCurrentUser();
+      if (usuario) {
+        const docente = this.docenteService.getDocenteById(usuario.id);
+        if (docente && docente.materiasAsignadas) {
+          const todasLasMaterias = this.materiaService.getMaterias();
+          this.materiasFiltradas = todasLasMaterias.filter(m => 
+            docente.materiasAsignadas!.includes(m.id)
+          );
+        }
+      }
+    }
+  }
+
   loadReportes(): void {
-    this.reportesAlumnos = this.reportService.generarReporteAlumnos();
-    this.reportesMaterias = this.reportService.generarReporteMaterias();
+    let reportesAlumnos = this.reportService.generarReporteAlumnos();
+    let reportesMaterias = this.reportService.generarReporteMaterias();
+
+    // Filtrar según el rol del usuario
+    if (this.permissionsService.esAlumno()) {
+      // Alumno: solo sus propios datos
+      const usuarioId = this.authService.getCurrentUser()?.id;
+      reportesAlumnos = reportesAlumnos.filter(r => r.alumno.id === usuarioId);
+      // Para materias, solo las que está inscrito
+      const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId || '');
+      const materiasIds = inscripciones.map(i => i.materiaId);
+      reportesMaterias = reportesMaterias.filter(r => materiasIds.includes(r.materia.id));
+    } else if (this.permissionsService.esProfesor()) {
+      // Profesor: solo sus materias y alumnos de esas materias
+      const usuario = this.authService.getCurrentUser();
+      if (usuario) {
+        const docente = this.docenteService.getDocenteById(usuario.id);
+        if (docente && docente.materiasAsignadas) {
+          // Filtrar materias
+          reportesMaterias = reportesMaterias.filter(r => 
+            docente.materiasAsignadas!.includes(r.materia.id)
+          );
+          
+          // Filtrar alumnos: solo los que están en cursos con sus materias
+          const cursos = this.cursoService.getCursos();
+          const cursosConMaterias = cursos.filter(c => 
+            c.materias.some(mId => docente.materiasAsignadas!.includes(mId))
+          );
+          const idsAlumnos = [...new Set(cursosConMaterias.flatMap(c => c.alumnos || []))];
+          reportesAlumnos = reportesAlumnos.filter(r => idsAlumnos.includes(r.alumno.id));
+        } else {
+          // Fallback: buscar por nombre del profesor
+          const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+          reportesMaterias = reportesMaterias.filter(r => 
+            r.materia.profesor === nombreProfesor || r.materia.profesor?.includes(usuario.nombre)
+          );
+          const materiasIds = reportesMaterias.map(r => r.materia.id);
+          const cursos = this.cursoService.getCursos();
+          const cursosConMaterias = cursos.filter(c => 
+            c.materias.some(mId => materiasIds.includes(mId))
+          );
+          const idsAlumnos = [...new Set(cursosConMaterias.flatMap(c => c.alumnos || []))];
+          reportesAlumnos = reportesAlumnos.filter(r => idsAlumnos.includes(r.alumno.id));
+        }
+      }
+    }
+    // Admin/Secretario: todos los datos (sin filtrar)
+
+    // Aplicar filtros adicionales si existen
+    if (this.filtroMateria) {
+      reportesAlumnos = reportesAlumnos.filter(r => {
+        const inscripciones = this.materiaService.getInscripcionesByAlumno(r.alumno.id);
+        return inscripciones.some(i => i.materiaId === this.filtroMateria);
+      });
+      reportesMaterias = reportesMaterias.filter(r => r.materia.id === this.filtroMateria);
+    }
+
+    if (this.filtroCurso) {
+      reportesAlumnos = reportesAlumnos.filter(r => r.alumno.curso === this.filtroCurso);
+    }
+
+    this.reportesAlumnos = reportesAlumnos;
+    this.reportesMaterias = reportesMaterias;
   }
 
   loadEstadisticas(): void {
-    const alumnos = this.alumnoService.getAlumnos();
-    const materias = this.materiaService.getMaterias();
+    // Cargar datos según el rol
+    let alumnos = this.alumnoService.getAlumnos();
+    let materias = this.materiaService.getMaterias();
+
+    if (this.permissionsService.esAlumno()) {
+      // Alumno: solo sus datos
+      const usuarioId = this.authService.getCurrentUser()?.id;
+      alumnos = alumnos.filter(a => a.id === usuarioId);
+      const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId || '');
+      const materiasIds = inscripciones.map(i => i.materiaId);
+      materias = materias.filter(m => materiasIds.includes(m.id));
+    } else if (this.permissionsService.esProfesor()) {
+      // Profesor: solo sus materias y alumnos de esas materias
+      const usuario = this.authService.getCurrentUser();
+      if (usuario) {
+        const docente = this.docenteService.getDocenteById(usuario.id);
+        if (docente && docente.materiasAsignadas) {
+          materias = materias.filter(m => docente.materiasAsignadas!.includes(m.id));
+          const cursos = this.cursoService.getCursos();
+          const cursosConMaterias = cursos.filter(c => 
+            c.materias.some(mId => docente.materiasAsignadas!.includes(mId))
+          );
+          const idsAlumnos = [...new Set(cursosConMaterias.flatMap(c => c.alumnos || []))];
+          alumnos = alumnos.filter(a => idsAlumnos.includes(a.id));
+        } else {
+          // Fallback: buscar por nombre
+          const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+          materias = materias.filter(m => 
+            m.profesor === nombreProfesor || m.profesor?.includes(usuario.nombre)
+          );
+        }
+      }
+    }
+    // Admin/Secretario: todos los datos
     
     this.estadisticas.totalAlumnos = alumnos.length;
     this.estadisticas.totalMaterias = materias.length;
@@ -466,6 +604,19 @@ export class ReportesComponent implements OnInit {
       }]
     };
 
+  }
+
+  getCursosUnicos(): string[] {
+    return [...new Set(this.reportesAlumnos.map(r => r.alumno.curso))].sort();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroMateria = '';
+    this.filtroCurso = '';
+    this.filtroCarrera = '';
+    this.loadReportes();
+    this.loadEstadisticas();
+    this.loadChartData();
   }
 
   exportarReporte(): void {

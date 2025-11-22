@@ -8,12 +8,40 @@
       <p class="subtitle">Análisis completo del rendimiento académico</p>
     </div>
     <div class="header-actions">
-      <button mat-raised-button color="primary" (click)="exportarReporte()">
-        <mat-icon>download</mat-icon>
-        Exportar Completo
-      </button>
+      @if (permissionsService.esAdmin() || permissionsService.esSecretario() || permissionsService.esProfesor()) {
+        <button mat-raised-button color="primary" (click)="exportarReporte()">
+          <mat-icon>download</mat-icon>
+          Exportar {{ permissionsService.esAlumno() ? 'Mis Datos' : 'Completo' }}
+        </button>
+      }
     </div>
   </div>
+
+  @if (permissionsService.esAdmin() || permissionsService.esSecretario()) {
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Filtrar por Materia</label>
+        <select [(ngModel)]="filtroMateria" (change)="loadReportes(); loadEstadisticas(); loadChartData();" class="filter-select">
+          <option value="">Todas las materias</option>
+          @for (materia of materiasFiltradas.length > 0 ? materiasFiltradas : materiaService.getMaterias(); track materia.id) {
+            <option [value]="materia.id">{{ materia.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Filtrar por Curso</label>
+        <select [(ngModel)]="filtroCurso" (change)="loadReportes(); loadEstadisticas(); loadChartData();" class="filter-select">
+          <option value="">Todos los cursos</option>
+          @for (curso of cursosFiltrados.length > 0 ? cursosFiltrados : getCursosUnicos(); track curso) {
+            <option [value]="curso">{{ curso }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <button mat-button (click)="limpiarFiltros()">Limpiar Filtros</button>
+      </div>
+    </div>
+  }
 
   <mat-tab-group class="reportes-tabs">
     <!-- Tab: Estadísticas Generales -->
