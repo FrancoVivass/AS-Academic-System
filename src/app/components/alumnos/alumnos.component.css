@@ -273,6 +273,73 @@
   text-align: right;
 }
 
+/* Estadísticas por materia para profesores */
+.estadisticas-materias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 300px;
+}
+
+.estadistica-materia {
+  padding: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-blue);
+}
+
+.materia-nombre {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.materia-datos {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.promedio-mini,
+.asistencia-mini {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.promedio-mini.excelente {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.promedio-mini.bueno {
+  background: linear-gradient(135deg, #2196f3, #42a5f5);
+  color: white;
+}
+
+.promedio-mini.regular {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+}
+
+.asistencia-mini.buena {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.asistencia-mini.baja {
+  background: linear-gradient(135deg, #f44336, #e57373);
+  color: white;
+}
+
+.sin-datos {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -771,5 +838,52 @@
   .usuario-details {
     font-size: 0.8rem;
   }
+}
+
+/* Estilos para modal de importar */
+.formato-info {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.formato-info h3 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.formato-info p {
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.formato-info ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.formato-info li {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.formato-info li strong {
+  color: var(--text-primary);
+}
+
+.upload-section {
+  padding: 1.5rem;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.upload-section h3 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
 }
 
