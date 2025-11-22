@@ -44,9 +44,8 @@ export class RegistroComponent implements OnInit {
   currentInstitucion: Institucion | null = null;
 
   roles = [
-    { value: 'alumno', label: 'Alumno', icon: 'school' },
-    { value: 'profesor', label: 'Profesor', icon: 'person' },
-    { value: 'secretario', label: 'Secretario', icon: 'admin_panel_settings' }
+    { value: 'secretario', label: 'Secretario/Administrador', icon: 'admin_panel_settings' },
+    { value: 'admin', label: 'Administrador', icon: 'admin_panel_settings' }
   ];
 
   constructor(
@@ -68,7 +67,7 @@ export class RegistroComponent implements OnInit {
       dni: ['', [Validators.required, Validators.pattern(/^\d{8,10}$/)]],
       telefono: [''],
       fechaNacimiento: [''],
-      rol: ['alumno', Validators.required]
+      rol: ['secretario', Validators.required]
     }, { validators: [this.passwordMatchValidator, this.emailMatchValidator] });
   }
 

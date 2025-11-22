@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -47,11 +49,12 @@ interface NavItem {
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.css'
 })
-export class LayoutComponent implements OnInit {
+export class LayoutComponent implements OnInit, OnDestroy {
   isMobile = false;
   sidenavOpened = false; // Cambiado a false para que el menú flotante esté cerrado por defecto
 
   navItems: NavItem[] = [];
+  private routerSubscription?: Subscription;
 
   constructor(
     public authService: AuthService,
@@ -73,6 +76,19 @@ export class LayoutComponent implements OnInit {
       // Theme changed
     });
     this.updateNavItems();
+    
+    // Scroll to top cuando cambia la ruta
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
   }
 
   updateNavItems(): void {
@@ -131,12 +147,32 @@ export class LayoutComponent implements OnInit {
         { label: 'Docentes', icon: 'person', route: '/app/docentes', visible: true },
         { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: true },
         { label: 'Cursos', icon: 'class', route: '/app/cursos', visible: true },
+        { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: permisos.verCarreras },
+        { label: 'Aulas', icon: 'meeting_room', route: '/app/aulas', visible: permisos.gestionarAulas },
         { label: 'Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
         { label: 'Notas', icon: 'grade', route: '/app/notas', visible: true },
+        { label: 'Justificativos', icon: 'description', route: '/app/justificativos', visible: permisos.gestionarJustificativos },
         { label: 'Calendario', icon: 'calendar_today', route: '/app/calendario', visible: true },
         { label: 'Biblioteca', icon: 'library_books', route: '/app/biblioteca', visible: true },
         { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
         { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: true },
+        { label: 'Auditoría', icon: 'history', route: '/app/auditoria', visible: permisos.verAuditoria },
+        { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
+        { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
+      ];
+    } else if (this.permissionsService.esCoordinador()) {
+      // Coordinador: Aprobación de correlatividades, notas finales, equivalencias
+      this.navItems = [
+        { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
+        { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: permisos.verAlumnos },
+        { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: permisos.verMaterias },
+        { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: permisos.verCarreras },
+        { label: 'Notas Pendientes', icon: 'pending_actions', route: '/app/notas-pendientes', visible: permisos.aprobarNotasFinales },
+        { label: 'Equivalencias', icon: 'swap_horiz', route: '/app/equivalencias', visible: permisos.gestionarEquivalencias },
+        { label: 'Solicitudes', icon: 'assignment', route: '/app/solicitudes', visible: permisos.verSolicitudes },
+        { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: permisos.verReportes },
+        { label: 'Análisis', icon: 'analytics', route: '/app/analisis', visible: permisos.analizarRendimiento },
+        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];

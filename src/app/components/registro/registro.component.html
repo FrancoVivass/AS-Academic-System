@@ -57,8 +57,8 @@
     <div class="right-panel-content">
       <!-- Header con título -->
       <div class="registro-header-section">
-        <h1 class="registro-title">Registro de Usuarios</h1>
-        <p class="registro-subtitle">Crea una cuenta</p>
+        <h1 class="registro-title">Registro de Administrador</h1>
+        <p class="registro-subtitle">Crea una cuenta de administrador o secretario</p>
       </div>
 
       <!-- Logo AS pequeño -->
@@ -180,7 +180,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Rol</mat-label>
+            <mat-label>Tipo de Cuenta</mat-label>
             <mat-select formControlName="rol">
               @for (rol of roles; track rol.value) {
                 <mat-option [value]="rol.value">
@@ -190,6 +190,7 @@
               }
             </mat-select>
             <mat-icon matPrefix>admin_panel_settings</mat-icon>
+            <mat-hint>Nota: Las cuentas de profesores y alumnos deben ser creadas por un administrador</mat-hint>
           </mat-form-field>
         </div>
 
