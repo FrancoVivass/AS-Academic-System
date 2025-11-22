@@ -1,0 +1,879 @@
+.carreras-container {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.carreras-table {
+  width: 100%;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Vista de Cursos */
+.cursos-view {
+  margin-top: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.cursos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.cursos-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+}
+
+.cursos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.curso-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.curso-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.curso-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.curso-info p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Resumen de Carrera */
+.carrera-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.carrera-resumen mat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.carrera-resumen mat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones de Acción del Curso */
+.curso-actions {
+  padding: 1rem !important;
+  margin: 0 !important;
+  border-top: 1px solid #e2e8f0;
+  background: #f7fafc;
+}
+
+.curso-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem !important;
+  min-height: 80px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: currentColor;
+}
+
+.action-btn mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.action-btn span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.action-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.action-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #718096;
+  background: #edf2f7;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  margin-top: 0.125rem;
+}
+
+/* Responsive para botones de acción */
+/* Responsive para el resumen de carrera */
+@media (max-width: 768px) {
+  .carrera-resumen {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  .cursos-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .cursos-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .cursos-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .curso-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    min-height: 70px;
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  .action-btn mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .action-btn span {
+    font-size: 0.8rem;
+  }
+
+  .action-count {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .curso-info {
+    font-size: 0.9rem;
+  }
+
+  .materias-list {
+    margin-top: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .carrera-resumen {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .carrera-resumen mat-card {
+    padding: 0.75rem !important;
+  }
+
+  .carrera-resumen mat-icon {
+    font-size: 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .carrera-resumen h3 {
+    font-size: 1.5rem !important;
+  }
+
+  .cursos-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .curso-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 50px;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .action-btn-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .action-btn mat-icon {
+    margin-right: 0.5rem;
+  }
+
+  .curso-card mat-card-title {
+    font-size: 1.1rem;
+  }
+
+  .curso-card mat-card-subtitle {
+    font-size: 0.85rem;
+  }
+}
+
+.modal-large {
+  max-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.materias-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.materias-list mat-chip {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.materias-list mat-chip.selected {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.alumnos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.alumno-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para gestión de horarios */
+.horario-form {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.horarios-list {
+  margin-top: 1.5rem;
+}
+
+.horarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.horarios-table th,
+.horarios-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.horarios-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.horarios-table tr:hover {
+  background: #f8f9fa;
+}
+
+/* Estilos para Wizard - Mejorado y Responsive */
+.wizard-modal {
+  max-width: 90vw;
+  width: 100%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(135deg, var(--institucion-primary, #667eea) 0%, var(--institucion-secondary, #764ba2) 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wizard-modal .modal-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
+  padding: 1.5rem 2rem;
+  border-bottom: 3px solid var(--institucion-primary, #667eea);
+  opacity: 0.8;
+}
+
+.wizard-modal .modal-header h2 {
+  background: linear-gradient(135deg, var(--institucion-primary, #667eea) 0%, var(--institucion-secondary, #764ba2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.wizard-form {
+  padding: 1.5rem;
+  background: white;
+  min-height: auto;
+}
+
+.wizard-form h3 {
+  margin-bottom: 1.25rem;
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wizard-form h3::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--institucion-primary, #667eea) 0%, var(--institucion-secondary, #764ba2) 100%);
+  border-radius: 2px;
+}
+
+.wizard-form h4 {
+  color: #4a5568;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+}
+
+.info-text {
+  color: #718096;
+  margin-bottom: 1.25rem;
+  padding: 0.875rem;
+  background: #f7fafc;
+  border-left: 4px solid var(--institucion-primary, #4299e1);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.warning-text {
+  color: #c05621;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #fffaf0;
+  border-left: 4px solid #ed8936;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.wizard-actions button {
+  min-width: 140px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.wizard-actions button[color="primary"] {
+  background: linear-gradient(135deg, var(--institucion-primary, #667eea) 0%, var(--institucion-secondary, #764ba2) 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.wizard-actions button[color="primary"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+}
+
+/* Stepper personalizado */
+.wizard-modal ::ng-deep .mat-step-header {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.wizard-modal ::ng-deep .mat-step-header[aria-selected="true"] {
+  background: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.wizard-modal ::ng-deep .mat-step-label {
+  color: white !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.wizard-modal ::ng-deep .mat-step-header .mat-step-icon {
+  color: white !important;
+}
+
+.wizard-modal ::ng-deep .mat-step-header .mat-step-icon-selected {
+  background: white !important;
+  color: var(--institucion-primary, #667eea) !important;
+}
+
+.wizard-modal ::ng-deep .mat-step-header .mat-step-icon-state-done {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Responsive - Tablets */
+@media (max-width: 1024px) {
+  .wizard-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .wizard-modal .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .wizard-modal .modal-header h2 {
+    font-size: 1.35rem;
+  }
+  
+  .wizard-form {
+    padding: 1.25rem;
+  }
+  
+  .wizard-form h3 {
+    font-size: 1.15rem;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .wizard-modal {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    max-width: 100%;
+  }
+  
+  .wizard-modal .modal-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .wizard-modal .modal-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .wizard-form {
+    padding: 1rem;
+  }
+  
+  .wizard-form h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .wizard-form h4 {
+    font-size: 1rem;
+  }
+  
+  .wizard-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+  
+  .wizard-actions button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .aulas-grid,
+  .carreras-grid,
+  .docentes-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+}
+
+/* Aulas Grid - Mejorado */
+.aulas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.aula-card-selectable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.aula-card-selectable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.aula-card-selectable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.aula-card-selectable:hover::before {
+  transform: scaleX(1);
+}
+
+.aula-card-selectable.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #e6f3ff 0%, #f0e6ff 100%);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.aula-card-selectable.selected::before {
+  transform: scaleX(1);
+}
+
+.aula-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.aula-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Cursos Wizard */
+.cursos-wizard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.curso-wizard-card {
+  background: #f8f9fa;
+}
+
+.curso-wizard-card mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Materias Grid - Mejorado */
+.materias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.materia-card-selectable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.materia-card-selectable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.materia-card-selectable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #48bb78;
+}
+
+.materia-card-selectable:hover::before {
+  transform: scaleX(1);
+}
+
+.materia-card-selectable.selected {
+  border-color: #48bb78;
+  background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+  box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+}
+
+.materia-card-selectable.selected::before {
+  transform: scaleX(1);
+}
+
+.profesor-selection,
+.materias-selection {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .aulas-grid,
+  .materias-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.materia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.materia-header h4 {
+  margin: 0;
+  color: #2d3748 !important;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.materia-card-selectable mat-card-content p {
+  color: #4a5568 !important;
+  margin: 0.5rem 0;
+}
+
+.materia-card-selectable mat-card-content p strong {
+  color: #2d3748 !important;
+}
+
+.curso-materias-card {
+  margin-bottom: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.curso-materias-card mat-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+}
+
+.curso-materias-card mat-card-title {
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.curso-wizard-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.curso-wizard-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.cursos-wizard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+

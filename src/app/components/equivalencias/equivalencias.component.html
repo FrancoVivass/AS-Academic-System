@@ -1,0 +1,59 @@
+<div class="equivalencias-container">
+  <div class="header">
+    <h1>
+      <mat-icon>swap_horiz</mat-icon>
+      Gestión de Equivalencias
+    </h1>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <table mat-table [dataSource]="equivalencias" class="equivalencias-table">
+        <ng-container matColumnDef="carreraOrigen">
+          <th mat-header-cell *matHeaderCellDef>Carrera Origen</th>
+          <td mat-cell *matCellDef="let equivalencia">{{ equivalencia.carreraOrigenId }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="carreraDestino">
+          <th mat-header-cell *matHeaderCellDef>Carrera Destino</th>
+          <td mat-cell *matCellDef="let equivalencia">{{ equivalencia.carreraDestinoId }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="materiaOrigen">
+          <th mat-header-cell *matHeaderCellDef>Materia Origen</th>
+          <td mat-cell *matCellDef="let equivalencia">{{ equivalencia.materiaOrigenId }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="materiaDestino">
+          <th mat-header-cell *matHeaderCellDef>Materia Destino</th>
+          <td mat-cell *matCellDef="let equivalencia">{{ equivalencia.materiaDestinoId }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let equivalencia">
+            <mat-chip [color]="equivalencia.estado === 'aprobada' ? 'primary' : equivalencia.estado === 'rechazada' ? 'warn' : 'accent'">
+              {{ equivalencia.estado }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let equivalencia">
+            @if (permissionsService.puedeVer('gestionarEquivalencias') && equivalencia.estado === 'pendiente') {
+              <button mat-raised-button color="primary" (click)="aprobarEquivalencia(equivalencia.id)">
+                <mat-icon>check</mat-icon>
+                Aprobar
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>
+

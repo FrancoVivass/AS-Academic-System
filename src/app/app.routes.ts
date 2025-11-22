@@ -83,6 +83,38 @@ export const routes: Routes = [
         loadComponent: () => import('./components/reportes/reportes.component').then(m => m.ReportesComponent)
       },
       {
+        path: 'carreras',
+        loadComponent: () => import('./components/carreras/carreras.component').then(m => m.CarrerasComponent)
+      },
+      {
+        path: 'aulas',
+        loadComponent: () => import('./components/aulas/aulas.component').then(m => m.AulasComponent)
+      },
+      {
+        path: 'auditoria',
+        loadComponent: () => import('./components/auditoria/auditoria.component').then(m => m.AuditoriaComponent)
+      },
+      {
+        path: 'justificativos',
+        loadComponent: () => import('./components/justificativos/justificativos.component').then(m => m.JustificativosComponent)
+      },
+      {
+        path: 'equivalencias',
+        loadComponent: () => import('./components/equivalencias/equivalencias.component').then(m => m.EquivalenciasComponent)
+      },
+      {
+        path: 'solicitudes',
+        loadComponent: () => import('./components/solicitudes/solicitudes.component').then(m => m.SolicitudesComponent)
+      },
+      {
+        path: 'notas-pendientes',
+        loadComponent: () => import('./components/notas-pendientes/notas-pendientes.component').then(m => m.NotasPendientesComponent)
+      },
+      {
+        path: 'analisis',
+        loadComponent: () => import('./components/analisis/analisis.component').then(m => m.AnalisisComponent)
+      },
+      {
         path: 'configuracion',
         loadComponent: () => import('./components/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)
       },

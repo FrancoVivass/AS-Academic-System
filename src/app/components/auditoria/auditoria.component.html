@@ -1,0 +1,87 @@
+<div class="auditoria-container">
+  <div class="header">
+    <h1>
+      <mat-icon>history</mat-icon>
+      Auditoría del Sistema
+    </h1>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <div class="filtros">
+        <mat-form-field>
+          <mat-label>Filtrar por Entidad</mat-label>
+          <mat-select [(ngModel)]="filtroEntidad" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todas</mat-option>
+            <mat-option value="alumno">Alumno</mat-option>
+            <mat-option value="profesor">Profesor</mat-option>
+            <mat-option value="materia">Materia</mat-option>
+            <mat-option value="curso">Curso</mat-option>
+            <mat-option value="carrera">Carrera</mat-option>
+            <mat-option value="nota">Nota</mat-option>
+            <mat-option value="asistencia">Asistencia</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Filtrar por Acción</mat-label>
+          <mat-select [(ngModel)]="filtroAccion" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todas</mat-option>
+            <mat-option value="crear">Crear</mat-option>
+            <mat-option value="editar">Editar</mat-option>
+            <mat-option value="eliminar">Eliminar</mat-option>
+            <mat-option value="aprobar">Aprobar</mat-option>
+            <mat-option value="rechazar">Rechazar</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button (click)="limpiarFiltros()">
+          <mat-icon>clear</mat-icon>
+          Limpiar
+        </button>
+      </div>
+
+      <table mat-table [dataSource]="auditoria" class="auditoria-table">
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let registro">{{ registro.fecha | date:'short' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="usuario">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let registro">{{ registro.usuarioNombre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="accion">
+          <th mat-header-cell *matHeaderCellDef>Acción</th>
+          <td mat-cell *matCellDef="let registro">
+            <mat-chip>{{ registro.accion }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="entidad">
+          <th mat-header-cell *matHeaderCellDef>Entidad</th>
+          <td mat-cell *matCellDef="let registro">{{ registro.entidad }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="tablaAfectada">
+          <th mat-header-cell *matHeaderCellDef>Tabla</th>
+          <td mat-cell *matCellDef="let registro">{{ registro.tablaAfectada }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="detalles">
+          <th mat-header-cell *matHeaderCellDef>Detalles</th>
+          <td mat-cell *matCellDef="let registro">
+            <button mat-icon-button (click)="verDetalles(registro)">
+              <mat-icon>info</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>
+

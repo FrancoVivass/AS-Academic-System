@@ -1,0 +1,116 @@
+<div class="justificativos-container">
+  <div class="header">
+    <h1>
+      <mat-icon>description</mat-icon>
+      Gestión de Justificativos
+    </h1>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Pendientes">
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="justificativosPendientes" class="justificativos-table">
+            <ng-container matColumnDef="alumno">
+              <th mat-header-cell *matHeaderCellDef>Alumno</th>
+              <td mat-cell *matCellDef="let justificativo">{{ getAlumnoNombre(justificativo.alumnoId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.fecha | date:'short' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.tipo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="motivo">
+              <th mat-header-cell *matHeaderCellDef>Motivo</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.motivo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let justificativo">
+                <mat-chip color="warn">Pendiente</mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let justificativo">
+                @if (permissionsService.puedeVer('gestionarJustificativos')) {
+                  <button mat-raised-button color="primary" (click)="aprobarJustificativo(justificativo.id)">
+                    <mat-icon>check</mat-icon>
+                    Aprobar
+                  </button>
+                  <button mat-raised-button color="warn" (click)="rechazarJustificativo(justificativo.id)">
+                    <mat-icon>close</mat-icon>
+                    Rechazar
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Todos">
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="justificativos" class="justificativos-table">
+            <ng-container matColumnDef="alumno">
+              <th mat-header-cell *matHeaderCellDef>Alumno</th>
+              <td mat-cell *matCellDef="let justificativo">{{ getAlumnoNombre(justificativo.alumnoId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.fecha | date:'short' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.tipo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="motivo">
+              <th mat-header-cell *matHeaderCellDef>Motivo</th>
+              <td mat-cell *matCellDef="let justificativo">{{ justificativo.motivo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let justificativo">
+                <mat-chip [color]="justificativo.estado === 'aprobado' ? 'primary' : justificativo.estado === 'rechazado' ? 'warn' : 'accent'">
+                  {{ justificativo.estado }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let justificativo">
+                @if (justificativo.comprobanteUrl) {
+                  <button mat-icon-button (click)="verComprobante(justificativo.comprobanteUrl!)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+

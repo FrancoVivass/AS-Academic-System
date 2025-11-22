@@ -1,0 +1,65 @@
+<div class="analisis-container">
+  <div class="header">
+    <h1>
+      <mat-icon>analytics</mat-icon>
+      Análisis de Rendimiento
+    </h1>
+  </div>
+
+  <mat-grid-list cols="3" rowHeight="200px">
+    <mat-grid-tile>
+      <mat-card>
+        <mat-card-content>
+          <div class="stat-card">
+            <mat-icon>people</mat-icon>
+            <div class="stat-value">{{ estadisticas.totalAlumnos }}</div>
+            <div class="stat-label">Total Alumnos</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+
+    <mat-grid-tile>
+      <mat-card>
+        <mat-card-content>
+          <div class="stat-card">
+            <mat-icon>menu_book</mat-icon>
+            <div class="stat-value">{{ estadisticas.totalMaterias }}</div>
+            <div class="stat-label">Total Materias</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+
+    <mat-grid-tile>
+      <mat-card>
+        <mat-card-content>
+          <div class="stat-card">
+            <mat-icon>star</mat-icon>
+            <div class="stat-value">{{ estadisticas.promedioGeneral }}</div>
+            <div class="stat-label">Promedio General</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+  </mat-grid-list>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Materias con Más Desaprobados</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Análisis detallado de materias con mayor índice de desaprobados</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Rendimiento por Profesor</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Análisis del rendimiento de alumnos por profesor</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+

@@ -1,0 +1,56 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { CarreraService } from '../../services/carrera.service';
+import { NotificationService } from '../../services/notification.service';
+import { PermissionsService } from '../../services/permissions.service';
+import { AuthService } from '../../services/auth.service';
+import { Equivalencia } from '../../models/carrera.model';
+
+@Component({
+  selector: 'app-equivalencias',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatTableModule,
+    MatIconModule,
+    MatButtonModule,
+    MatChipsModule
+  ],
+  templateUrl: './equivalencias.component.html',
+  styleUrl: './equivalencias.component.css'
+})
+export class EquivalenciasComponent implements OnInit {
+  equivalencias: Equivalencia[] = [];
+  displayedColumns: string[] = ['carreraOrigen', 'carreraDestino', 'materiaOrigen', 'materiaDestino', 'estado', 'acciones'];
+
+  constructor(
+    private carreraService: CarreraService,
+    private notificationService: NotificationService,
+    private authService: AuthService,
+    public permissionsService: PermissionsService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadEquivalencias();
+  }
+
+  loadEquivalencias(): void {
+    this.equivalencias = this.carreraService.getEquivalencias();
+  }
+
+  aprobarEquivalencia(id: string): void {
+    const usuario = this.authService.getCurrentUser();
+    if (usuario) {
+      this.carreraService.aprobarEquivalencia(id, usuario.id);
+      this.notificationService.showSuccess('Equivalencia aprobada');
+      this.loadEquivalencias();
+    }
+  }
+}
+
