@@ -10,9 +10,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatStepperModule } from '@angular/material/stepper';
 import { DocenteService } from '../../services/docente.service';
 import { MateriaService } from '../../services/materia.service';
+import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { ScrollLockService } from '../../services/scroll-lock.service';
 import { Docente } from '../../models/usuario.model';
 
 @Component({
@@ -30,7 +33,8 @@ import { Docente } from '../../models/usuario.model';
     MatFormFieldModule,
     MatChipsModule,
     MatDialogModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatStepperModule
   ],
   templateUrl: './docentes.component.html',
   styleUrl: './docentes.component.css'
@@ -41,15 +45,20 @@ export class DocentesComponent implements OnInit {
   docenteSeleccionado: Docente | null = null;
   modoEdicion: boolean = false;
   mostrarModal: boolean = false;
+  mostrarWizard: boolean = false;
   busqueda: string = '';
   docenteForm: FormGroup;
   displayedColumns: string[] = ['nombre', 'especialidad', 'materias', 'email', 'acciones'];
+  
+  // Wizard data (simplificado - solo datos personales)
 
   constructor(
     private docenteService: DocenteService,
     private materiaService: MateriaService,
+    private authService: AuthService,
     private fb: FormBuilder,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private scrollLockService: ScrollLockService
   ) {
     this.docenteForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -93,11 +102,40 @@ export class DocentesComponent implements OnInit {
   }
 
   abrirModalNuevo(): void {
+    this.mostrarWizard = true;
     this.modoEdicion = false;
     this.docenteSeleccionado = null;
     this.docenteForm.reset();
     this.docenteForm.patchValue({ rol: 'profesor' });
-    this.mostrarModal = true;
+    this.scrollLockService.lockScroll();
+  }
+  
+  cerrarWizard(): void {
+    this.mostrarWizard = false;
+    this.docenteForm.reset();
+    this.scrollLockService.unlockScroll();
+  }
+  
+  finalizarWizardDocente(): void {
+    if (this.docenteForm.invalid) {
+      this.notificationService.showWarning('Por favor complete todos los campos requeridos');
+      return;
+    }
+    
+    const formValue = this.docenteForm.value;
+    const nuevoDocente: Docente = {
+      id: Date.now().toString(),
+      ...formValue,
+      rol: 'profesor',
+      materiasAsignadas: [], // Se asignarán cuando se creen las materias o se asignen a cursos
+      fechaRegistro: new Date().toISOString(),
+      activo: true
+    };
+    
+    this.docenteService.addDocente(nuevoDocente);
+    this.notificationService.showSuccess(`Docente creado exitosamente. Las materias se asignarán cuando se creen materias o se configuren los cursos. Usuario: ${nuevoDocente.username}`);
+    this.loadDocentes();
+    this.cerrarWizard();
   }
 
   abrirModalEditar(docente: Docente): void {
@@ -135,7 +173,9 @@ export class DocentesComponent implements OnInit {
         activo: true
       };
       this.docenteService.addDocente(nuevoDocente);
-      this.notificationService.showSuccess('Docente agregado correctamente');
+      
+      // El servicio ya crea el usuario, pero mostramos las credenciales
+      this.notificationService.showSuccess(`Docente agregado correctamente. Usuario: ${nuevoDocente.username}, Password: ${nuevoDocente.password}`);
     }
 
     this.loadDocentes();

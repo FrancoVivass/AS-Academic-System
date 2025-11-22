@@ -27,7 +27,19 @@ export class MateriaService {
           profesor: 'Dr. García',
           curso: '1ro A',
           horario: 'Lunes y Miércoles 8:00-10:00',
-          creditos: 4
+          creditos: 4,
+          horasSemanales: 4,
+          correlatividades: [],
+          tipo: 'obligatoria',
+          estado: 'activa',
+          fechaCreacion: new Date().toISOString(),
+          configuracion: {
+            tieneNota: true,
+            tieneAsistencia: true,
+            requiereAprobacion: false,
+            notaMinimaAprobacion: 6,
+            porcentajeAsistenciaMinimo: 75
+          }
         },
         {
           id: '2',
@@ -37,7 +49,19 @@ export class MateriaService {
           profesor: 'Prof. Martínez',
           curso: '1ro A',
           horario: 'Martes y Jueves 8:00-10:00',
-          creditos: 3
+          creditos: 3,
+          horasSemanales: 3,
+          correlatividades: [],
+          tipo: 'obligatoria',
+          estado: 'activa',
+          fechaCreacion: new Date().toISOString(),
+          configuracion: {
+            tieneNota: true,
+            tieneAsistencia: true,
+            requiereAprobacion: false,
+            notaMinimaAprobacion: 6,
+            porcentajeAsistenciaMinimo: 75
+          }
         },
         {
           id: '3',
@@ -47,7 +71,19 @@ export class MateriaService {
           profesor: 'Dra. López',
           curso: '2do B',
           horario: 'Lunes y Viernes 10:00-12:00',
-          creditos: 4
+          creditos: 4,
+          horasSemanales: 4,
+          correlatividades: [],
+          tipo: 'obligatoria',
+          estado: 'activa',
+          fechaCreacion: new Date().toISOString(),
+          configuracion: {
+            tieneNota: true,
+            tieneAsistencia: true,
+            requiereAprobacion: false,
+            notaMinimaAprobacion: 6,
+            porcentajeAsistenciaMinimo: 75
+          }
         },
         {
           id: '4',
@@ -57,7 +93,19 @@ export class MateriaService {
           profesor: 'Prof. Fernández',
           curso: '2do B',
           horario: 'Miércoles 10:00-12:00',
-          creditos: 2
+          creditos: 2,
+          horasSemanales: 2,
+          correlatividades: [],
+          tipo: 'obligatoria',
+          estado: 'activa',
+          fechaCreacion: new Date().toISOString(),
+          configuracion: {
+            tieneNota: true,
+            tieneAsistencia: true,
+            requiereAprobacion: false,
+            notaMinimaAprobacion: 6,
+            porcentajeAsistenciaMinimo: 75
+          }
         }
       ];
       this.saveMaterias(defaultMaterias);

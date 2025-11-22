@@ -13,7 +13,7 @@
       }
     </div>
     @if (permissionsService.esSecretario() || permissionsService.esAdmin() || permissionsService.puedeVer('editarMaterias')) {
-      <button class="btn-primary" (click)="abrirModalNuevo()">+ Nueva Materia</button>
+      <button class="btn-primary" (click)="abrirModalNuevo()">+ Nueva Materia (Wizard)</button>
     }
   </div>
 
@@ -77,51 +77,138 @@
     }
   </div>
 
-  @if (mostrarModal && materiaSeleccionada !== null && !mostrarInscripciones) {
+  @if (mostrarModal && !mostrarInscripciones) {
     <div class="modal-overlay" (click)="cerrarModal()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>{{ modoEdicion ? 'Editar Materia' : 'Nueva Materia' }}</h2>
           <button class="btn-close" (click)="cerrarModal()">×</button>
         </div>
-        <form (ngSubmit)="guardarMateria()" class="modal-form">
+        <form [formGroup]="materiaForm" (ngSubmit)="guardarMateria()" class="modal-form">
           <div class="form-row">
-            <div class="form-group">
-              <label>Nombre *</label>
-              <input type="text" [(ngModel)]="formData.nombre" name="nombre" required />
-            </div>
-            <div class="form-group">
-              <label>Código *</label>
-              <input type="text" [(ngModel)]="formData.codigo" name="codigo" required />
-            </div>
+            <mat-form-field>
+              <mat-label>Nombre *</mat-label>
+              <input matInput formControlName="nombre" required>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Código *</mat-label>
+              <input matInput formControlName="codigo" required>
+            </mat-form-field>
           </div>
+
           <div class="form-row">
-            <div class="form-group">
-              <label>Profesor *</label>
-              <input type="text" [(ngModel)]="formData.profesor" name="profesor" required />
-            </div>
-            <div class="form-group">
-              <label>Curso *</label>
-              <input type="text" [(ngModel)]="formData.curso" name="curso" required />
-            </div>
+            <mat-form-field>
+              <mat-label>Profesor *</mat-label>
+              <mat-select formControlName="profesor" required>
+                <mat-option value="">Seleccione un profesor</mat-option>
+                @for (docente of docentes; track docente.id) {
+                  <mat-option [value]="docente.id">{{ docente.nombre }} {{ docente.apellido }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Curso</mat-label>
+              <mat-select formControlName="curso">
+                <mat-option value="">Sin curso específico</mat-option>
+                @for (curso of cursos; track curso.id) {
+                  <mat-option [value]="curso.nombre">{{ curso.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
+
           <div class="form-row">
-            <div class="form-group">
-              <label>Horario</label>
-              <input type="text" [(ngModel)]="formData.horario" name="horario" />
+            <mat-form-field>
+              <mat-label>Carrera</mat-label>
+              <mat-select formControlName="carreraId">
+                <mat-option value="">Sin carrera</mat-option>
+                @for (carrera of carreras; track carrera.id) {
+                  <mat-option [value]="carrera.id">{{ carrera.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Tipo *</mat-label>
+              <mat-select formControlName="tipo" required>
+                <mat-option value="obligatoria">Obligatoria</mat-option>
+                <mat-option value="optativa">Optativa</mat-option>
+                <mat-option value="electiva">Electiva</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Año</mat-label>
+              <input matInput type="number" formControlName="año" min="1">
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Cuatrimestre</mat-label>
+              <input matInput type="number" formControlName="cuatrimestre" min="1" max="2">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Horario</mat-label>
+              <input matInput formControlName="horario">
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Créditos</mat-label>
+              <input matInput type="number" formControlName="creditos" min="0">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Horas Semanales</mat-label>
+              <input matInput type="number" formControlName="horasSemanales" min="0">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcion" rows="3"></textarea>
+          </mat-form-field>
+
+          <div class="form-section">
+            <h3>Configuración</h3>
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="tieneNota">Tiene Nota</mat-checkbox>
+              <mat-checkbox formControlName="tieneAsistencia">Tiene Asistencia</mat-checkbox>
+              <mat-checkbox formControlName="requiereAprobacion">Requiere Aprobación</mat-checkbox>
             </div>
-            <div class="form-group">
-              <label>Créditos</label>
-              <input type="number" [(ngModel)]="formData.creditos" name="creditos" min="0" />
+            <div class="form-row">
+              <mat-form-field>
+                <mat-label>Nota Mínima Aprobación</mat-label>
+                <input matInput type="number" formControlName="notaMinimaAprobacion" min="0" max="10">
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>% Asistencia Mínimo</mat-label>
+                <input matInput type="number" formControlName="porcentajeAsistenciaMinimo" min="0" max="100">
+              </mat-form-field>
             </div>
           </div>
-          <div class="form-group">
-            <label>Descripción</label>
-            <textarea [(ngModel)]="formData.descripcion" name="descripcion" rows="3"></textarea>
+
+          <div class="form-section">
+            <h3>Correlatividades</h3>
+            <p>Seleccione las materias que deben aprobarse antes de inscribirse a esta materia:</p>
+            <div class="correlatividades-list">
+              @for (materia of materiasDisponibles; track materia.id) {
+                @if (modoEdicion && materiaSeleccionada && materia.id !== materiaSeleccionada.id || !modoEdicion) {
+                  <mat-chip 
+                    [class.selected]="tieneCorrelatividad(materia.id)" 
+                    (click)="toggleCorrelatividad(materia.id)">
+                    {{ materia.nombre }}
+                  </mat-chip>
+                }
+              }
+            </div>
           </div>
+
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
-            <button type="submit" class="btn-primary">Guardar</button>
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
           </div>
         </form>
       </div>
@@ -168,6 +255,147 @@
         <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="cerrarModal()">Cerrar</button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Wizard de Creación de Materia -->
+  @if (mostrarWizard) {
+    <div class="modal-overlay" (click)="cerrarWizard()">
+      <div class="modal-content wizard-modal" (click)="$event.stopPropagation()" style="display: flex; flex-direction: column; height: auto; min-height: 600px;">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar' : 'Crear' }} Materia - Paso a Paso</h2>
+          <button mat-icon-button (click)="cerrarWizard()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        
+        <mat-stepper [linear]="true" #stepper>
+          <!-- Paso 1: Datos Básicos -->
+          <mat-step [stepControl]="materiaForm" label="1. Datos Básicos">
+            <form [formGroup]="materiaForm" class="wizard-form">
+              <h3>Complete los datos básicos de la materia</h3>
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Nombre *</mat-label>
+                  <input matInput formControlName="nombre" required>
+                  <mat-icon matPrefix>menu_book</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Código *</mat-label>
+                  <input matInput formControlName="codigo" required>
+                  <mat-icon matPrefix>tag</mat-icon>
+                </mat-form-field>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput formControlName="descripcion" rows="3"></textarea>
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+              <div class="wizard-actions">
+                <button mat-button (click)="cerrarWizard()">Cancelar</button>
+                <button mat-raised-button color="primary" (click)="completarPaso1(); stepper.next()" [disabled]="materiaForm.get('nombre')?.invalid || materiaForm.get('codigo')?.invalid">
+                  Siguiente: Asignar Profesor
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Paso 2: Asignar Profesor -->
+          <mat-step label="2. Asignar Profesor">
+            <div class="wizard-form">
+              <h3>Seleccione el profesor que dictará esta materia</h3>
+              <p class="info-text">El profesor debe estar registrado en el sistema. La materia quedará asignada a este profesor.</p>
+              
+              <div class="docentes-grid">
+                @for (docente of docentes; track docente.id) {
+                  <mat-card 
+                    [class.selected]="wizardData.profesorSeleccionado?.id === docente.id" 
+                    (click)="seleccionarProfesor(docente.id)"
+                    class="docente-card-selectable">
+                    <mat-card-content>
+                      <div class="docente-header">
+                        <h4>{{ docente.nombre }} {{ docente.apellido }}</h4>
+                        <mat-checkbox [checked]="wizardData.profesorSeleccionado?.id === docente.id" (click)="$event.stopPropagation()"></mat-checkbox>
+                      </div>
+                      <p><strong>Email:</strong> {{ docente.email }}</p>
+                      @if (docente.especialidad) {
+                        <p><strong>Especialidad:</strong> {{ docente.especialidad }}</p>
+                      }
+                      <p><strong>Materias asignadas:</strong> {{ docente.materiasAsignadas?.length || 0 }}</p>
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+              
+              @if (docentes.length === 0) {
+                <p class="warning-text">No hay docentes disponibles. Por favor, registre un docente primero desde la sección de Docentes.</p>
+              }
+              
+              <div class="wizard-actions">
+                <button mat-button (click)="stepper.previous()">Anterior</button>
+                <button mat-button (click)="cerrarWizard()">Cancelar</button>
+                <button mat-raised-button color="primary" (click)="completarPaso2(); stepper.next()" [disabled]="!wizardData.profesorSeleccionado">
+                  Siguiente: Configuración Final
+                </button>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- Paso 4: Configuración Final -->
+          <mat-step label="4. Configuración Final">
+            <form [formGroup]="materiaForm" class="wizard-form">
+              <h3>Complete la configuración de la materia</h3>
+              <p class="info-text">Configure horas, créditos, correlatividades y otros parámetros.</p>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Horas Semanales</mat-label>
+                  <input matInput type="number" formControlName="horasSemanales" min="0">
+                  <mat-icon matPrefix>schedule</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Créditos</mat-label>
+                  <input matInput type="number" formControlName="creditos" min="0">
+                  <mat-icon matPrefix>star</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <div class="form-section">
+                <h4>Configuración Académica</h4>
+                <div class="checkbox-group">
+                  <mat-checkbox formControlName="tieneNota">Tiene Nota</mat-checkbox>
+                  <mat-checkbox formControlName="tieneAsistencia">Tiene Asistencia</mat-checkbox>
+                  <mat-checkbox formControlName="requiereAprobacion">Requiere Aprobación</mat-checkbox>
+                </div>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nota Mínima Aprobación</mat-label>
+                    <input matInput type="number" formControlName="notaMinimaAprobacion" min="0" max="10">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>% Asistencia Mínimo</mat-label>
+                    <input matInput type="number" formControlName="porcentajeAsistenciaMinimo" min="0" max="100">
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <h4>Correlatividades (Opcional)</h4>
+                <p class="info-text">Las correlatividades se pueden configurar después cuando se asigne la materia a una carrera. Por ahora, puede dejar esto vacío.</p>
+              </div>
+              
+              <div class="wizard-actions">
+                <button mat-button type="button" (click)="stepper.previous()">Anterior</button>
+                <button mat-button type="button" (click)="cerrarWizard()">Cancelar</button>
+                <button mat-raised-button color="primary" type="button" (click)="finalizarWizardMateria()">
+                  <mat-icon>check</mat-icon>
+                  {{ modoEdicion ? 'Finalizar y Actualizar Materia' : 'Finalizar y Crear Materia' }}
+                </button>
+              </div>
+            </form>
+          </mat-step>
+        </mat-stepper>
       </div>
     </div>
   }

@@ -5,13 +5,33 @@
         <mat-icon>class</mat-icon>
         Gestión de Cursos
       </h1>
-      <p>Administra los cursos y comisiones</p>
+      <p>La gestión de cursos se realiza desde la sección de Carreras</p>
     </div>
-    <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
-      <mat-icon>add</mat-icon>
-      Nuevo Curso
-    </button>
   </div>
+
+  <mat-card class="info-card">
+    <mat-card-content>
+      <div class="info-content">
+        <mat-icon class="info-icon">info</mat-icon>
+        <div>
+          <h2>Gestión de Cursos</h2>
+          <p>Para gestionar cursos, por favor diríjase a la sección <strong>Carreras</strong> y seleccione una carrera.</p>
+          <p>Desde allí podrá:</p>
+          <ul>
+            <li>Ver todos los cursos de la carrera</li>
+            <li>Crear nuevos cursos</li>
+            <li>Asignar materias a los cursos</li>
+            <li>Inscribir alumnos a los cursos</li>
+            <li>Gestionar la lista de espera</li>
+          </ul>
+          <button mat-raised-button color="primary" routerLink="/app/carreras">
+            <mat-icon>school</mat-icon>
+            Ir a Carreras
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
   <div class="cursos-grid">
     @for (curso of cursos; track curso.id) {
@@ -42,14 +62,36 @@
           </div>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-button color="primary" (click)="abrirModalEditar(curso)">
-            <mat-icon>edit</mat-icon>
-            Editar
-          </button>
-          <button mat-button color="warn" (click)="eliminarCurso(curso.id)">
-            <mat-icon>delete</mat-icon>
-            Eliminar
-          </button>
+          @if (permissionsService.puedeVer('editarCursos')) {
+            <button mat-button color="primary" (click)="abrirModalEditar(curso)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+          }
+          @if (permissionsService.puedeVer('asignarProfesores')) {
+            <button mat-button color="accent" (click)="asignarProfesor(curso)">
+              <mat-icon>person</mat-icon>
+              Asignar Profesor
+            </button>
+          }
+          @if (permissionsService.puedeVer('gestionarInscripciones')) {
+            <button mat-button color="primary" (click)="gestionarInscripciones(curso)">
+              <mat-icon>people</mat-icon>
+              Inscripciones
+            </button>
+          }
+          @if (permissionsService.puedeVer('gestionarListaEspera')) {
+            <button mat-button color="accent" (click)="gestionarListaEspera(curso)">
+              <mat-icon>queue</mat-icon>
+              Lista Espera
+            </button>
+          }
+          @if (permissionsService.puedeVer('eliminarCursos')) {
+            <button mat-button color="warn" (click)="eliminarCurso(curso.id)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          }
         </mat-card-actions>
       </mat-card>
     }

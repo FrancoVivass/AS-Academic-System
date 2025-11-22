@@ -9,11 +9,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
+import { RouterModule } from '@angular/router';
 import { CursoService } from '../../services/curso.service';
 import { AlumnoService } from '../../services/alumno.service';
 import { MateriaService } from '../../services/materia.service';
+import { DocenteService } from '../../services/docente.service';
 import { NotificationService } from '../../services/notification.service';
+import { PermissionsService } from '../../services/permissions.service';
 import { Curso } from '../../models/curso.model';
+import { Docente } from '../../models/usuario.model';
 
 @Component({
   selector: 'app-cursos',
@@ -22,6 +26,7 @@ import { Curso } from '../../models/curso.model';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -41,11 +46,18 @@ export class CursosComponent implements OnInit {
   modalAbierto: boolean = false;
   busqueda: string = '';
   cursoForm: FormGroup;
+  docentes: Docente[] = [];
+  mostrarAsignarProfesor: boolean = false;
+  mostrarInscripciones: boolean = false;
+  mostrarListaEspera: boolean = false;
+  cursoParaAccion: Curso | null = null;
 
   constructor(
     private cursoService: CursoService,
     private alumnoService: AlumnoService,
     private materiaService: MateriaService,
+    private docenteService: DocenteService,
+    public permissionsService: PermissionsService,
     private fb: FormBuilder,
     private notificationService: NotificationService
   ) {
@@ -61,7 +73,14 @@ export class CursosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadCursos();
+    // Redirigir a la gestión desde carreras
+    this.notificationService.showInfo('La gestión de cursos se realiza desde la sección de Carreras. Seleccione una carrera y luego "Ver Cursos"');
+    // Opcional: redirigir automáticamente
+    // this.router.navigate(['/app/carreras']);
+  }
+
+  loadDocentes(): void {
+    this.docentes = this.docenteService.getDocentes();
   }
 
   loadCursos(): void {
@@ -102,7 +121,17 @@ export class CursosComponent implements OnInit {
         horarios: [],
         materias: [],
         alumnos: [],
-        estado: 'activo'
+        estado: 'activo',
+        cupoMaximo: this.cursoForm.value.capacidad,
+        cupoActual: 0,
+        listaEspera: [],
+        modalidad: 'presencial',
+        configuracion: {
+          permiteAutoinscripcion: false,
+          permiteEdicionHorariosProfesor: false,
+          requiereAprobacionInscripcion: true,
+          activaListaEspera: true
+        }
       };
       this.cursoService.addCurso(nuevoCurso);
       this.notificationService.showSuccess('Curso creado correctamente');
@@ -133,6 +162,34 @@ export class CursosComponent implements OnInit {
 
   getCantidadMaterias(curso: Curso): number {
     return curso.materias.length;
+  }
+
+  asignarProfesor(curso: Curso): void {
+    this.cursoParaAccion = curso;
+    this.mostrarAsignarProfesor = true;
+  }
+
+  gestionarInscripciones(curso: Curso): void {
+    this.cursoParaAccion = curso;
+    this.mostrarInscripciones = true;
+  }
+
+  gestionarListaEspera(curso: Curso): void {
+    this.cursoParaAccion = curso;
+    this.mostrarListaEspera = true;
+  }
+
+  asignarProfesorACurso(profesorId: string): void {
+    // Esta funcionalidad ya no es necesaria - los profesores se asignan a las materias, no a los cursos
+    this.notificationService.showInfo('Los profesores se asignan a las materias, no a los cursos. Por favor, asigne profesores desde la sección de Materias.');
+    this.cerrarModales();
+  }
+
+  cerrarModales(): void {
+    this.mostrarAsignarProfesor = false;
+    this.mostrarInscripciones = false;
+    this.mostrarListaEspera = false;
+    this.cursoParaAccion = null;
   }
 }
 

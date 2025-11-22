@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Docente } from '../models/usuario.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ export class DocenteService {
   private docentesSubject = new BehaviorSubject<Docente[]>(this.getDocentes());
   public docentes$ = this.docentesSubject.asObservable();
 
-  constructor() {
+  constructor(private authService: AuthService) {
     this.initializeDefaultData();
   }
 
@@ -66,6 +67,14 @@ export class DocenteService {
     const docentes = this.getDocentes();
     docentes.push(docente);
     this.saveDocentes(docentes);
+    
+    // También crear usuario en AuthService para que pueda iniciar sesión
+    const usuarios = this.authService.getUsuarios();
+    const usuarioExistente = usuarios.find(u => u.id === docente.id || u.username === docente.username);
+    if (!usuarioExistente) {
+      usuarios.push(docente);
+      localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
+    }
   }
 
   updateDocente(docente: Docente): void {

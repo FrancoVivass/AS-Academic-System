@@ -9,7 +9,7 @@
     </div>
     <button mat-raised-button color="primary" (click)="abrirModalNuevo()">
       <mat-icon>person_add</mat-icon>
-      Nuevo Docente
+      Nuevo Docente (Wizard)
     </button>
   </div>
 
@@ -187,6 +187,89 @@
             <button mat-raised-button color="primary" type="submit">Guardar</button>
           </div>
         </form>
+      </div>
+    </div>
+  }
+
+  <!-- Wizard de Creación de Docente -->
+  @if (mostrarWizard) {
+    <div class="modal-overlay" (click)="cerrarWizard()">
+      <div class="modal-content wizard-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Registrar Nuevo Docente - Paso a Paso</h2>
+          <button mat-icon-button (click)="cerrarWizard()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        
+        <mat-stepper [linear]="false" #stepper>
+          <!-- Paso 1: Datos Personales -->
+          <mat-step [stepControl]="docenteForm" label="Datos del Docente">
+            <form [formGroup]="docenteForm" class="wizard-form">
+              <h3>Complete los datos del docente</h3>
+              <p class="info-text">Las materias y carreras se asignarán cuando se creen las materias o se configuren los cursos en las carreras.</p>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Nombre *</mat-label>
+                  <input matInput formControlName="nombre" required>
+                  <mat-icon matPrefix>person</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Apellido *</mat-label>
+                  <input matInput formControlName="apellido" required>
+                  <mat-icon matPrefix>person_outline</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Usuario *</mat-label>
+                  <input matInput formControlName="username" required>
+                  <mat-icon matPrefix>account_circle</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>DNI *</mat-label>
+                  <input matInput formControlName="dni" required>
+                  <mat-icon matPrefix>badge</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email *</mat-label>
+                <input matInput type="email" formControlName="email" required>
+                <mat-icon matPrefix>email</mat-icon>
+              </mat-form-field>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Teléfono</mat-label>
+                  <input matInput formControlName="telefono">
+                  <mat-icon matPrefix>phone</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Especialidad</mat-label>
+                  <input matInput formControlName="especialidad">
+                  <mat-icon matPrefix>school</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Contraseña *</mat-label>
+                <input matInput type="password" formControlName="password" required>
+                <mat-icon matPrefix>lock</mat-icon>
+              </mat-form-field>
+              
+              <div class="wizard-actions">
+                <button mat-button (click)="cerrarWizard()">Cancelar</button>
+                <button mat-raised-button color="primary" (click)="finalizarWizardDocente()" [disabled]="docenteForm.invalid">
+                  <mat-icon>check</mat-icon>
+                  Crear Docente
+                </button>
+              </div>
+            </form>
+          </mat-step>
+        </mat-stepper>
       </div>
     </div>
   }
