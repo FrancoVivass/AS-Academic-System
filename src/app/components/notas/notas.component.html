@@ -18,20 +18,34 @@
   <mat-card class="filters-card">
     <mat-card-content>
       <div class="filters-section">
+        @if (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario()) {
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filtrar por Carrera</mat-label>
+            <mat-select [(ngModel)]="filtroCarrera" (selectionChange)="onCarreraChange()">
+              <mat-option value="">Todas las carreras</mat-option>
+              @for (carrera of carreras; track carrera.id) {
+                <mat-option [value]="carrera.id">{{ carrera.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Filtrar por Materia</mat-label>
-          <mat-select [(ngModel)]="filtroMateria" (selectionChange)="aplicarFiltros()">
+          <mat-select [(ngModel)]="filtroMateria" (selectionChange)="onMateriaChange()" [disabled]="!filtroCarrera && (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario())">
             <mat-option value="">Todas las materias</mat-option>
-            @for (materia of getMaterias(); track materia.id) {
+            @for (materia of materiasDisponibles.length > 0 ? materiasDisponibles : getMaterias(); track materia.id) {
               <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
             }
           </mat-select>
+          @if (!filtroCarrera && (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario())) {
+            <mat-hint>Primero seleccione una carrera</mat-hint>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Filtrar por Alumno</mat-label>
           <mat-select [(ngModel)]="filtroAlumno" (selectionChange)="aplicarFiltros()">
             <mat-option value="">Todos los alumnos</mat-option>
-            @for (alumno of getAlumnos(); track alumno.id) {
+            @for (alumno of alumnosDisponibles.length > 0 ? alumnosDisponibles : getAlumnos(); track alumno.id) {
               <mat-option [value]="alumno.id">{{ alumno.nombre }} {{ alumno.apellido }}</mat-option>
             }
           </mat-select>
@@ -119,21 +133,45 @@
           </button>
         </div>
         <form [formGroup]="notaForm" (ngSubmit)="guardarNota()" class="modal-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Alumno *</mat-label>
-            <mat-select formControlName="alumnoId" required>
-              @for (alumno of getAlumnos(); track alumno.id) {
-                <mat-option [value]="alumno.id">{{ alumno.nombre }} {{ alumno.apellido }}</mat-option>
+          @if (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario()) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Carrera *</mat-label>
+              <mat-select formControlName="carreraId" required (selectionChange)="onCarreraChangeModal()">
+                <mat-option value="">Seleccione una carrera</mat-option>
+                @for (carrera of carreras; track carrera.id) {
+                  <mat-option [value]="carrera.id">{{ carrera.nombre }}</mat-option>
+                }
+              </mat-select>
+              @if (permissionsService.esProfesor() && carreras.length === 0) {
+                <mat-hint class="error-hint">No hay carreras asignadas. Contacte al administrador.</mat-hint>
               }
-            </mat-select>
-          </mat-form-field>
+            </mat-form-field>
+          }
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Materia *</mat-label>
-            <mat-select formControlName="materiaId" required>
-              @for (materia of getMaterias(); track materia.id) {
+            <mat-select formControlName="materiaId" required [disabled]="!notaForm.get('carreraId')?.value && (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario())" (selectionChange)="onMateriaChangeModal()">
+              <mat-option value="">Seleccione una materia</mat-option>
+              @for (materia of materiasDisponibles; track materia.id) {
                 <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
               }
             </mat-select>
+            @if (!notaForm.get('carreraId')?.value && (permissionsService.esProfesor() || permissionsService.esAdmin() || permissionsService.esSecretario())) {
+              <mat-hint>Primero seleccione una carrera</mat-hint>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Alumno *</mat-label>
+            <mat-select formControlName="alumnoId" required [disabled]="!notaForm.get('carreraId')?.value">
+              <mat-option value="">Seleccione un alumno</mat-option>
+              @for (alumno of alumnosDisponibles; track alumno.id) {
+                <mat-option [value]="alumno.id">{{ alumno.nombre }} {{ alumno.apellido }}</mat-option>
+              }
+            </mat-select>
+            @if (!notaForm.get('carreraId')?.value) {
+              <mat-hint>Primero seleccione una carrera</mat-hint>
+            } @else if (alumnosDisponibles.length === 0) {
+              <mat-hint>No hay alumnos disponibles para esta carrera</mat-hint>
+            }
           </mat-form-field>
           <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">

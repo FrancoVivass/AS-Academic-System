@@ -29,7 +29,18 @@ export class AlumnoService {
           telefono: '1234567890',
           curso: '1ro A',
           fechaNacimiento: '2010-05-15',
-          direccion: 'Calle Falsa 123'
+          direccion: 'Calle Falsa 123',
+          estado: 'regular',
+          fechaRegistro: new Date().toISOString(),
+          documentacion: {
+            dniCompleto: true,
+            analiticoCompleto: false,
+            aptoMedicoCompleto: false
+          },
+          historialEstados: [{
+            estado: 'regular',
+            fecha: new Date().toISOString()
+          }]
         },
         {
           id: '2',
@@ -40,7 +51,18 @@ export class AlumnoService {
           telefono: '2345678901',
           curso: '2do B',
           fechaNacimiento: '2009-08-20',
-          direccion: 'Av. Principal 456'
+          direccion: 'Av. Principal 456',
+          estado: 'regular',
+          fechaRegistro: new Date().toISOString(),
+          documentacion: {
+            dniCompleto: true,
+            analiticoCompleto: true,
+            aptoMedicoCompleto: true
+          },
+          historialEstados: [{
+            estado: 'regular',
+            fecha: new Date().toISOString()
+          }]
         },
         {
           id: '3',
@@ -51,7 +73,18 @@ export class AlumnoService {
           telefono: '3456789012',
           curso: '1ro A',
           fechaNacimiento: '2010-12-10',
-          direccion: 'Boulevard Central 789'
+          direccion: 'Boulevard Central 789',
+          estado: 'regular',
+          fechaRegistro: new Date().toISOString(),
+          documentacion: {
+            dniCompleto: true,
+            analiticoCompleto: false,
+            aptoMedicoCompleto: false
+          },
+          historialEstados: [{
+            estado: 'regular',
+            fecha: new Date().toISOString()
+          }]
         }
       ];
       this.saveAlumnos(defaultAlumnos);
@@ -114,7 +147,13 @@ export class AlumnoService {
 
   addNota(nota: Nota): void {
     const notas = this.getNotas();
-    notas.push(nota);
+    // Asegurar campos por defecto
+    const notaCompleta: Nota = {
+      ...nota,
+      estado: nota.estado || 'cargada',
+      esRecuperatorio: nota.esRecuperatorio || false
+    };
+    notas.push(notaCompleta);
     localStorage.setItem(this.NOTAS_KEY, JSON.stringify(notas));
   }
 
@@ -155,7 +194,15 @@ export class AlumnoService {
 
   addAsistencia(asistencia: Asistencia): void {
     const asistencias = this.getAsistencias();
-    asistencias.push(asistencia);
+    // Asegurar campos por defecto y compatibilidad con modelo anterior
+    const asistenciaCompleta: Asistencia = {
+      ...asistencia,
+      estado: asistencia.estado || (asistencia.presente ? 'presente' : 'ausente'),
+      presente: asistencia.presente !== undefined ? asistencia.presente : (asistencia.estado === 'presente' || asistencia.estado === 'tardanza'),
+      fechaCarga: asistencia.fechaCarga || new Date().toISOString(),
+      puedeEditar: asistencia.puedeEditar !== undefined ? asistencia.puedeEditar : true
+    };
+    asistencias.push(asistenciaCompleta);
     localStorage.setItem(this.ASISTENCIAS_KEY, JSON.stringify(asistencias));
   }
 
@@ -179,8 +226,40 @@ export class AlumnoService {
       asistencias = asistencias.filter(a => a.materiaId === materiaId);
     }
     if (asistencias.length === 0) return 0;
-    const presentes = asistencias.filter(a => a.presente).length;
-    return Math.round((presentes / asistencias.length) * 100);
+    // Contar presentes y tardanzas como asistencia, justificados no cuentan como ausentes
+    const asistenciasValidas = asistencias.filter(a => 
+      a.estado === 'presente' || a.estado === 'tardanza' || a.estado === 'justificado'
+    );
+    if (asistenciasValidas.length === 0) return 0;
+    const presentes = asistencias.filter(a => 
+      a.estado === 'presente' || a.estado === 'tardanza' || a.estado === 'justificado'
+    ).length;
+    return Math.round((presentes / asistenciasValidas.length) * 100);
+  }
+
+  getEstadisticasAsistencia(alumnoId: string, materiaId: string, cursoId?: string): { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number } {
+    let asistencias = this.getAsistenciasByAlumno(alumnoId).filter(a => a.materiaId === materiaId);
+    if (cursoId) {
+      asistencias = asistencias.filter(a => a.cursoId === cursoId);
+    }
+    
+    const totalClases = asistencias.length;
+    const presentes = asistencias.filter(a => a.estado === 'presente').length;
+    const ausentes = asistencias.filter(a => a.estado === 'ausente').length;
+    const tardanzas = asistencias.filter(a => a.estado === 'tardanza').length;
+    const justificados = asistencias.filter(a => a.estado === 'justificado').length;
+    
+    const porcentaje = totalClases > 0 
+      ? Math.round(((presentes + tardanzas + justificados) / totalClases) * 100)
+      : 0;
+    
+    return { totalClases, presentes, ausentes, tardanzas, justificados, porcentaje };
+  }
+
+  getAsistenciasByMateriaYFecha(materiaId: string, fecha: string): Asistencia[] {
+    return this.getAsistencias().filter(a => 
+      a.materiaId === materiaId && a.fecha === fecha
+    );
   }
 }
 

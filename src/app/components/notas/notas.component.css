@@ -168,6 +168,12 @@
   width: 100%;
 }
 
+.error-hint {
+  color: #f44336;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
