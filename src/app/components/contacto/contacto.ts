@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -31,7 +31,7 @@ import { NotificationService } from '../../services/notification.service';
   templateUrl: './contacto.html',
   styleUrl: './contacto.css'
 })
-export class ContactoComponent {
+export class ContactoComponent implements OnInit {
   contactoForm: FormGroup;
   loading = false;
 
@@ -134,6 +134,11 @@ export class ContactoComponent {
       fechaInicio: [''],
       necesidadesEspecificas: ['']
     });
+  }
+
+  ngOnInit(): void {
+    // Scroll al inicio cuando se carga la página
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   onSubmit(): void {

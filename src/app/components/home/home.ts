@@ -104,6 +104,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   isSocialCollapsed = false;
 
   ngOnInit(): void {
+    // Scroll al inicio cuando se carga la página
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
     // Cargar preferencia de modo oscuro
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {

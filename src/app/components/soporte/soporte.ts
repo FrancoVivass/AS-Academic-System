@@ -47,6 +47,9 @@ export class SoporteComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    // Scroll al inicio cuando se carga la página
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       this.isDarkMode = true;
