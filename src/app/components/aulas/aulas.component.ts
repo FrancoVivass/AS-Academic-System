@@ -103,25 +103,30 @@ export class AulasComponent implements OnInit {
       return;
     }
 
-    if (this.modoEdicion && this.aulaSeleccionada) {
-      const aulaActualizada: Aula = {
-        ...this.aulaSeleccionada,
-        ...this.aulaForm.value
-      };
-      await this.aulaService.updateAula(aulaActualizada);
-      this.notificationService.showSuccess('Aula actualizada correctamente');
-    } else {
-      const nuevaAula: Aula = {
-        id: Date.now().toString(),
-        ...this.aulaForm.value,
-        recursos: []
-      };
-      await this.aulaService.addAula(nuevaAula);
-      this.notificationService.showSuccess('Aula creada correctamente');
-    }
+    try {
+      if (this.modoEdicion && this.aulaSeleccionada) {
+        const aulaActualizada: Aula = {
+          ...this.aulaSeleccionada,
+          ...this.aulaForm.value
+        };
+        await this.aulaService.updateAula(aulaActualizada);
+        this.notificationService.showSuccess('Aula actualizada correctamente');
+      } else {
+        const nuevaAula: Aula = {
+          id: crypto.randomUUID(),
+          ...this.aulaForm.value,
+          recursos: []
+        };
+        await this.aulaService.addAula(nuevaAula);
+        this.notificationService.showSuccess('Aula creada correctamente');
+      }
 
-    await this.loadAulas();
-    this.cerrarModal();
+      await this.loadAulas();
+      this.cerrarModal();
+    } catch (error: any) {
+      console.error('Error guardando aula:', error);
+      this.notificationService.showError(error.message || 'Error al guardar el aula. Por favor, intente nuevamente.');
+    }
   }
 
   async eliminarAula(id: string): Promise<void> {

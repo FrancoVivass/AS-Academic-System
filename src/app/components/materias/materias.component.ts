@@ -421,9 +421,10 @@ export class MateriasComponent implements OnInit {
     
     const esEdicion = this.modoEdicion && this.materiaSeleccionada;
     
-    if (esEdicion) {
-      // Actualizar materia existente
-      const materiaActualizada: Materia = {
+    try {
+      if (esEdicion) {
+        // Actualizar materia existente
+        const materiaActualizada: Materia = {
         ...this.materiaSeleccionada!,
         nombre: formValue.nombre,
         codigo: formValue.codigo,
@@ -441,36 +442,36 @@ export class MateriasComponent implements OnInit {
         fechaCreacion: this.materiaSeleccionada!.fechaCreacion || new Date().toISOString()
       };
       
-      this.materiaService.updateMateria(materiaActualizada);
-      
-      // Actualizar materias asignadas del docente
-      // Remover de docentes anteriores si cambió el profesor
-      if (this.materiaSeleccionada!.profesor !== nombreProfesor) {
-        const docentesAnteriores = this.docentes.filter(d => 
-          d.materiasAsignadas?.includes(materiaActualizada.id)
-        );
-        docentesAnteriores.forEach(d => {
-          if (d.materiasAsignadas) {
-            d.materiasAsignadas = d.materiasAsignadas.filter(id => id !== materiaActualizada.id);
-            this.docenteService.updateDocente(d);
+        await this.materiaService.updateMateria(materiaActualizada);
+        
+        // Actualizar materias asignadas del docente
+        // Remover de docentes anteriores si cambió el profesor
+        if (this.materiaSeleccionada!.profesor !== nombreProfesor) {
+          const docentesAnteriores = this.docentes.filter(d => 
+            d.materiasAsignadas?.includes(materiaActualizada.id)
+          );
+          for (const d of docentesAnteriores) {
+            if (d.materiasAsignadas) {
+              d.materiasAsignadas = d.materiasAsignadas.filter(id => id !== materiaActualizada.id);
+              await this.docenteService.updateDocente(d);
+            }
           }
-        });
-      }
-      
-      // Agregar al nuevo docente
-      if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
-        this.wizardData.profesorSeleccionado.materiasAsignadas = [];
-      }
-      if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(materiaActualizada.id)) {
-        this.wizardData.profesorSeleccionado.materiasAsignadas.push(materiaActualizada.id);
-        this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
-      }
-      
-      this.notificationService.showSuccess(`Materia "${materiaActualizada.nombre}" actualizada exitosamente`);
-    } else {
-      // Crear nueva materia
-      const nuevaMateria: Materia = {
-        id: Date.now().toString(),
+        }
+        
+        // Agregar al nuevo docente
+        if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
+          this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+        }
+        if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(materiaActualizada.id)) {
+          this.wizardData.profesorSeleccionado.materiasAsignadas.push(materiaActualizada.id);
+          await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
+        }
+        
+        this.notificationService.showSuccess(`Materia "${materiaActualizada.nombre}" actualizada exitosamente`);
+      } else {
+        // Crear nueva materia
+        const nuevaMateria: Materia = {
+        id: crypto.randomUUID(),
         nombre: formValue.nombre,
         codigo: formValue.codigo,
         descripcion: formValue.descripcion || '',
@@ -489,28 +490,30 @@ export class MateriasComponent implements OnInit {
         fechaCreacion: new Date().toISOString()
       };
       
-      console.log('Nueva materia a crear:', nuevaMateria);
-      this.materiaService.addMateria(nuevaMateria);
-      console.log('Materia guardada en servicio');
-      
-      // Asignar materia al docente
-      if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
-        this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+        console.log('Nueva materia a crear:', nuevaMateria);
+        await this.materiaService.addMateria(nuevaMateria);
+        console.log('Materia guardada en servicio');
+        
+        // Asignar materia al docente
+        if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
+          this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+        }
+        if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(nuevaMateria.id)) {
+          this.wizardData.profesorSeleccionado.materiasAsignadas.push(nuevaMateria.id);
+          await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
+          console.log('Materia asignada al docente');
+        }
+        
+        this.notificationService.showSuccess(`Materia "${nuevaMateria.nombre}" creada exitosamente y asignada al profesor ${nombreProfesor}`);
       }
-      if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(nuevaMateria.id)) {
-        this.wizardData.profesorSeleccionado.materiasAsignadas.push(nuevaMateria.id);
-        this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
-        console.log('Materia asignada al docente');
-      }
       
-      this.notificationService.showSuccess(`Materia "${nuevaMateria.nombre}" creada exitosamente y asignada al profesor ${nombreProfesor}`);
+      await this.loadMaterias();
+      this.loadMateriasDisponibles();
+      this.cerrarWizard();
+    } catch (error: any) {
+      console.error('Error en finalizarWizardMateria:', error);
+      this.notificationService.showError(error.message || 'Error al guardar la materia. Por favor, intente nuevamente.');
     }
-    
-    console.log('Recargando materias...');
-    await this.loadMaterias();
-    this.loadMateriasDisponibles();
-    console.log('Materias recargadas. Total:', this.materias.length);
-    this.cerrarWizard();
   }
 
   abrirModalEditar(materia: Materia): void {
@@ -567,7 +570,8 @@ export class MateriasComponent implements OnInit {
       return;
     }
 
-    const formValue = this.materiaForm.value;
+    try {
+      const formValue = this.materiaForm.value;
     
     // Validar que tenga carrera asignada
     if (!formValue.carreraId) {
@@ -613,7 +617,7 @@ export class MateriasComponent implements OnInit {
         estado: this.materiaSeleccionada.estado || 'activa',
         fechaCreacion: this.materiaSeleccionada.fechaCreacion || new Date().toISOString()
       };
-      this.materiaService.updateMateria(materiaActualizada);
+      await this.materiaService.updateMateria(materiaActualizada);
       
       // Actualizar materias asignadas del docente
       if (!docente.materiasAsignadas) {
@@ -624,22 +628,22 @@ export class MateriasComponent implements OnInit {
         const docentesAnteriores = this.docentes.filter(d => 
           d.materiasAsignadas?.includes(materiaActualizada.id)
         );
-        docentesAnteriores.forEach(d => {
+        for (const d of docentesAnteriores) {
           if (d.materiasAsignadas) {
             d.materiasAsignadas = d.materiasAsignadas.filter(id => id !== materiaActualizada.id);
-            this.docenteService.updateDocente(d);
+            await this.docenteService.updateDocente(d);
           }
-        });
+        }
       }
       if (!docente.materiasAsignadas.includes(materiaActualizada.id)) {
         docente.materiasAsignadas.push(materiaActualizada.id);
       }
-      this.docenteService.updateDocente(docente);
+      await this.docenteService.updateDocente(docente);
       
       this.notificationService.showSuccess('Materia actualizada correctamente');
     } else {
       const nuevaMateria: Materia = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         ...formValue,
         profesor: nombreProfesor,
         correlatividades: this.correlatividadesSeleccionadas,
@@ -647,7 +651,7 @@ export class MateriasComponent implements OnInit {
         estado: 'activa',
         fechaCreacion: new Date().toISOString()
       };
-      this.materiaService.addMateria(nuevaMateria);
+      await this.materiaService.addMateria(nuevaMateria);
       
       // Asignar materia al docente
       if (!docente.materiasAsignadas) {
@@ -656,18 +660,22 @@ export class MateriasComponent implements OnInit {
       if (!docente.materiasAsignadas.includes(nuevaMateria.id)) {
         docente.materiasAsignadas.push(nuevaMateria.id);
       }
-      this.docenteService.updateDocente(docente);
+      await this.docenteService.updateDocente(docente);
       
-      this.notificationService.showSuccess('Materia creada correctamente. Ahora puede asignarla a cursos desde la sección de Carreras.');
-      
-      // Si tiene carreraId, agregar automáticamente al plan de estudio
-      if (nuevaMateria.carreraId) {
-        this.agregarMateriaACarrera(nuevaMateria);
+        this.notificationService.showSuccess('Materia creada correctamente. Ahora puede asignarla a cursos desde la sección de Carreras.');
+        
+        // Si tiene carreraId, agregar automáticamente al plan de estudio
+        if (nuevaMateria.carreraId) {
+          await this.agregarMateriaACarrera(nuevaMateria);
+        }
       }
+      
+      await this.loadMaterias();
+      this.cerrarModal();
+    } catch (error: any) {
+      console.error('Error guardando materia:', error);
+      this.notificationService.showError(error.message || 'Error al guardar la materia. Por favor, intente nuevamente.');
     }
-
-    await this.loadMaterias();
-    this.cerrarModal();
   }
 
   async agregarMateriaACarrera(materia: Materia): Promise<void> {

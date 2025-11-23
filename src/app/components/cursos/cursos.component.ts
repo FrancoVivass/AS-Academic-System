@@ -107,38 +107,43 @@ export class CursosComponent implements OnInit {
       return;
     }
 
-    if (this.modoEdicion && this.cursoSeleccionado) {
-      const cursoActualizado: Curso = {
-        ...this.cursoSeleccionado,
-        ...this.cursoForm.value
-      };
-      await this.cursoService.updateCurso(cursoActualizado);
-      this.notificationService.showSuccess('Curso actualizado correctamente');
-    } else {
-      const nuevoCurso: Curso = {
-        id: Date.now().toString(),
-        ...this.cursoForm.value,
-        horarios: [],
-        materias: [],
-        alumnos: [],
-        estado: 'activo',
-        cupoMaximo: this.cursoForm.value.capacidad,
-        cupoActual: 0,
-        listaEspera: [],
-        modalidad: 'presencial',
-        configuracion: {
-          permiteAutoinscripcion: false,
-          permiteEdicionHorariosProfesor: false,
-          requiereAprobacionInscripcion: true,
-          activaListaEspera: true
-        }
-      };
-      await this.cursoService.addCurso(nuevoCurso);
-      this.notificationService.showSuccess('Curso creado correctamente');
-    }
+    try {
+      if (this.modoEdicion && this.cursoSeleccionado) {
+        const cursoActualizado: Curso = {
+          ...this.cursoSeleccionado,
+          ...this.cursoForm.value
+        };
+        await this.cursoService.updateCurso(cursoActualizado);
+        this.notificationService.showSuccess('Curso actualizado correctamente');
+      } else {
+        const nuevoCurso: Curso = {
+          id: crypto.randomUUID(),
+          ...this.cursoForm.value,
+          horarios: [],
+          materias: [],
+          alumnos: [],
+          estado: 'activo',
+          cupoMaximo: this.cursoForm.value.capacidad,
+          cupoActual: 0,
+          listaEspera: [],
+          modalidad: 'presencial',
+          configuracion: {
+            permiteAutoinscripcion: false,
+            permiteEdicionHorariosProfesor: false,
+            requiereAprobacionInscripcion: true,
+            activaListaEspera: true
+          }
+        };
+        await this.cursoService.addCurso(nuevoCurso);
+        this.notificationService.showSuccess('Curso creado correctamente');
+      }
 
-    await this.loadCursos();
-    this.cerrarModal();
+      await this.loadCursos();
+      this.cerrarModal();
+    } catch (error: any) {
+      console.error('Error guardando curso:', error);
+      this.notificationService.showError(error.message || 'Error al guardar el curso. Por favor, intente nuevamente.');
+    }
   }
 
   async eliminarCurso(id: string): Promise<void> {
