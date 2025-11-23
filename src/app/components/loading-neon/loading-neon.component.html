@@ -1,0 +1,17 @@
+<div class="loading-overlay" *ngIf="isLoading" [@fadeInOut]>
+  <div class="loading-container">
+    <div class="logo-wrapper">
+      <img 
+        src="assets/logo.png" 
+        alt="Logo" 
+        class="logo-image"
+        (error)="$event.target.src='assets/img/logo.png'">
+    </div>
+    <div class="loading-text">
+      <span class="loading-dot">.</span>
+      <span class="loading-dot">.</span>
+      <span class="loading-dot">.</span>
+    </div>
+  </div>
+</div>
+

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { Institucion } from '../models/institucion.model';
+import { SupabaseService } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,32 +9,111 @@ import { Institucion } from '../models/institucion.model';
 export class InstitucionService {
   private readonly STORAGE_KEY = 'gestion_academica_instituciones';
   private readonly CURRENT_INSTITUCION_KEY = 'gestion_academica_institucion_actual';
-  private institucionesSubject = new BehaviorSubject<Institucion[]>(this.getInstituciones());
-  private currentInstitucionSubject = new BehaviorSubject<Institucion | null>(this.getCurrentInstitucion());
+  private useSupabase = true; // Cambiar a false para usar localStorage temporalmente
+  private institucionesSubject = new BehaviorSubject<Institucion[]>([]);
+  private currentInstitucionSubject = new BehaviorSubject<Institucion | null>(this.getCurrentInstitucionFromStorage());
   
   public instituciones$ = this.institucionesSubject.asObservable();
   public currentInstitucion$ = this.currentInstitucionSubject.asObservable();
 
-  constructor() {
-    this.initializeDefaultInstituciones();
+  constructor(private supabase: SupabaseService) {
+    this.loadInstituciones();
     // Aplicar colores de la institución actual si existe
-    const currentInstitucion = this.getCurrentInstitucion();
+    const currentInstitucion = this.getCurrentInstitucionFromStorage();
     if (currentInstitucion) {
-      // Actualizar la institución actual con los datos más recientes
-      const institucionesActualizadas = this.getInstituciones();
-      const institucionActual = institucionesActualizadas.find(i => i.id === currentInstitucion.id);
-      if (institucionActual) {
-        this.setCurrentInstitucion(institucionActual);
-      } else {
-        this.updateCSSVariables(currentInstitucion);
+      this.updateCSSVariables(currentInstitucion);
+    }
+  }
+
+  private async loadInstituciones(): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const instituciones = await this.getInstitucionesFromSupabase();
+        this.institucionesSubject.next(instituciones);
+        // Si no hay instituciones, inicializar las por defecto
+        if (instituciones.length === 0) {
+          await this.initializeDefaultInstituciones();
+        }
+      } catch (error) {
+        console.error('Error cargando instituciones desde Supabase:', error);
+        // Fallback a localStorage
+        const instituciones = this.getInstitucionesFromStorage();
+        this.institucionesSubject.next(instituciones);
+        if (instituciones.length === 0) {
+          this.initializeDefaultInstitucionesSync();
+        }
+      }
+    } else {
+      const instituciones = this.getInstitucionesFromStorage();
+      this.institucionesSubject.next(instituciones);
+      if (instituciones.length === 0) {
+        this.initializeDefaultInstitucionesSync();
       }
     }
   }
 
-  private initializeDefaultInstituciones(): void {
-    const instituciones = this.getInstituciones();
-    
-    // Definir instituciones por defecto
+  private async getInstitucionesFromSupabase(): Promise<Institucion[]> {
+    const { data, error } = await this.supabase.client
+      .from('instituciones')
+      .select('*')
+      .order('nombre', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map((db: any) => this.mapDbToInstitucion(db));
+  }
+
+  private mapDbToInstitucion(db: any): Institucion {
+    return {
+      id: db.id,
+      nombre: db.nombre,
+      nombreCorto: db.nombre_corto,
+      logo: db.logo,
+      descripcion: db.descripcion,
+      colorPrimario: db.color_primario,
+      colorSecundario: db.color_secundario,
+      colorAcento: db.color_acento,
+      email: db.email,
+      telefono: db.telefono,
+      direccion: db.direccion,
+      activa: db.activa,
+      credencialSecreta: db.credencial_secreta,
+      fechaCreacion: db.fecha_creacion,
+      fechaActualizacion: db.fecha_actualizacion
+    };
+  }
+
+  private mapInstitucionToDb(inst: Institucion): any {
+    return {
+      id: inst.id,
+      nombre: inst.nombre,
+      nombre_corto: inst.nombreCorto,
+      logo: inst.logo,
+      descripcion: inst.descripcion,
+      color_primario: inst.colorPrimario,
+      color_secundario: inst.colorSecundario,
+      color_acento: inst.colorAcento,
+      email: inst.email,
+      telefono: inst.telefono,
+      direccion: inst.direccion,
+      activa: inst.activa,
+      credencial_secreta: inst.credencialSecreta,
+      fecha_creacion: inst.fechaCreacion,
+      fecha_actualizacion: inst.fechaActualizacion || new Date().toISOString()
+    };
+  }
+
+  private getInstitucionesFromStorage(): Institucion[] {
+    const stored = localStorage.getItem(this.STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  }
+
+  private getCurrentInstitucionFromStorage(): Institucion | null {
+    const stored = localStorage.getItem(this.CURRENT_INSTITUCION_KEY);
+    return stored ? JSON.parse(stored) : null;
+  }
+
+  private async initializeDefaultInstituciones(): Promise<void> {
     const defaultInstituciones: Institucion[] = [
       {
         id: '1',
@@ -88,96 +168,101 @@ export class InstitucionService {
       }
     ];
 
-    if (instituciones.length === 0) {
-      // Si no hay instituciones, crear las por defecto
-      this.saveInstituciones(defaultInstituciones);
-    } else {
-      let necesitaGuardar = false;
-      
-      // Siempre actualizar la institución con ID '1' para asegurar que tenga los datos correctos
-      const institucionActualizada = defaultInstituciones.find(i => i.id === '1');
-      const index = instituciones.findIndex(i => i.id === '1');
-      
-      if (institucionActualizada) {
-        if (index !== -1) {
-          const institucionExistente = instituciones[index];
-          // Mantener la fecha de creación original si existe
-          institucionActualizada.fechaCreacion = institucionExistente.fechaCreacion || institucionActualizada.fechaCreacion;
-          
-          // Verificar si hay cambios antes de actualizar
-          if (institucionExistente.nombre !== institucionActualizada.nombre || 
-              institucionExistente.descripcion !== institucionActualizada.descripcion ||
-              institucionExistente.logo !== institucionActualizada.logo ||
-              institucionExistente.colorPrimario !== institucionActualizada.colorPrimario) {
-            // Actualizar la institución
-            instituciones[index] = { ...institucionActualizada };
-            necesitaGuardar = true;
-            
-            // Si esta institución está seleccionada actualmente, actualizarla también
-            const currentInstitucion = this.getCurrentInstitucion();
-            if (currentInstitucion && currentInstitucion.id === '1') {
-              this.setCurrentInstitucion(instituciones[index]);
-            }
+    if (this.useSupabase) {
+      for (const inst of defaultInstituciones) {
+        try {
+          const existing = await this.supabase.client
+            .from('instituciones')
+            .select('id')
+            .eq('id', inst.id)
+            .single();
+
+          if (!existing.data) {
+            await this.supabase.create('instituciones', this.mapInstitucionToDb(inst));
           }
-        } else {
-          // Si no existe la institución con ID '1', agregarla
-          instituciones.push(institucionActualizada);
-          necesitaGuardar = true;
+        } catch (error: any) {
+          // Ignorar si ya existe
         }
       }
-      
-      // Asegurarse de que todas las instituciones por defecto existan
-      defaultInstituciones.forEach(defaultInst => {
-        const existe = instituciones.find(i => i.id === defaultInst.id);
-        if (!existe) {
-          instituciones.push(defaultInst);
-          necesitaGuardar = true;
-        }
-      });
-      
-      // Guardar solo si hubo cambios
-      if (necesitaGuardar) {
-        this.saveInstituciones(instituciones);
+      await this.loadInstituciones();
+    } else {
+      this.initializeDefaultInstitucionesSync();
+    }
+  }
+
+  private initializeDefaultInstitucionesSync(): void {
+    const instituciones = this.getInstitucionesFromStorage();
+    const defaultInstituciones: Institucion[] = [
+      {
+        id: '1',
+        nombre: 'Instituto Paula Robles',
+        nombreCorto: 'IPR',
+        logo: 'assets/instituciones/paula-robles-logo.png',
+        descripcion: 'Instituto Superior Paula Robles',
+        colorPrimario: '#800020',
+        colorSecundario: '#722F37',
+        colorAcento: '#FFFFFF',
+        email: 'contacto@paulorobles.edu',
+        telefono: '+54 11 1234-5678',
+        direccion: 'Av. Principal 123, Buenos Aires',
+        activa: true,
+        credencialSecreta: 'EDI2025',
+        fechaCreacion: new Date().toISOString(),
+        fechaActualizacion: new Date().toISOString()
       }
+    ];
+
+    if (instituciones.length === 0) {
+      this.saveInstitucionesToStorage(defaultInstituciones);
+      this.institucionesSubject.next(defaultInstituciones);
     }
   }
   
-  // Método público para forzar la actualización de instituciones
-  refreshInstituciones(): void {
-    this.initializeDefaultInstituciones();
-    const instituciones = this.getInstituciones();
-    this.institucionesSubject.next(instituciones);
+  async refreshInstituciones(): Promise<void> {
+    await this.loadInstituciones();
   }
 
-  getInstituciones(): Institucion[] {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+  async getInstituciones(): Promise<Institucion[]> {
+    if (this.useSupabase) {
+      return await this.getInstitucionesFromSupabase();
+    } else {
+      return this.getInstitucionesFromStorage();
+    }
   }
 
-  getInstitucionById(id: string): Institucion | undefined {
-    return this.getInstituciones().find(i => i.id === id);
+  async getInstitucionById(id: string): Promise<Institucion | undefined> {
+    if (this.useSupabase) {
+      try {
+        const { data, error } = await this.supabase.client
+          .from('instituciones')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        return data ? this.mapDbToInstitucion(data) : undefined;
+      } catch (error) {
+        console.error('Error obteniendo institución:', error);
+        return undefined;
+      }
+    } else {
+      return this.getInstitucionesFromStorage().find(i => i.id === id);
+    }
   }
 
-  getInstitucionActiva(): Institucion[] {
-    return this.getInstituciones().filter(i => i.activa);
+  async getInstitucionActiva(): Promise<Institucion[]> {
+    const instituciones = await this.getInstituciones();
+    return instituciones.filter(i => i.activa);
   }
 
   setCurrentInstitucion(institucion: Institucion): void {
     localStorage.setItem(this.CURRENT_INSTITUCION_KEY, JSON.stringify(institucion));
     this.currentInstitucionSubject.next(institucion);
     this.updateCSSVariables(institucion);
-    // También actualizar los colores del header
-    this.applyInstitucionColors(institucion);
-  }
-
-  private applyInstitucionColors(institucion: Institucion): void {
-    // Los colores ya se aplican mediante CSS variables
-    // Este método puede usarse para lógica adicional si es necesario
   }
 
   getCurrentInstitucion(): Institucion | null {
-    const stored = localStorage.getItem(this.CURRENT_INSTITUCION_KEY);
-    return stored ? JSON.parse(stored) : null;
+    return this.getCurrentInstitucionFromStorage();
   }
 
   clearCurrentInstitucion(): void {
@@ -186,37 +271,74 @@ export class InstitucionService {
     this.resetCSSVariables();
   }
 
-  verificarCredencial(institucionId: string, credencial: string): boolean {
-    const institucion = this.getInstitucionById(institucionId);
+  async verificarCredencial(institucionId: string, credencial: string): Promise<boolean> {
+    const institucion = await this.getInstitucionById(institucionId);
     return institucion ? institucion.credencialSecreta === credencial : false;
   }
 
-  addInstitucion(institucion: Institucion): void {
-    const instituciones = this.getInstituciones();
-    instituciones.push(institucion);
-    this.saveInstituciones(instituciones);
+  async addInstitucion(institucion: Institucion): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.create('instituciones', this.mapInstitucionToDb(institucion));
+        await this.loadInstituciones();
+      } catch (error) {
+        console.error('Error agregando institución:', error);
+        throw error;
+      }
+    } else {
+      const instituciones = this.getInstitucionesFromStorage();
+      instituciones.push(institucion);
+      this.saveInstitucionesToStorage(instituciones);
+      this.institucionesSubject.next(instituciones);
+    }
   }
 
-  updateInstitucion(institucion: Institucion): void {
-    const instituciones = this.getInstituciones();
-    const index = instituciones.findIndex(i => i.id === institucion.id);
-    if (index !== -1) {
-      instituciones[index] = { ...institucion, fechaActualizacion: new Date().toISOString() };
-      this.saveInstituciones(instituciones);
-      if (this.getCurrentInstitucion()?.id === institucion.id) {
-        this.setCurrentInstitucion(instituciones[index]);
+  async updateInstitucion(institucion: Institucion): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const updated = { ...institucion, fechaActualizacion: new Date().toISOString() };
+        await this.supabase.update('instituciones', institucion.id, this.mapInstitucionToDb(updated));
+        await this.loadInstituciones();
+        
+        if (this.getCurrentInstitucion()?.id === institucion.id) {
+          this.setCurrentInstitucion(updated);
+        }
+      } catch (error) {
+        console.error('Error actualizando institución:', error);
+        throw error;
+      }
+    } else {
+      const instituciones = this.getInstitucionesFromStorage();
+      const index = instituciones.findIndex(i => i.id === institucion.id);
+      if (index !== -1) {
+        instituciones[index] = { ...institucion, fechaActualizacion: new Date().toISOString() };
+        this.saveInstitucionesToStorage(instituciones);
+        this.institucionesSubject.next(instituciones);
+        if (this.getCurrentInstitucion()?.id === institucion.id) {
+          this.setCurrentInstitucion(instituciones[index]);
+        }
       }
     }
   }
 
-  deleteInstitucion(id: string): void {
-    const instituciones = this.getInstituciones().filter(i => i.id !== id);
-    this.saveInstituciones(instituciones);
+  async deleteInstitucion(id: string): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.delete('instituciones', id);
+        await this.loadInstituciones();
+      } catch (error) {
+        console.error('Error eliminando institución:', error);
+        throw error;
+      }
+    } else {
+      const instituciones = this.getInstitucionesFromStorage().filter(i => i.id !== id);
+      this.saveInstitucionesToStorage(instituciones);
+      this.institucionesSubject.next(instituciones);
+    }
   }
 
-  private saveInstituciones(instituciones: Institucion[]): void {
+  private saveInstitucionesToStorage(instituciones: Institucion[]): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(instituciones));
-    this.institucionesSubject.next(instituciones);
   }
 
   private updateCSSVariables(institucion: Institucion): void {

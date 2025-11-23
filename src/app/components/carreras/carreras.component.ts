@@ -138,36 +138,38 @@ export class CarrerasComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadCarreras();
+  async ngOnInit(): Promise<void> {
+    await this.loadCarreras();
+    await this.actualizarCaches();
   }
 
-  loadCarreras(): void {
-    this.carreras = this.carreraService.getCarreras();
+  async loadCarreras(): Promise<void> {
+    this.carreras = await this.carreraService.getCarreras();
   }
 
-  verCursos(carrera: Carrera): void {
+  async verCursos(carrera: Carrera): Promise<void> {
     this.carreraSeleccionada = carrera;
-    this.cursosDeCarrera = this.cursoService.getCursosByCarrera(carrera.id);
-    this.loadAulasDisponibles();
-    this.loadDocentesDisponibles();
+    this.cursosDeCarrera = await this.cursoService.getCursosByCarrera(carrera.id);
+    await this.loadAulasDisponibles();
+    await this.loadDocentesDisponibles();
     this.mostrarCursos = true;
   }
 
-  verDetalleCarrera(carrera: Carrera): void {
+  async verDetalleCarrera(carrera: Carrera): Promise<void> {
     this.carreraSeleccionada = carrera;
-    this.cursosDeCarrera = this.cursoService.getCursosByCarrera(carrera.id);
-    this.loadAulasDisponibles();
-    this.loadDocentesDisponibles();
+    this.cursosDeCarrera = await this.cursoService.getCursosByCarrera(carrera.id);
+    await this.loadAulasDisponibles();
+    await this.loadDocentesDisponibles();
     this.mostrarCursos = true;
   }
 
-  loadAulasDisponibles(): void {
-    this.aulasDisponibles = this.aulaService.getAulas().filter(a => a.estado === 'disponible');
+  async loadAulasDisponibles(): Promise<void> {
+    const todasLasAulas = await this.aulaService.getAulas();
+    this.aulasDisponibles = todasLasAulas.filter(a => a.estado === 'disponible');
   }
 
-  loadDocentesDisponibles(): void {
-    this.docentesDisponibles = this.docenteService.getDocentes();
+  async loadDocentesDisponibles(): Promise<void> {
+    this.docentesDisponibles = await this.docenteService.getDocentes();
   }
 
   cerrarCursos(): void {
@@ -194,7 +196,7 @@ export class CarrerasComponent implements OnInit {
     this.cursoForm.patchValue(curso);
   }
 
-  guardarCurso(): void {
+  async guardarCurso(): Promise<void> {
     if (!this.carreraSeleccionada || this.cursoForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -210,7 +212,7 @@ export class CarrerasComponent implements OnInit {
     
     // Validar aula si está seleccionada
     if (formValue.aulaId) {
-      const aula = this.aulaService.getAulaById(formValue.aulaId);
+      const aula = this.aulasCache.get(formValue.aulaId);
       if (!aula) {
         this.notificationService.showError('El aula seleccionada no existe');
         return;
@@ -230,7 +232,7 @@ export class CarrerasComponent implements OnInit {
         ...formValue,
         carreraId: this.carreraSeleccionada.id
       };
-      this.cursoService.updateCurso(cursoActualizado);
+      await this.cursoService.updateCurso(cursoActualizado);
       this.notificationService.showSuccess('Curso actualizado correctamente');
     } else {
       const nuevoCurso: Curso = {
@@ -252,7 +254,7 @@ export class CarrerasComponent implements OnInit {
           activaListaEspera: true
         }
       };
-      this.cursoService.addCurso(nuevoCurso);
+      await this.cursoService.addCurso(nuevoCurso);
       
       // Agregar curso a la carrera
       if (!this.carreraSeleccionada.cursos) {
@@ -275,21 +277,22 @@ export class CarrerasComponent implements OnInit {
     this.cursoForm.reset();
   }
 
-  eliminarCurso(cursoId: string): void {
+  async eliminarCurso(cursoId: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar este curso?')) {
-      this.cursoService.deleteCurso(cursoId);
+      await this.cursoService.deleteCurso(cursoId);
       if (this.carreraSeleccionada) {
-        this.verCursos(this.carreraSeleccionada);
+        await this.verCursos(this.carreraSeleccionada);
       }
       this.notificationService.showSuccess('Curso eliminado correctamente');
     }
   }
 
-  asignarMaterias(curso: Curso): void {
+  async asignarMaterias(curso: Curso): Promise<void> {
     // Las materias ya se asignaron al crear la carrera, pero se puede editar desde aquí
     this.cursoSeleccionado = curso;
     // Mostrar todas las materias disponibles (las que ya están asignadas al curso y las disponibles)
-    this.materiasDisponibles = this.materiaService.getMaterias()
+    const todasLasMaterias = await this.materiaService.getMaterias();
+    this.materiasDisponibles = todasLasMaterias
       .filter(m => 
         (!m.carreraId || m.carreraId === curso.carreraId) && 
         (!m.año || m.año === curso['año']) &&
@@ -299,11 +302,12 @@ export class CarrerasComponent implements OnInit {
     this.mostrarAsignarMaterias = true;
   }
 
-  inscribirAlumnos(curso: Curso): void {
+  async inscribirAlumnos(curso: Curso): Promise<void> {
     this.cursoSeleccionado = curso;
     // Mostrar TODOS los alumnos registrados en el sistema, no solo los de la misma carrera
-    const todosLosAlumnos = this.alumnoService.getAlumnos();
-    const cursosDelAño = this.cursoService.getCursosByCarrera(curso.carreraId)
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    const todosLosCursos = await this.cursoService.getCursosByCarrera(curso.carreraId);
+    const cursosDelAño = todosLosCursos
       .filter(c => c['año'] === curso['año']);
     const alumnosYaInscritos = cursosDelAño.flatMap(c => c.alumnos || []);
     
@@ -336,7 +340,7 @@ export class CarrerasComponent implements OnInit {
     this.notificationService.showSuccess('Materias actualizadas');
   }
 
-  inscribirAlumnoACurso(alumnoId: string): void {
+  async inscribirAlumnoACurso(alumnoId: string): Promise<void> {
     if (!this.cursoSeleccionado) return;
     
     if (this.cursoSeleccionado.alumnos.includes(alumnoId)) {
@@ -344,7 +348,7 @@ export class CarrerasComponent implements OnInit {
       return;
     }
     
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
+    const alumno = await this.alumnoService.getAlumnoById(alumnoId);
     if (!alumno) {
       this.notificationService.showError('Alumno no encontrado');
       return;
@@ -353,7 +357,7 @@ export class CarrerasComponent implements OnInit {
     // Si el alumno pertenece a otra carrera, actualizar su carreraId al inscribirlo
     if (alumno.carreraId !== this.cursoSeleccionado.carreraId) {
       alumno.carreraId = this.cursoSeleccionado.carreraId;
-      this.alumnoService.updateAlumno(alumno);
+      await this.alumnoService.updateAlumno(alumno);
       this.notificationService.showInfo(`El alumno ha sido asignado a la carrera "${this.carreraSeleccionada?.nombre || ''}"`);
     }
     
@@ -369,15 +373,15 @@ export class CarrerasComponent implements OnInit {
       
       // Actualizar curso del alumno
       alumno.curso = `${this.cursoSeleccionado['año']}° ${this.cursoSeleccionado.division}`;
-      this.alumnoService.updateAlumno(alumno);
+      await this.alumnoService.updateAlumno(alumno);
       
       // Inscribir automáticamente al alumno en todas las materias del curso
       this.inscribirAlumnoEnMateriasDelCurso(alumnoId, this.cursoSeleccionado);
     }
     
-    this.cursoService.updateCurso(this.cursoSeleccionado);
+    await this.cursoService.updateCurso(this.cursoSeleccionado);
     this.notificationService.showSuccess('Alumno inscrito correctamente');
-    this.inscribirAlumnos(this.cursoSeleccionado);
+    await this.inscribirAlumnos(this.cursoSeleccionado);
   }
 
   inscribirAlumnoEnMateriasDelCurso(alumnoId: string, curso: Curso): void {
@@ -400,7 +404,7 @@ export class CarrerasComponent implements OnInit {
     }
   }
 
-  desinscribirAlumnoACurso(alumnoId: string): void {
+  async desinscribirAlumnoACurso(alumnoId: string): Promise<void> {
     if (!this.cursoSeleccionado) return;
     
     const index = this.cursoSeleccionado.alumnos.indexOf(alumnoId);
@@ -409,15 +413,15 @@ export class CarrerasComponent implements OnInit {
       this.cursoSeleccionado.cupoActual = Math.max(0, (this.cursoSeleccionado.cupoActual || 0) - 1);
       
       // Actualizar curso del alumno
-      const alumno = this.alumnoService.getAlumnoById(alumnoId);
+      const alumno = await this.alumnoService.getAlumnoById(alumnoId);
       if (alumno) {
         alumno.curso = '';
-        this.alumnoService.updateAlumno(alumno);
+        await this.alumnoService.updateAlumno(alumno);
       }
       
-      this.cursoService.updateCurso(this.cursoSeleccionado);
+      await this.cursoService.updateCurso(this.cursoSeleccionado);
       this.notificationService.showSuccess('Alumno desinscrito correctamente');
-      this.inscribirAlumnos(this.cursoSeleccionado);
+      await this.inscribirAlumnos(this.cursoSeleccionado);
     }
   }
 
@@ -527,19 +531,48 @@ export class CarrerasComponent implements OnInit {
     return materia ? materia.nombre : '';
   }
 
+  private nombresAlumnos: Map<string, string> = new Map();
+  private nombresAulas: Map<string, string> = new Map();
+  private materiasCache: Map<string, Materia> = new Map();
+  private aulasCache: Map<string, Aula> = new Map();
+  private alumnosCache: Map<string, Alumno> = new Map();
+  private carrerasCache: Map<string, Carrera> = new Map();
+
+  async actualizarCaches(): Promise<void> {
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    todosLosAlumnos.forEach(alumno => {
+      this.nombresAlumnos.set(alumno.id, `${alumno.nombre} ${alumno.apellido}`);
+      this.alumnosCache.set(alumno.id, alumno);
+    });
+
+    const todasLasAulas = await this.aulaService.getAulas();
+    todasLasAulas.forEach(aula => {
+      this.nombresAulas.set(aula.id, aula.nombre);
+      this.aulasCache.set(aula.id, aula);
+    });
+
+    const todasLasMaterias = await this.materiaService.getMaterias();
+    todasLasMaterias.forEach(materia => {
+      this.materiasCache.set(materia.id, materia);
+    });
+
+    const todasLasCarreras = await this.carreraService.getCarreras();
+    todasLasCarreras.forEach(carrera => {
+      this.carrerasCache.set(carrera.id, carrera);
+    });
+  }
+
   getNombreAlumno(alumnoId: string): string {
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
-    return alumno ? `${alumno.nombre} ${alumno.apellido}` : '';
+    return this.nombresAlumnos.get(alumnoId) || '';
   }
 
   getMateriaById(materiaId: string): Materia | undefined {
-    return this.materiaService.getMateriaById(materiaId);
+    return this.materiasCache.get(materiaId);
   }
 
   getAulaNombre(aulaId: string | undefined): string {
     if (!aulaId) return '';
-    const aula = this.aulaService.getAulaById(aulaId);
-    return aula ? aula.nombre : '';
+    return this.nombresAulas.get(aulaId) || '';
   }
 
   getTotalMaterias(): number {
@@ -555,12 +588,12 @@ export class CarrerasComponent implements OnInit {
     return aulasUnicas.size;
   }
 
-  getAlumnoById(alumnoId: string) {
-    return this.alumnoService.getAlumnoById(alumnoId);
+  getAlumnoById(alumnoId: string): Alumno | undefined {
+    return this.alumnosCache.get(alumnoId);
   }
 
-  getCarreraById(carreraId: string) {
-    return this.carreraService.getCarreraById(carreraId);
+  getCarreraById(carreraId: string): Carrera | undefined {
+    return this.carrerasCache.get(carreraId);
   }
 
   getNombreDocente(docenteId: string): string {
@@ -569,7 +602,7 @@ export class CarrerasComponent implements OnInit {
   }
   
   getAulaById(aulaId: string): Aula | undefined {
-    return this.aulaService.getAulaById(aulaId);
+    return this.aulasCache.get(aulaId);
   }
 
   abrirModalNuevo(): void {
@@ -718,12 +751,12 @@ export class CarrerasComponent implements OnInit {
   getMateriasDisponiblesParaCurso(curso: Partial<Curso>): Materia[] {
     // Obtener TODAS las materias disponibles (con o sin carreraId asignado)
     // El profesor ya viene asignado a cada materia
-    return this.materiaService.getMaterias();
+    return Array.from(this.materiasCache.values());
   }
   
-  toggleMateriaEnCurso(materiaId: string, cursoId: string, profesorId: string, nombreMateria: string): void {
+  async toggleMateriaEnCurso(materiaId: string, cursoId: string, profesorId: string, nombreMateria: string): Promise<void> {
     // Obtener el profesor de la materia si no viene
-    const materia = this.materiaService.getMateriaById(materiaId);
+    const materia = this.materiasCache.get(materiaId);
     const profesorMateria = materia?.profesor || profesorId;
     
     // Buscar o crear el cursoData
@@ -805,7 +838,7 @@ export class CarrerasComponent implements OnInit {
   }
   
   // Finalizar Wizard
-  finalizarWizard(): void {
+  async finalizarWizard(): Promise<void> {
     if (!this.wizardData.carrera) {
       this.notificationService.showError('Error: No se pudo procesar la carrera');
       return;
@@ -825,21 +858,21 @@ export class CarrerasComponent implements OnInit {
       carrera.fechaCreacion = this.carreraSeleccionada!.fechaCreacion;
       
       // Eliminar cursos antiguos que no están en el wizard
-      const cursosAntiguos = this.cursoService.getCursosByCarrera(carrera.id);
+      const cursosAntiguos = await this.cursoService.getCursosByCarrera(carrera.id);
       const idsCursosNuevos = this.wizardData.cursos.map(c => c.id!);
-      cursosAntiguos.forEach(cursoAntiguo => {
+      for (const cursoAntiguo of cursosAntiguos) {
         if (!idsCursosNuevos.includes(cursoAntiguo.id)) {
-          this.cursoService.deleteCurso(cursoAntiguo.id);
+          await this.cursoService.deleteCurso(cursoAntiguo.id);
         }
-      });
+      }
     } else {
       // Crear nueva carrera
-      this.carreraService.addCarrera(carrera);
+      await this.carreraService.addCarrera(carrera);
     }
     
     // 2. Actualizar materias con carreraId si no lo tienen
     for (let materiaSeleccionada of this.wizardData.materiasSeleccionadas) {
-      const materia = this.materiaService.getMateriaById(materiaSeleccionada.materiaId);
+      const materia = this.materiasCache.get(materiaSeleccionada.materiaId);
       if (materia && (!materia.carreraId || materia.carreraId === '')) {
         // Obtener el curso correspondiente para obtener año y cuatrimestre
         const cursoCorrespondiente = this.wizardData.cursos.find(c => c.id === materiaSeleccionada.cursoId);
@@ -851,7 +884,9 @@ export class CarrerasComponent implements OnInit {
           cuatrimestre: cursoCorrespondiente?.cuatrimestre || materia.cuatrimestre,
           tipo: materia.tipo || 'obligatoria'
         };
-        this.materiaService.updateMateria(materiaActualizada);
+        await this.materiaService.updateMateria(materiaActualizada);
+        // Actualizar cache
+        this.materiasCache.set(materia.id, materiaActualizada);
       }
     }
     
@@ -861,28 +896,30 @@ export class CarrerasComponent implements OnInit {
         .filter(m => m.cursoId === cursoData.id)
         .map(m => m.materiaId);
       
-      if (esEdicion && cursoData.id && this.cursoService.getCursoById(cursoData.id)) {
-        // Actualizar curso existente
-        const cursoExistente = this.cursoService.getCursoById(cursoData.id);
-        const curso: Curso = {
-          ...cursoExistente!,
-          nombre: cursoData.nombre!,
-          codigo: cursoData.codigo!,
-          año: cursoData['año']!,
-          division: cursoData.division!,
-          turno: cursoData.turno!,
-          capacidad: cursoData.capacidad!,
-          cuatrimestre: cursoData.cuatrimestre!,
-          modalidad: cursoData.modalidad!,
-          aulaId: cursoData.aulaId!,
-          materias: materiasDelCurso
-        };
-        this.cursoService.updateCurso(curso);
-        if (!carrera.cursos) {
-          carrera.cursos = [];
-        }
-        if (!carrera.cursos.includes(curso.id)) {
-          carrera.cursos.push(curso.id);
+      if (esEdicion && cursoData.id) {
+        const cursoExistente = await this.cursoService.getCursoById(cursoData.id);
+        if (cursoExistente) {
+          // Actualizar curso existente
+          const curso: Curso = {
+            ...cursoExistente,
+            nombre: cursoData.nombre!,
+            codigo: cursoData.codigo!,
+            año: cursoData['año']!,
+            division: cursoData.division!,
+            turno: cursoData.turno!,
+            capacidad: cursoData.capacidad!,
+            cuatrimestre: cursoData.cuatrimestre!,
+            modalidad: cursoData.modalidad!,
+            aulaId: cursoData.aulaId!,
+            materias: materiasDelCurso
+          };
+          await this.cursoService.updateCurso(curso);
+          if (!carrera.cursos) {
+            carrera.cursos = [];
+          }
+          if (!carrera.cursos.includes(curso.id)) {
+            carrera.cursos.push(curso.id);
+          }
         }
       } else {
         // Crear nuevo curso
@@ -898,24 +935,14 @@ export class CarrerasComponent implements OnInit {
           cuatrimestre: cursoData.cuatrimestre!,
           modalidad: cursoData.modalidad!,
           aulaId: cursoData.aulaId!,
-          horarios: cursoData.id && this.cursoService.getCursoById(cursoData.id) 
-            ? this.cursoService.getCursoById(cursoData.id)!.horarios 
-            : [],
+          horarios: [],
           materias: materiasDelCurso,
-          alumnos: cursoData.id && this.cursoService.getCursoById(cursoData.id)
-            ? this.cursoService.getCursoById(cursoData.id)!.alumnos
-            : [],
-          listaEspera: cursoData.id && this.cursoService.getCursoById(cursoData.id)
-            ? this.cursoService.getCursoById(cursoData.id)!.listaEspera || []
-            : [],
+          alumnos: [],
+          listaEspera: [],
           estado: 'activo',
           cupoMaximo: cursoData.capacidad,
-          cupoActual: cursoData.id && this.cursoService.getCursoById(cursoData.id)
-            ? this.cursoService.getCursoById(cursoData.id)!.cupoActual || 0
-            : 0,
-          fechaCreacion: cursoData.id && this.cursoService.getCursoById(cursoData.id)
-            ? this.cursoService.getCursoById(cursoData.id)!.fechaCreacion
-            : new Date().toISOString(),
+          cupoActual: 0,
+          fechaCreacion: new Date().toISOString(),
           configuracion: {
             permiteAutoinscripcion: false,
             permiteEdicionHorariosProfesor: false,
@@ -923,7 +950,7 @@ export class CarrerasComponent implements OnInit {
             activaListaEspera: true
           }
         };
-        this.cursoService.addCurso(curso);
+        await this.cursoService.addCurso(curso);
         if (!carrera.cursos) {
           carrera.cursos = [];
         }
@@ -932,18 +959,18 @@ export class CarrerasComponent implements OnInit {
     }
     
     // 3. Actualizar carrera con cursos
-    this.carreraService.updateCarrera(carrera);
+    await this.carreraService.updateCarrera(carrera);
     
     const mensaje = esEdicion 
       ? '¡Carrera actualizada exitosamente con todos sus cursos y materias!'
       : '¡Carrera creada exitosamente con todos sus cursos y materias!';
     
     this.notificationService.showSuccess(mensaje);
-    this.loadCarreras();
+    await this.loadCarreras();
     this.cerrarWizard();
   }
 
-  abrirModalEditar(carrera: Carrera): void {
+  async abrirModalEditar(carrera: Carrera): Promise<void> {
     // Iniciar wizard en modo edición
     this.mostrarWizard = true;
     this.modalAbierto = false;
@@ -973,8 +1000,8 @@ export class CarrerasComponent implements OnInit {
     
     // Cargar cursos existentes de la carrera
     if (carrera.cursos && carrera.cursos.length > 0) {
-      const cursosExistentes = this.cursoService.getCursosByCarrera(carrera.id);
-      this.wizardData.cursos = cursosExistentes.map(curso => ({
+      const cursosExistentes = await this.cursoService.getCursosByCarrera(carrera.id);
+      this.wizardData.cursos = cursosExistentes.map((curso: Curso) => ({
         id: curso.id,
         nombre: curso.nombre,
         codigo: curso.codigo,
@@ -988,10 +1015,10 @@ export class CarrerasComponent implements OnInit {
       }));
       
       // Cargar materias seleccionadas por curso
-      cursosExistentes.forEach(curso => {
+      for (const curso of cursosExistentes) {
         if (curso.materias && curso.materias.length > 0) {
-          curso.materias.forEach(materiaId => {
-            const materia = this.materiaService.getMateriaById(materiaId);
+          for (const materiaId of curso.materias) {
+            const materia = this.materiasCache.get(materiaId);
             if (materia) {
               const profesorId = this.docentesDisponibles.find(d => 
                 `${d.nombre} ${d.apellido}` === materia.profesor
@@ -1012,9 +1039,9 @@ export class CarrerasComponent implements OnInit {
               }
               cursoData.materias.push(materiaId);
             }
-          });
+          }
         }
-      });
+      }
     }
     
     // Cargar aulas de los cursos

@@ -90,32 +90,32 @@ export class AlumnosComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadCarreras();
+  async ngOnInit(): Promise<void> {
+    await this.loadCarreras();
     // loadAlumnos se llama después si es profesor y hay carrera seleccionada
     if (!this.permissionsService.esProfesor() || this.carreraSeleccionada) {
-      this.loadAlumnos();
+      await this.loadAlumnos();
     }
   }
 
-  loadCarreras(): void {
+  async loadCarreras(): Promise<void> {
     if (this.permissionsService.esProfesor()) {
       // Para profesores: solo carreras donde tiene materias
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
         // Intentar obtener docente por ID
-        let docente = this.docenteService.getDocenteById(usuario.id);
+        let docente = await this.docenteService.getDocenteById(usuario.id);
         
         // Si no se encuentra por ID, buscar por nombre
         if (!docente) {
-          const todosLosDocentes = this.docenteService.getDocentes();
+          const todosLosDocentes = await this.docenteService.getDocentes();
           docente = todosLosDocentes.find(d => 
             d.nombre === usuario.nombre && d.apellido === usuario.apellido
           );
         }
         
         const materiasAsignadas = docente?.materiasAsignadas || [];
-        const todasLasMaterias = this.materiaService.getMaterias();
+        const todasLasMaterias = await this.materiaService.getMaterias();
         const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
         
         // Filtrar materias del profesor
@@ -141,8 +141,8 @@ export class AlumnosComponent implements OnInit {
         });
         
         // También buscar en cursos que tienen estas materias
-        const todasLasCarreras = this.carreraService.getCarreras();
-        const cursos = this.cursoService.getCursos();
+        const todasLasCarreras = await this.carreraService.getCarreras();
+        const cursos = await this.cursoService.getCursos();
         
         cursos.forEach(curso => {
           if (curso.materias.some(mId => materiasProfesor.some(m => m.id === mId))) {
@@ -158,21 +158,21 @@ export class AlumnosComponent implements OnInit {
         if (this.carreras.length > 0 && !this.carreraSeleccionada) {
           this.carreraSeleccionada = this.carreras[0].id;
           // Cargar alumnos después de seleccionar la carrera
-          setTimeout(() => this.loadAlumnos(), 0);
+          await this.loadAlumnos();
         }
       }
     } else {
       // Para admin/secretario: todas las carreras
-      this.carreras = this.carreraService.getCarreras();
+      this.carreras = await this.carreraService.getCarreras();
     }
   }
 
-  onCarreraChange(): void {
-    this.loadAlumnos();
+  async onCarreraChange(): Promise<void> {
+    await this.loadAlumnos();
   }
 
-  loadAlumnos(): void {
-    let todosLosAlumnos = this.alumnoService.getAlumnos();
+  async loadAlumnos(): Promise<void> {
+    let todosLosAlumnos = await this.alumnoService.getAlumnos();
     
     // Si es profesor, filtrar solo alumnos de la carrera seleccionada
     if (this.permissionsService.esProfesor()) {
@@ -188,6 +188,13 @@ export class AlumnosComponent implements OnInit {
     
     this.alumnos = todosLosAlumnos;
     this.aplicarFiltros();
+    
+    // Actualizar cache de estadísticas para todos los alumnos
+    for (const alumno of this.alumnos) {
+      await this.actualizarEstadisticasMateriasAlumno(alumno.id);
+      await this.actualizarPromedioAlumno(alumno.id);
+      await this.actualizarPorcentajeAsistenciaAlumno(alumno.id);
+    }
   }
 
   aplicarFiltros(): void {
@@ -230,16 +237,16 @@ export class AlumnosComponent implements OnInit {
     this.scrollLockService.lockScroll();
   }
 
-  cargarUsuariosDisponibles(): void {
-    const usuariosRegistrados = this.authService.getUsuariosByRol('alumno');
-    const alumnosAsociados = this.alumnoService.getAlumnos();
-    const idsAsociados = alumnosAsociados.map(a => a.id);
+  async cargarUsuariosDisponibles(): Promise<void> {
+    const usuariosRegistrados = await this.authService.getUsuariosByRol('alumno');
+    const alumnosAsociados = await this.alumnoService.getAlumnos();
+    const idsAsociados = alumnosAsociados.map((a: Alumno) => a.id);
     
     // Filtrar usuarios que no están asociados como alumnos
-    this.usuariosDisponibles = usuariosRegistrados.filter(u => !idsAsociados.includes(u.id));
+    this.usuariosDisponibles = usuariosRegistrados.filter((u: Usuario) => !idsAsociados.includes(u.id));
   }
 
-  asociarUsuario(usuario: Usuario): void {
+  async asociarUsuario(usuario: Usuario): Promise<void> {
     const nuevoAlumno: Alumno = {
       id: usuario.id,
       nombre: usuario.nombre,
@@ -264,9 +271,9 @@ export class AlumnosComponent implements OnInit {
       }]
     };
     
-    this.alumnoService.addAlumno(nuevoAlumno);
+    await this.alumnoService.addAlumno(nuevoAlumno);
     this.notificationService.showSuccess(`Alumno ${usuario.nombre} ${usuario.apellido} asociado correctamente`);
-    this.loadAlumnos();
+    await this.loadAlumnos();
     this.mostrarUsuarios = false;
     this.cerrarModal();
   }
@@ -291,7 +298,7 @@ export class AlumnosComponent implements OnInit {
     this.scrollLockService.unlockScroll();
   }
 
-  guardarAlumno(): void {
+  async guardarAlumno(): Promise<void> {
     if (this.alumnoForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -304,7 +311,7 @@ export class AlumnosComponent implements OnInit {
         ...this.alumnoSeleccionado,
         ...formValue
       };
-      this.alumnoService.updateAlumno(alumnoActualizado);
+      await this.alumnoService.updateAlumno(alumnoActualizado);
       this.notificationService.showSuccess('Alumno actualizado correctamente');
     } else {
       const nuevoAlumno: Alumno = {
@@ -323,7 +330,7 @@ export class AlumnosComponent implements OnInit {
           fecha: new Date().toISOString()
         }]
       };
-      this.alumnoService.addAlumno(nuevoAlumno);
+      await this.alumnoService.addAlumno(nuevoAlumno);
       
       // Crear usuario para que pueda iniciar sesión
       const nuevoUsuario: Usuario = {
@@ -342,25 +349,25 @@ export class AlumnosComponent implements OnInit {
         activo: true
       };
       
-      const usuarios = this.authService.getUsuarios();
+      const usuarios = await this.authService.getUsuarios();
       usuarios.push(nuevoUsuario);
       localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
       
       this.notificationService.showSuccess(`Alumno creado correctamente. Usuario: ${nuevoUsuario.username}, Password: ${nuevoUsuario.password}`);
     }
 
-    this.loadAlumnos();
+    await this.loadAlumnos();
     this.cerrarModal();
   }
 
-  eliminarAlumno(id: string): void {
+  async eliminarAlumno(id: string): Promise<void> {
     if (!this.permissionsService.puedeVer('editarAlumnos')) {
       this.notificationService.showError('No tiene permisos para desasociar alumnos');
       return;
     }
     if (confirm('¿Está seguro de desasociar este alumno?')) {
-      this.alumnoService.deleteAlumno(id);
-      this.loadAlumnos();
+      await this.alumnoService.deleteAlumno(id);
+      await this.loadAlumnos();
       this.notificationService.showSuccess('Alumno desasociado correctamente');
     }
   }
@@ -372,22 +379,36 @@ export class AlumnosComponent implements OnInit {
   }
 
   getPromedioAlumno(id: string): number {
+    return this.promediosCache.get(id) || 0;
+  }
+
+  async actualizarPromedioAlumno(id: string): Promise<void> {
+    let promedio: number;
     // Si es profesor, calcular promedio solo de sus materias
     if (this.permissionsService.esProfesor() && this.carreraSeleccionada) {
-      return this.getPromedioAlumnoPorMateriasProfesor(id);
+      promedio = await this.getPromedioAlumnoPorMateriasProfesor(id);
+    } else {
+      promedio = await this.alumnoService.getPromedioAlumno(id);
     }
-    return this.alumnoService.getPromedioAlumno(id);
+    this.promediosCache.set(id, promedio);
   }
 
   getPorcentajeAsistenciaAlumno(id: string): number {
-    // Si es profesor, calcular asistencia solo de sus materias
-    if (this.permissionsService.esProfesor() && this.carreraSeleccionada) {
-      return this.getPorcentajeAsistenciaPorMateriasProfesor(id);
-    }
-    return this.alumnoService.getPorcentajeAsistencia(id);
+    return this.porcentajesAsistenciaCache.get(id) || 0;
   }
 
-  getPromedioAlumnoPorMateriasProfesor(alumnoId: string): number {
+  async actualizarPorcentajeAsistenciaAlumno(id: string): Promise<void> {
+    let porcentaje: number;
+    // Si es profesor, calcular asistencia solo de sus materias
+    if (this.permissionsService.esProfesor() && this.carreraSeleccionada) {
+      porcentaje = await this.getPorcentajeAsistenciaPorMateriasProfesor(id);
+    } else {
+      porcentaje = await this.alumnoService.getPorcentajeAsistencia(id);
+    }
+    this.porcentajesAsistenciaCache.set(id, porcentaje);
+  }
+
+  async getPromedioAlumnoPorMateriasProfesor(alumnoId: string): Promise<number> {
     if (!this.carreraSeleccionada || this.materiasProfesor.length === 0) {
       return 0;
     }
@@ -396,16 +417,16 @@ export class AlumnosComponent implements OnInit {
       .filter(m => m.carreraId === this.carreraSeleccionada)
       .map(m => m.id);
 
-    const notas = this.alumnoService.getNotasByAlumno(alumnoId)
-      .filter(n => materiasIds.includes(n.materiaId));
+    const todasLasNotas = await this.alumnoService.getNotasByAlumno(alumnoId);
+    const notas = todasLasNotas.filter((n: any) => materiasIds.includes(n.materiaId));
 
     if (notas.length === 0) return 0;
 
-    const suma = notas.reduce((acc, nota) => acc + nota.calificacion, 0);
+    const suma = notas.reduce((acc: number, nota: any) => acc + nota.calificacion, 0);
     return Math.round((suma / notas.length) * 100) / 100;
   }
 
-  getPorcentajeAsistenciaPorMateriasProfesor(alumnoId: string): number {
+  async getPorcentajeAsistenciaPorMateriasProfesor(alumnoId: string): Promise<number> {
     if (!this.carreraSeleccionada || this.materiasProfesor.length === 0) {
       return 0;
     }
@@ -414,33 +435,46 @@ export class AlumnosComponent implements OnInit {
       .filter(m => m.carreraId === this.carreraSeleccionada)
       .map(m => m.id);
 
-    const asistencias = this.alumnoService.getAsistenciasByAlumno(alumnoId)
-      .filter(a => materiasIds.includes(a.materiaId));
+    const asistencias = await this.alumnoService.getAsistenciasByAlumno(alumnoId);
+    const asistenciasFiltradas = asistencias.filter((a: any) => materiasIds.includes(a.materiaId));
 
-    if (asistencias.length === 0) return 0;
+    if (asistenciasFiltradas.length === 0) return 0;
 
-    const presentes = asistencias.filter(a => a.presente || a.estado === 'presente').length;
-    return Math.round((presentes / asistencias.length) * 100);
+    const presentes = asistenciasFiltradas.filter((a: any) => a.presente || a.estado === 'presente').length;
+    return Math.round((presentes / asistenciasFiltradas.length) * 100);
   }
 
+  private estadisticasMateriasCache: Map<string, { materia: string; promedio: number; asistencia: number }[]> = new Map();
+  private promediosCache: Map<string, number> = new Map();
+  private porcentajesAsistenciaCache: Map<string, number> = new Map();
+
   getEstadisticasMateriasAlumno(alumnoId: string): { materia: string; promedio: number; asistencia: number }[] {
+    return this.estadisticasMateriasCache.get(alumnoId) || [];
+  }
+
+  async actualizarEstadisticasMateriasAlumno(alumnoId: string): Promise<void> {
+    const estadisticas = await this.calcularEstadisticasMateriasAlumno(alumnoId);
+    this.estadisticasMateriasCache.set(alumnoId, estadisticas);
+  }
+
+  private async calcularEstadisticasMateriasAlumno(alumnoId: string): Promise<{ materia: string; promedio: number; asistencia: number }[]> {
     if (!this.carreraSeleccionada || this.materiasProfesor.length === 0) {
       return [];
     }
 
     const materiasCarrera = this.materiasProfesor.filter(m => m.carreraId === this.carreraSeleccionada);
 
-    return materiasCarrera.map(materia => {
-      const notas = this.alumnoService.getNotasByAlumno(alumnoId)
-        .filter(n => n.materiaId === materia.id);
+    const estadisticasPromises = materiasCarrera.map(async (materia) => {
+      const todasLasNotas = await this.alumnoService.getNotasByAlumno(alumnoId);
+      const notas = todasLasNotas.filter((n: any) => n.materiaId === materia.id);
       const promedio = notas.length > 0
-        ? Math.round((notas.reduce((acc, n) => acc + n.calificacion, 0) / notas.length) * 100) / 100
+        ? Math.round((notas.reduce((acc: number, n: any) => acc + n.calificacion, 0) / notas.length) * 100) / 100
         : 0;
 
-      const asistencias = this.alumnoService.getAsistenciasByAlumno(alumnoId)
-        .filter(a => a.materiaId === materia.id);
+      const todasLasAsistencias = await this.alumnoService.getAsistenciasByAlumno(alumnoId);
+      const asistencias = todasLasAsistencias.filter((a: any) => a.materiaId === materia.id);
       const asistencia = asistencias.length > 0
-        ? Math.round((asistencias.filter(a => a.presente || a.estado === 'presente').length / asistencias.length) * 100)
+        ? Math.round((asistencias.filter((a: any) => a.presente || a.estado === 'presente').length / asistencias.length) * 100)
         : 0;
 
       return {
@@ -449,6 +483,9 @@ export class AlumnosComponent implements OnInit {
         asistencia
       };
     });
+    const estadisticas = await Promise.all(estadisticasPromises);
+    
+    return estadisticas;
   }
 
   getCantidadRegulares(): number {
@@ -482,7 +519,7 @@ export class AlumnosComponent implements OnInit {
     return Math.round((promedios.reduce((a, b) => a + b, 0) / promedios.length) * 100) / 100;
   }
 
-  cambiarEstadoAlumno(alumno: Alumno): void {
+  async cambiarEstadoAlumno(alumno: Alumno): Promise<void> {
     const estados: ('regular' | 'irregular' | 'egresado' | 'expulsado' | 'suspendido' | 'libre')[] = 
       ['regular', 'irregular', 'egresado', 'expulsado', 'suspendido', 'libre'];
     const estadoActual = alumno.estado || 'regular';
@@ -502,12 +539,12 @@ export class AlumnosComponent implements OnInit {
       ]
     };
     
-    this.alumnoService.updateAlumno(alumnoActualizado);
+    await this.alumnoService.updateAlumno(alumnoActualizado);
     this.notificationService.showSuccess(`Estado cambiado a: ${nuevoEstado}`);
-    this.loadAlumnos();
+    await this.loadAlumnos();
   }
 
-  validarDocumentacion(alumno: Alumno): void {
+  async validarDocumentacion(alumno: Alumno): Promise<void> {
     const documentacion = alumno.documentacion || {
       dniCompleto: false,
       analiticoCompleto: false,
@@ -525,9 +562,9 @@ export class AlumnosComponent implements OnInit {
       documentacion
     };
     
-    this.alumnoService.updateAlumno(alumnoActualizado);
+    await this.alumnoService.updateAlumno(alumnoActualizado);
     this.notificationService.showSuccess('Documentación validada correctamente');
-    this.loadAlumnos();
+    await this.loadAlumnos();
   }
 
   importarAlumnos(): void {
@@ -576,7 +613,7 @@ export class AlumnosComponent implements OnInit {
     reader.readAsText(file);
   }
 
-  procesarArchivoExcel(text: string): void {
+  async procesarArchivoExcel(text: string): Promise<void> {
     const lines = text.split('\n').filter(line => line.trim());
     if (lines.length < 2) {
       this.notificationService.showError('El archivo está vacío o no tiene el formato correcto');
@@ -655,8 +692,8 @@ export class AlumnosComponent implements OnInit {
           activo: true
         };
         
-        this.alumnoService.addAlumno(nuevoAlumno);
-        const usuarios = this.authService.getUsuarios();
+        await this.alumnoService.addAlumno(nuevoAlumno);
+        const usuarios = await this.authService.getUsuarios();
         usuarios.push(nuevoUsuario);
         localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
         
@@ -667,16 +704,16 @@ export class AlumnosComponent implements OnInit {
     }
     
     this.notificationService.showSuccess(`Importación completada: ${importados} alumnos importados${errores > 0 ? `, ${errores} errores` : ''}`);
-    this.loadAlumnos();
+    await this.loadAlumnos();
     this.cerrarModalImportar();
   }
 
-  mostrarUsuariosDisponibles(): void {
+  async mostrarUsuariosDisponibles(): Promise<void> {
     if (!this.permissionsService.puedeVer('editarAlumnos')) {
       this.notificationService.showError('No tiene permisos para asociar alumnos');
       return;
     }
-    this.cargarUsuariosDisponibles();
+    await this.cargarUsuariosDisponibles();
     this.mostrarUsuarios = true;
     this.mostrarModal = true;
     this.scrollLockService.lockScroll();

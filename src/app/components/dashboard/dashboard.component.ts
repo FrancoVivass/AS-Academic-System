@@ -195,35 +195,39 @@ export class DashboardComponent implements OnInit {
     this.loadData();
   }
 
-  loadData(): void {
+  async loadData(): Promise<void> {
     if (this.permissionsService.esAlumno()) {
-      this.loadDashboardAlumno();
+      await this.loadDashboardAlumno();
     } else if (this.permissionsService.esProfesor()) {
-      this.loadDashboardProfesor();
+      await this.loadDashboardProfesor();
     } else if (this.permissionsService.esSecretario() || this.permissionsService.esAdmin()) {
-      this.loadDashboardAdmin();
+      await this.loadDashboardAdmin();
     }
   }
 
   // Dashboard para Alumno
-  loadDashboardAlumno(): void {
+  async loadDashboardAlumno(): Promise<void> {
     const usuarioId = this.authService.getCurrentUser()?.id;
     if (!usuarioId) return;
 
-    const alumno = this.alumnoService.getAlumnoById(usuarioId);
+    const alumno = await this.alumnoService.getAlumnoById(usuarioId);
     if (!alumno) return;
 
     // Obtener materias inscritas
     const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId);
-    this.materias = this.materiaService.getMaterias().filter(m => 
+    const todasLasMaterias = await this.materiaService.getMaterias();
+    this.materias = todasLasMaterias.filter(m => 
       inscripciones.some(i => i.materiaId === m.id)
     );
 
     // Calcular resumen por materia
+    const notasAlumno = await this.alumnoService.getNotasByAlumno(usuarioId);
+    const asistenciasAlumno = await this.alumnoService.getAsistenciasByAlumno(usuarioId);
+    
     this.materiasResumen = this.materias.map(materia => {
-      const notas = this.alumnoService.getNotasByAlumno(usuarioId)
+      const notas = notasAlumno
         .filter(n => n.materiaId === materia.id);
-      const asistencias = this.alumnoService.getAsistenciasByAlumno(usuarioId)
+      const asistencias = asistenciasAlumno
         .filter(a => a.materiaId === materia.id);
       
       const promedio = notas.length > 0 
@@ -253,12 +257,11 @@ export class DashboardComponent implements OnInit {
     });
 
     // Calcular promedios generales
-    const todasLasNotas = this.alumnoService.getNotasByAlumno(usuarioId);
-    this.promedioGeneral = todasLasNotas.length > 0
-      ? Math.round((todasLasNotas.reduce((sum, n) => sum + n.calificacion, 0) / todasLasNotas.length) * 100) / 100
+    this.promedioGeneral = notasAlumno.length > 0
+      ? Math.round((notasAlumno.reduce((sum, n) => sum + n.calificacion, 0) / notasAlumno.length) * 100) / 100
       : 0;
 
-    const todasLasAsistencias = this.alumnoService.getAsistenciasByAlumno(usuarioId);
+    const todasLasAsistencias = asistenciasAlumno;
     this.porcentajeAsistencia = todasLasAsistencias.length > 0
       ? Math.round((todasLasAsistencias.filter(a => a.presente).length / todasLasAsistencias.length) * 100)
       : 0;
@@ -333,16 +336,16 @@ export class DashboardComponent implements OnInit {
   }
 
   // Dashboard para Profesor
-  loadDashboardProfesor(): void {
+  async loadDashboardProfesor(): Promise<void> {
     const usuario = this.authService.getCurrentUser();
     if (!usuario) return;
 
     // Obtener docente completo
-    const docente = this.docenteService.getDocenteById(usuario.id);
+    const docente = await this.docenteService.getDocenteById(usuario.id);
     const materiasAsignadas = docente?.materiasAsignadas || [];
     
     // Obtener todas las materias del profesor
-    let todasLasMaterias = this.materiaService.getMaterias();
+    let todasLasMaterias = await this.materiaService.getMaterias();
     if (materiasAsignadas.length > 0) {
       todasLasMaterias = todasLasMaterias.filter(m => materiasAsignadas.includes(m.id));
     } else {
@@ -356,8 +359,8 @@ export class DashboardComponent implements OnInit {
     this.materias = todasLasMaterias;
 
     // Obtener carreras donde el profesor tiene materias
-    const carreras = this.carreraService.getCarreras();
-    const cursos = this.cursoService.getCursos();
+    const carreras = await this.carreraService.getCarreras();
+    const cursos = await this.cursoService.getCursos();
     const carrerasDelProfesor = new Set<string>();
     
     todasLasMaterias.forEach(materia => {
@@ -373,29 +376,30 @@ export class DashboardComponent implements OnInit {
     });
 
     // Obtener todos los alumnos de las carreras del profesor
-    const todosLosAlumnos = new Set<string>();
+    const todosLosAlumnosIds = new Set<string>();
     const alumnosPorCarrera: { [carreraId: string]: Alumno[] } = {};
     
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
     carrerasDelProfesor.forEach(carreraId => {
-      const alumnosCarrera = this.alumnoService.getAlumnos().filter(a => 
+      const alumnosCarrera = todosLosAlumnos.filter(a => 
         a.carreraId === carreraId || !a.carreraId
       );
       alumnosPorCarrera[carreraId] = alumnosCarrera;
-      alumnosCarrera.forEach(a => todosLosAlumnos.add(a.id));
+      alumnosCarrera.forEach(a => todosLosAlumnosIds.add(a.id));
     });
 
     // También obtener alumnos de cursos que tienen las materias del profesor
     cursos.forEach(curso => {
       if (curso.materias.some(mId => todasLasMaterias.some(m => m.id === mId))) {
-        curso.alumnos?.forEach(alumnoId => todosLosAlumnos.add(alumnoId));
+        curso.alumnos?.forEach(alumnoId => todosLosAlumnosIds.add(alumnoId));
       }
     });
 
-    this.totalAlumnos = todosLosAlumnos.size;
+    this.totalAlumnos = todosLosAlumnosIds.size;
     this.totalMaterias = this.materias.length;
 
     // Alumnos por materia (usando cursos y carreras)
-    this.alumnosPorMateria = todasLasMaterias.map(materia => {
+    const alumnosPorMateriaPromises = todasLasMaterias.map(async (materia) => {
       // Buscar alumnos en cursos que tienen esta materia
       const cursosConMateria = cursos.filter(c => c.materias.includes(materia.id));
       const idsAlumnos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
@@ -405,24 +409,29 @@ export class DashboardComponent implements OnInit {
         alumnosPorCarrera[materia.carreraId].forEach(a => idsAlumnos.push(a.id));
       }
       
-      const alumnos = [...new Set(idsAlumnos)]
-        .map(id => this.alumnoService.getAlumnoById(id))
+      const alumnosPromises = [...new Set(idsAlumnos)]
+        .map(id => this.alumnoService.getAlumnoById(id));
+      const alumnos = (await Promise.all(alumnosPromises))
         .filter(a => a !== undefined) as Alumno[];
+
+      const alumnosDetallePromises = alumnos.map(async (a) => ({
+        nombre: `${a.nombre} ${a.apellido}`,
+        promedio: await this.alumnoService.getPromedioAlumno(a.id),
+        asistencia: await this.alumnoService.getPorcentajeAsistencia(a.id, materia.id)
+      }));
+      const alumnosDetalle = await Promise.all(alumnosDetallePromises);
 
       return {
         materia: materia.nombre,
         cantidad: alumnos.length,
-        alumnos: alumnos.map(a => ({
-          nombre: `${a.nombre} ${a.apellido}`,
-          promedio: this.alumnoService.getPromedioAlumno(a.id),
-          asistencia: this.alumnoService.getPorcentajeAsistencia(a.id, materia.id)
-        }))
+        alumnos: alumnosDetalle
       };
     });
+    this.alumnosPorMateria = await Promise.all(alumnosPorMateriaPromises);
 
     // Calcular notas cargadas hoy
     const hoy = new Date().toISOString().split('T')[0];
-    const todasLasNotas = this.alumnoService.getNotas();
+    const todasLasNotas = await this.alumnoService.getNotas();
     const materiasIds = todasLasMaterias.map(m => m.id);
     this.notasHoy = todasLasNotas.filter(n => 
       n.fecha.startsWith(hoy) && 
@@ -430,11 +439,11 @@ export class DashboardComponent implements OnInit {
     ).length;
 
     // Asistencias cargadas hoy
-    const todasLasAsistencias = this.alumnoService.getAsistencias();
+    const todasLasAsistencias = await this.alumnoService.getAsistencias();
     this.asistenciasHoy = todasLasAsistencias.filter(a => 
       a.fecha.startsWith(hoy) && 
       materiasIds.includes(a.materiaId) &&
-      Array.from(todosLosAlumnos).includes(a.alumnoId)
+      Array.from(todosLosAlumnosIds).includes(a.alumnoId)
     ).length;
 
     // Cargar clases del día para profesor
@@ -443,15 +452,15 @@ export class DashboardComponent implements OnInit {
     // Advertencias para profesor
     this.advertencias = [];
     
-    todasLasMaterias.forEach(materia => {
+    for (const materia of todasLasMaterias) {
       const cursosConMateria = cursos.filter(c => c.materias.includes(materia.id));
       const idsAlumnos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
-      const alumnos = idsAlumnos
-        .map(id => this.alumnoService.getAlumnoById(id))
+      const alumnosPromises = idsAlumnos.map(id => this.alumnoService.getAlumnoById(id));
+      const alumnos = (await Promise.all(alumnosPromises))
         .filter(a => a !== undefined) as Alumno[];
 
-      alumnos.forEach(alumno => {
-        const asistencia = this.alumnoService.getPorcentajeAsistencia(alumno.id, materia.id);
+      for (const alumno of alumnos) {
+        const asistencia = await this.alumnoService.getPorcentajeAsistencia(alumno.id, materia.id);
         if (asistencia < 75) {
           this.advertencias.push({
             tipo: 'warning',
@@ -460,11 +469,11 @@ export class DashboardComponent implements OnInit {
             icono: 'person_off'
           });
         }
-      });
-    });
+      }
+    }
 
     // Verificar asistencias pendientes
-    const asistenciasPendientes = this.getAsistenciasPendientes();
+    const asistenciasPendientes = await this.getAsistenciasPendientes();
     if (asistenciasPendientes > 0) {
       this.advertencias.push({
         tipo: 'info',
@@ -487,11 +496,11 @@ export class DashboardComponent implements OnInit {
   }
 
   // Dashboard para Admin/Secretario
-  loadDashboardAdmin(): void {
-    this.alumnos = this.alumnoService.getAlumnos();
-    this.profesores = this.docenteService.getDocentes();
-    this.materias = this.materiaService.getMaterias();
-    this.cursos = this.cursoService.getCursos();
+  async loadDashboardAdmin(): Promise<void> {
+    this.alumnos = await this.alumnoService.getAlumnos();
+    this.profesores = await this.docenteService.getDocentes();
+    this.materias = await this.materiaService.getMaterias();
+    this.cursos = await this.cursoService.getCursos();
     
     this.totalAlumnos = this.alumnos.filter(a => a.activo !== false).length;
     this.totalProfesores = this.profesores.filter(p => p.activo !== false).length;
@@ -499,14 +508,15 @@ export class DashboardComponent implements OnInit {
 
     // Asistencias cargadas hoy
     const hoy = new Date().toISOString().split('T')[0];
-    const todasLasAsistenciasAdmin = this.alumnoService.getAsistencias();
+    const todasLasAsistenciasAdmin = await this.alumnoService.getAsistencias();
     this.asistenciasHoy = todasLasAsistenciasAdmin.filter(a => a.fecha.startsWith(hoy)).length;
 
     // Calcular promedio general
     if (this.alumnos.length > 0) {
-      const promedios = this.alumnos.map(alumno => 
+      const promediosPromises = this.alumnos.map(alumno => 
         this.alumnoService.getPromedioAlumno(alumno.id)
-      ).filter(p => p > 0);
+      );
+      const promedios = (await Promise.all(promediosPromises)).filter(p => p > 0);
       
       if (promedios.length > 0) {
         this.promedioGeneral = Math.round(
@@ -517,9 +527,10 @@ export class DashboardComponent implements OnInit {
 
     // Calcular porcentaje de asistencia general
     if (this.alumnos.length > 0) {
-      const porcentajes = this.alumnos.map(alumno =>
+      const porcentajesPromises = this.alumnos.map(alumno =>
         this.alumnoService.getPorcentajeAsistencia(alumno.id)
-      ).filter(p => p > 0);
+      );
+      const porcentajes = (await Promise.all(porcentajesPromises)).filter(p => p > 0);
       
       if (porcentajes.length > 0) {
         this.porcentajeAsistencia = Math.round(
@@ -529,7 +540,7 @@ export class DashboardComponent implements OnInit {
     }
 
     // Calcular faltas acumuladas (promedio)
-    const todasLasAsistenciasFaltas = this.alumnoService.getAsistencias();
+    const todasLasAsistenciasFaltas = await this.alumnoService.getAsistencias();
     const totalFaltas = todasLasAsistenciasFaltas.filter(a => !a.presente).length;
     this.faltasAcumuladas = totalFaltas;
 
@@ -542,11 +553,11 @@ export class DashboardComponent implements OnInit {
     // Cargar gráficos
     this.loadGraficos();
 
-    this.loadTopAlumnos();
-    this.loadMateriasPopulares();
+    await this.loadTopAlumnos();
+    await this.loadMateriasPopulares();
   }
 
-  loadActividadReciente(): void {
+  async loadActividadReciente(): Promise<void> {
     this.actividadReciente = [];
 
     // Últimos alumnos registrados
@@ -580,13 +591,14 @@ export class DashboardComponent implements OnInit {
     });
 
     // Últimas asistencias cargadas
-    const asistenciasRecientes = this.alumnoService.getAsistencias()
+    const todasLasAsistencias = await this.alumnoService.getAsistencias();
+    const asistenciasRecientes = todasLasAsistencias
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
       .slice(0, 5);
     
-    asistenciasRecientes.forEach(asistencia => {
-      const alumno = this.alumnoService.getAlumnoById(asistencia.alumnoId);
-      const materia = this.materiaService.getMateriaById(asistencia.materiaId);
+    for (const asistencia of asistenciasRecientes) {
+      const alumno = await this.alumnoService.getAlumnoById(asistencia.alumnoId);
+      const materia = await this.materiaService.getMateriaById(asistencia.materiaId);
       if (alumno && materia) {
         this.actividadReciente.push({
           tipo: 'asistencia',
@@ -596,21 +608,21 @@ export class DashboardComponent implements OnInit {
           icono: asistencia.presente ? 'check_circle' : 'cancel'
         });
       }
-    });
+    }
 
     // Ordenar por fecha
     this.actividadReciente.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
     this.actividadReciente = this.actividadReciente.slice(0, 10);
   }
 
-  loadAlertasAdmin(): void {
+  async loadAlertasAdmin(): Promise<void> {
     this.advertencias = [];
 
     // Alumnos con faltas al límite
-    this.alumnos.forEach(alumno => {
-      const asistencias = this.alumnoService.getAsistenciasByAlumno(alumno.id);
+    for (const alumno of this.alumnos) {
+      const asistencias = await this.alumnoService.getAsistenciasByAlumno(alumno.id);
       if (asistencias.length > 0) {
-        const porcentaje = this.alumnoService.getPorcentajeAsistencia(alumno.id);
+        const porcentaje = await this.alumnoService.getPorcentajeAsistencia(alumno.id);
         if (porcentaje < 75) {
           this.advertencias.push({
             tipo: 'error',
@@ -622,21 +634,21 @@ export class DashboardComponent implements OnInit {
           });
         }
       }
-    });
+    }
 
     // Profesores atrasados en carga de asistencia
     const hoy = new Date().toISOString().split('T')[0];
-    this.profesores.forEach(profesor => {
+    for (const profesor of this.profesores) {
       const materiasAsignadas = profesor.materiasAsignadas || [];
       let tieneAsistenciasHoy = false;
       
-      materiasAsignadas.forEach(materiaId => {
-        const asistencias = this.alumnoService.getAsistenciasByMateria(materiaId);
+      for (const materiaId of materiasAsignadas) {
+        const asistencias = await this.alumnoService.getAsistenciasByMateria(materiaId);
         const asistenciasHoy = asistencias.filter(a => a.fecha.startsWith(hoy));
         if (asistenciasHoy.length > 0) {
           tieneAsistenciasHoy = true;
         }
-      });
+      }
 
       if (materiasAsignadas.length > 0 && !tieneAsistenciasHoy) {
         this.advertencias.push({
@@ -648,11 +660,11 @@ export class DashboardComponent implements OnInit {
           ruta: `/app/docentes`
         });
       }
-    });
+    }
 
     // Materias sin profesores asignados
-    this.materias.forEach(materia => {
-      const profesoresAsignados = this.docenteService.getDocentesByMateria(materia.id);
+    for (const materia of this.materias) {
+      const profesoresAsignados = await this.docenteService.getDocentesByMateria(materia.id);
       if (profesoresAsignados.length === 0) {
         this.advertencias.push({
           tipo: 'warning',
@@ -663,7 +675,7 @@ export class DashboardComponent implements OnInit {
           ruta: `/app/materias`
         });
       }
-    });
+    }
 
     if (this.advertencias.length === 0) {
       this.advertencias.push({
@@ -729,8 +741,8 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  loadClasesDelDia(alumnoId: string): void {
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
+  async loadClasesDelDia(alumnoId: string): Promise<void> {
+    const alumno = await this.alumnoService.getAlumnoById(alumnoId);
     if (!alumno) return;
 
     const hoy = new Date();
@@ -740,11 +752,11 @@ export class DashboardComponent implements OnInit {
     const cursosDelAlumno = this.cursos.filter(c => c.alumnos.includes(alumnoId));
     
     this.clasesDelDia = [];
-    cursosDelAlumno.forEach(curso => {
-      curso.horarios.forEach(horario => {
+    for (const curso of cursosDelAlumno) {
+      for (const horario of curso.horarios) {
         if (horario.dia === diaSemana) {
-          const materia = this.materiaService.getMateriaById(horario.materiaId);
-          const docente = this.docenteService.getDocenteById(horario.docenteId);
+          const materia = await this.materiaService.getMateriaById(horario.materiaId);
+          const docente = await this.docenteService.getDocenteById(horario.docenteId);
           this.clasesDelDia.push({
             materia: materia?.nombre || 'Sin nombre',
             hora: `${horario.horaInicio} - ${horario.horaFin}`,
@@ -753,25 +765,25 @@ export class DashboardComponent implements OnInit {
             curso: curso.nombre
           });
         }
-      });
-    });
+      }
+    }
 
     // Ordenar por hora
     this.clasesDelDia.sort((a, b) => a.hora.localeCompare(b.hora));
   }
 
-  loadClasesDelDiaProfesor(profesorId: string): void {
-    const profesor = this.docenteService.getDocenteById(profesorId);
+  async loadClasesDelDiaProfesor(profesorId: string): Promise<void> {
+    const profesor = await this.docenteService.getDocenteById(profesorId);
     if (!profesor) return;
 
     const hoy = new Date();
     const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][hoy.getDay()];
     
     this.clasesDelDia = [];
-    this.cursos.forEach(curso => {
-      curso.horarios.forEach(horario => {
+    for (const curso of this.cursos) {
+      for (const horario of curso.horarios) {
         if (horario.dia === diaSemana && horario.docenteId === profesorId) {
-          const materia = this.materiaService.getMateriaById(horario.materiaId);
+          const materia = await this.materiaService.getMateriaById(horario.materiaId);
           this.clasesDelDia.push({
             materia: materia?.nombre || 'Sin nombre',
             hora: `${horario.horaInicio} - ${horario.horaFin}`,
@@ -779,35 +791,35 @@ export class DashboardComponent implements OnInit {
             curso: curso.nombre
           });
         }
-      });
-    });
+      }
+    }
 
     // Ordenar por hora
     this.clasesDelDia.sort((a, b) => a.hora.localeCompare(b.hora));
   }
 
-  getAsistenciasPendientes(): number {
+  async getAsistenciasPendientes(): Promise<number> {
     const hoy = new Date().toISOString().split('T')[0];
     const usuario = this.authService.getCurrentUser();
     const materiasAsignadas = (usuario as any).materiasAsignadas || [];
     
     let pendientes = 0;
-    materiasAsignadas.forEach((materiaId: string) => {
+    for (const materiaId of materiasAsignadas) {
       const inscripciones = this.materiaService.getInscripcionesByMateria(materiaId);
-      inscripciones.forEach(inscripcion => {
-        const asistencias = this.alumnoService.getAsistenciasByAlumno(inscripcion.alumnoId)
-          .filter(a => a.materiaId === materiaId && a.fecha.startsWith(hoy));
-        if (asistencias.length === 0) {
+      for (const inscripcion of inscripciones) {
+        const asistencias = await this.alumnoService.getAsistenciasByAlumno(inscripcion.alumnoId);
+        const asistenciasHoy = asistencias.filter(a => a.materiaId === materiaId && a.fecha.startsWith(hoy));
+        if (asistenciasHoy.length === 0) {
           pendientes++;
         }
-      });
-    });
+      }
+    }
     
     return pendientes;
   }
 
-  loadTopAlumnos(): void {
-    const reportes = this.reportService.generarReporteAlumnos();
+  async loadTopAlumnos(): Promise<void> {
+    const reportes = await this.reportService.generarReporteAlumnos();
     this.topAlumnos = reportes
       .filter((r: any) => r.promedio > 0)
       .sort((a: any, b: any) => b.promedio - a.promedio)
@@ -820,8 +832,8 @@ export class DashboardComponent implements OnInit {
       }));
   }
 
-  loadMateriasPopulares(): void {
-    const reportes = this.reportService.generarReporteMaterias();
+  async loadMateriasPopulares(): Promise<void> {
+    const reportes = await this.reportService.generarReporteMaterias();
     this.materiasPopulares = reportes
       .sort((a: any, b: any) => b.cantidadInscritos - a.cantidadInscritos)
       .slice(0, 5)
@@ -832,12 +844,12 @@ export class DashboardComponent implements OnInit {
       }));
   }
 
-  getPromedioAlumno(id: string): number {
-    return this.alumnoService.getPromedioAlumno(id);
+  async getPromedioAlumno(id: string): Promise<number> {
+    return await this.alumnoService.getPromedioAlumno(id);
   }
 
-  getPorcentajeAsistencia(id: string): number {
-    return this.alumnoService.getPorcentajeAsistencia(id);
+  async getPorcentajeAsistencia(id: string): Promise<number> {
+    return await this.alumnoService.getPorcentajeAsistencia(id);
   }
 
   getColorEstado(estado: string): string {

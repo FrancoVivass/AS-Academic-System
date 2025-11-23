@@ -65,8 +65,8 @@ export class LoginComponent {
     this.loading = true;
     const { username, password } = this.loginForm.value;
 
-    setTimeout(() => {
-      if (this.authService.login(username, password)) {
+    setTimeout(async () => {
+      if (await this.authService.login(username, password)) {
         this.notificationService.showSuccess('¡Bienvenido!');
         this.router.navigate(['/app/dashboard']);
       } else {

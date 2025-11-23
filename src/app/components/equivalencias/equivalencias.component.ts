@@ -36,20 +36,20 @@ export class EquivalenciasComponent implements OnInit {
     public permissionsService: PermissionsService
   ) {}
 
-  ngOnInit(): void {
-    this.loadEquivalencias();
+  async ngOnInit(): Promise<void> {
+    await this.loadEquivalencias();
   }
 
-  loadEquivalencias(): void {
-    this.equivalencias = this.carreraService.getEquivalencias();
+  async loadEquivalencias(): Promise<void> {
+    this.equivalencias = await this.carreraService.getEquivalencias();
   }
 
-  aprobarEquivalencia(id: string): void {
+  async aprobarEquivalencia(id: string): Promise<void> {
     const usuario = this.authService.getCurrentUser();
     if (usuario) {
-      this.carreraService.aprobarEquivalencia(id, usuario.id);
+      await this.carreraService.aprobarEquivalencia(id, usuario.id);
       this.notificationService.showSuccess('Equivalencia aprobada');
-      this.loadEquivalencias();
+      await this.loadEquivalencias();
     }
   }
 }

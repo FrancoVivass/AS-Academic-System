@@ -70,13 +70,13 @@ export class SeleccionInstitucionComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadInstituciones(): void {
-    this.instituciones = this.institucionService.getInstitucionActiva();
+  async loadInstituciones(): Promise<void> {
+    this.instituciones = await this.institucionService.getInstitucionActiva();
   }
 
-  seleccionarInstitucion(institucion: Institucion): void {
+  async seleccionarInstitucion(institucion: Institucion): Promise<void> {
     // Obtener la versión actualizada de la institución desde el servicio
-    const institucionActualizada = this.institucionService.getInstitucionById(institucion.id);
+    const institucionActualizada = await this.institucionService.getInstitucionById(institucion.id);
     this.institucionSeleccionada = institucionActualizada || institucion;
     this.mostrarCredencial = true;
     this.credencialForm.reset();
@@ -88,16 +88,16 @@ export class SeleccionInstitucionComponent implements OnInit, OnDestroy {
     this.credencialForm.reset();
   }
 
-  verificarCredencial(): void {
+  async verificarCredencial(): Promise<void> {
     if (this.credencialForm.valid && this.institucionSeleccionada) {
       const credencial = this.credencialForm.get('credencial')?.value;
       
       // Asegurarse de tener la versión más actualizada de la institución
-      const institucionActualizada = this.institucionService.getInstitucionById(this.institucionSeleccionada.id);
+      const institucionActualizada = await this.institucionService.getInstitucionById(this.institucionSeleccionada.id);
       const institucionParaUsar = institucionActualizada || this.institucionSeleccionada;
       
-      if (this.institucionService.verificarCredencial(institucionParaUsar.id, credencial)) {
-        this.institucionService.setCurrentInstitucion(institucionParaUsar);
+      if (await this.institucionService.verificarCredencial(institucionParaUsar.id, credencial)) {
+        await this.institucionService.setCurrentInstitucion(institucionParaUsar);
         this.notificationService.showSuccess(`Credencial verificada. Redirigiendo a ${institucionParaUsar.nombre}...`);
         setTimeout(() => {
           this.router.navigate(['/login']);

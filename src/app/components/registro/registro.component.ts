@@ -101,38 +101,54 @@ export class RegistroComponent implements OnInit {
     return null;
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.registroForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos correctamente');
+      return;
+    }
+
+    // Verificar que hay una institución seleccionada
+    if (!this.currentInstitucion) {
+      this.notificationService.showError('Debe seleccionar una institución primero');
+      this.router.navigate(['/instituciones']);
       return;
     }
 
     this.loading = true;
     const formValue = this.registroForm.value;
     
-    // Simular registro
-    setTimeout(() => {
+    try {
       // Remover confirmEmail y confirmPassword antes de guardar
       const { confirmEmail, confirmPassword, ...usuarioData } = formValue;
       
-      const nuevoUsuario = {
-        id: Date.now().toString(),
-        ...usuarioData,
-        fechaRegistro: new Date().toISOString(),
-        activo: true
-      };
-      
-      // Guardar en localStorage (simulación)
-      const usuarios = JSON.parse(localStorage.getItem('gestion_academica_usuarios') || '[]');
-      usuarios.push(nuevoUsuario);
-      localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
+      const result = await this.authService.registerUser({
+        username: usuarioData.username,
+        password: usuarioData.password,
+        nombre: usuarioData.nombre,
+        apellido: usuarioData.apellido,
+        email: usuarioData.email,
+        telefono: usuarioData.telefono,
+        dni: usuarioData.dni,
+        fechaNacimiento: usuarioData.fechaNacimiento,
+        rol: usuarioData.rol
+      });
+
+      if (!result.success) {
+        this.notificationService.showError(result.error || 'Error al registrar usuario');
+        this.loading = false;
+        return;
+      }
       
       this.notificationService.showSuccess('¡Registro exitoso! Redirigiendo al login...');
       setTimeout(() => {
         this.router.navigate(['/login']);
       }, 1500);
+    } catch (error: any) {
+      console.error('Error en registro:', error);
+      this.notificationService.showError('Error inesperado al registrar usuario');
+    } finally {
       this.loading = false;
-    }, 1000);
+    }
   }
 
   getErrorMessage(field: string): string {

@@ -1,0 +1,109 @@
+<div class="test-conexion-container">
+  <mat-card class="test-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud</mat-icon>
+        Prueba de Conexión con Supabase
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="test-actions">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="probarConexion()"
+          [disabled]="probando">
+          <mat-icon>refresh</mat-icon>
+          Probar Conexión
+        </button>
+
+        <button 
+          mat-raised-button 
+          color="accent" 
+          (click)="probarConsultaCompleta()"
+          [disabled]="probando">
+          <mat-icon>search</mat-icon>
+          Probar Consulta Completa
+        </button>
+
+        <button 
+          mat-button 
+          (click)="limpiarResultado()"
+          [disabled]="probando || !resultado">
+          <mat-icon>clear</mat-icon>
+          Limpiar
+        </button>
+      </div>
+
+      <div *ngIf="probando" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Probando conexión...</p>
+      </div>
+
+      <div *ngIf="resultado && !probando" class="resultado-container">
+        <div [ngClass]="{
+          'resultado-success': resultado.conexion,
+          'resultado-error': !resultado.conexion,
+          'resultado-warning': resultado.detalles?.tipo === 'warning'
+        }">
+          <div class="resultado-header">
+            <mat-icon>
+              {{ resultado.conexion ? 'check_circle' : 'error' }}
+            </mat-icon>
+            <h3>{{ resultado.mensaje }}</h3>
+          </div>
+
+          <div *ngIf="resultado.detalles" class="resultado-detalles">
+            <p><strong>Tipo:</strong> {{ resultado.detalles.tipo }}</p>
+            <p><strong>Mensaje:</strong> {{ resultado.detalles.mensaje }}</p>
+            
+            <div *ngIf="resultado.detalles.cantidad !== undefined">
+              <p><strong>Registros encontrados:</strong> {{ resultado.detalles.cantidad }}</p>
+            </div>
+
+            <div *ngIf="resultado.detalles.instrucciones">
+              <p><strong>Instrucciones:</strong> {{ resultado.detalles.instrucciones }}</p>
+            </div>
+
+            <div *ngIf="resultado.detalles.datos && resultado.detalles.datos.length > 0" class="datos-preview">
+              <p><strong>Datos:</strong></p>
+              <pre>{{ resultado.detalles.datos | json }}</pre>
+            </div>
+          </div>
+
+          <div *ngIf="resultado.error" class="resultado-error-details">
+            <p><strong>Error:</strong> {{ resultado.error.mensaje }}</p>
+            <details>
+              <summary>Ver detalles técnicos</summary>
+              <pre>{{ resultado.error.detalles | json }}</pre>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!resultado && !probando" class="info-container">
+        <mat-icon>info</mat-icon>
+        <p>Haz clic en "Probar Conexión" para verificar la conexión con Supabase</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>help</mat-icon>
+        Información
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <ul>
+        <li><strong>Probar Conexión:</strong> Verifica que la conexión con Supabase funcione</li>
+        <li><strong>Probar Consulta Completa:</strong> Intenta obtener datos de la tabla "instituciones"</li>
+        <li>Si ves un error de "tabla no existe", necesitas ejecutar los scripts SQL</li>
+        <li>Consulta <code>INSTRUCCIONES_SQL.md</code> para crear las tablas</li>
+      </ul>
+    </mat-card-content>
+  </mat-card>
+</div>
+

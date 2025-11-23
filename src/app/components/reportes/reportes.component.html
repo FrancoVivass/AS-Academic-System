@@ -23,7 +23,7 @@
         <label>Filtrar por Materia</label>
         <select [(ngModel)]="filtroMateria" (change)="loadReportes(); loadEstadisticas(); loadChartData();" class="filter-select">
           <option value="">Todas las materias</option>
-          @for (materia of materiasFiltradas.length > 0 ? materiasFiltradas : materiaService.getMaterias(); track materia.id) {
+          @for (materia of materiasFiltradas; track materia.id) {
             <option [value]="materia.id">{{ materia.nombre }}</option>
           }
         </select>

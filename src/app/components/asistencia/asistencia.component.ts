@@ -36,10 +36,13 @@ export class AsistenciaComponent implements OnInit {
   materiasFiltradas: Materia[] = []; // Materias filtradas por carrera
   carreras: Carrera[] = [];
   asistencias: Asistencia[] = [];
+  misAsistencias: Asistencia[] = [];
   cursos: Curso[] = [];
   cursosDeCarrera: Curso[] = []; // Cursos de la carrera seleccionada
   horariosMateria: HorarioCurso[] = [];
   cursoActual: Curso | null = null;
+  estadisticasPorMateriaCache: Map<string, { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number }> = new Map();
+  estadisticasAlumnoCache: Map<string, { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number }> = new Map();
   
   carreraSeleccionada: string = '';
   materiaSeleccionada: string = '';
@@ -60,23 +63,23 @@ export class AsistenciaComponent implements OnInit {
     private notificationService: NotificationService
   ) {}
 
-  ngOnInit(): void {
-    this.loadData();
+  async ngOnInit(): Promise<void> {
+    await this.loadData();
     this.generarCalendario();
     
     // Si es alumno, cargar sus datos automáticamente
     if (this.permissionsService.esAlumno()) {
-      this.cargarDatosAlumno();
+      await this.cargarDatosAlumno();
     }
   }
 
-  loadData(): void {
-    this.cursos = this.cursoService.getCursos();
-    this.carreras = this.carreraService.getCarreras();
-    this.alumnos = this.alumnoService.getAlumnos();
+  async loadData(): Promise<void> {
+    this.cursos = await this.cursoService.getCursos();
+    this.carreras = await this.carreraService.getCarreras();
+    this.alumnos = await this.alumnoService.getAlumnos();
     
     // Cargar todas las materias disponibles
-    let todasLasMaterias = this.materiaService.getMaterias();
+    let todasLasMaterias = await this.materiaService.getMaterias();
     
     // Si es profesor, filtrar por sus materias
     if (this.permissionsService.esProfesor()) {
@@ -92,7 +95,7 @@ export class AsistenciaComponent implements OnInit {
     // Si es alumno, solo sus materias
     else if (this.permissionsService.esAlumno()) {
       const usuarioId = this.authService.getCurrentUser()?.id;
-      const alumno = this.alumnoService.getAlumnoById(usuarioId || '');
+      const alumno = await this.alumnoService.getAlumnoById(usuarioId || '');
       
       if (alumno && alumno.carreraId) {
         // Obtener materias de la carrera del alumno
@@ -108,7 +111,7 @@ export class AsistenciaComponent implements OnInit {
         todasLasMaterias = todasLasMaterias.filter(m => todasMateriasAlumno.includes(m.id));
       } else {
         // Si no tiene carrera, usar asistencias existentes
-        const asistencias = this.alumnoService.getAsistenciasByAlumno(usuarioId || '');
+        const asistencias = await this.alumnoService.getAsistenciasByAlumno(usuarioId || '');
         const idsMaterias = [...new Set(asistencias.map(a => a.materiaId))];
         todasLasMaterias = todasLasMaterias.filter(m => idsMaterias.includes(m.id));
       }
@@ -124,42 +127,53 @@ export class AsistenciaComponent implements OnInit {
     }
   }
 
-  cargarDatosAlumno(): void {
+  async cargarDatosAlumno(): Promise<void> {
     const usuarioId = this.authService.getCurrentUser()?.id;
     if (!usuarioId) return;
     
     // Obtener el alumno actual
-    const alumno = this.alumnoService.getAlumnoById(usuarioId);
+    const alumno = await this.alumnoService.getAlumnoById(usuarioId);
     if (!alumno) return;
     
     // Si el alumno tiene carrera, seleccionarla automáticamente
     if (alumno.carreraId) {
       this.carreraSeleccionada = alumno.carreraId;
-      this.cargarCursosPorCarrera();
+      await this.cargarCursosPorCarrera();
     }
     
     // Las materias ya se cargaron en loadData(), solo asegurar que materiasFiltradas esté actualizada
     if (this.materias.length > 0) {
       this.materiasFiltradas = this.materias;
     }
+    
+    // Cargar asistencias del alumno
+    this.misAsistencias = await this.getMisAsistencias();
+    
+    // Actualizar cache de estadísticas
+    if (this.materiasFiltradas.length > 0) {
+      for (const materia of this.materiasFiltradas) {
+        await this.actualizarEstadisticasPorMateria(materia.id);
+      }
+    }
   }
 
-  onCarreraChange(): void {
+  async onCarreraChange(): Promise<void> {
     this.materiaSeleccionada = ''; // Reset materia al cambiar carrera
     this.cursoActual = null;
     this.horariosMateria = [];
-    this.cargarMateriasPorCarrera();
-    this.cargarCursosPorCarrera();
-    this.cargarAsistencias();
+    await this.cargarMateriasPorCarrera();
+    await this.cargarCursosPorCarrera();
+    await this.cargarAsistencias();
   }
 
-  cargarMateriasPorCarrera(): void {
+  async cargarMateriasPorCarrera(): Promise<void> {
     if (!this.carreraSeleccionada) {
       this.materiasFiltradas = [];
       return;
     }
 
     // Filtrar materias que pertenecen a esta carrera
+    const cursosDeCarrera = await this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
     this.materiasFiltradas = this.materias.filter(m => {
       // Verificar si la materia tiene carreraId o está en los cursos de la carrera
       if (m.carreraId === this.carreraSeleccionada) {
@@ -167,22 +181,21 @@ export class AsistenciaComponent implements OnInit {
       }
       
       // Verificar si está en algún curso de esta carrera
-      const cursosDeCarrera = this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
       return cursosDeCarrera.some(c => c.materias.includes(m.id));
     });
   }
 
-  cargarCursosPorCarrera(): void {
+  async cargarCursosPorCarrera(): Promise<void> {
     if (!this.carreraSeleccionada) {
       this.cursosDeCarrera = [];
       return;
     }
-    this.cursosDeCarrera = this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
+    this.cursosDeCarrera = await this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
   }
 
-  cargarAsistencias(): void {
+  async cargarAsistencias(): Promise<void> {
     if (this.materiaSeleccionada && this.fechaSeleccionada) {
-      this.asistencias = this.alumnoService.getAsistenciasByMateriaYFecha(
+      this.asistencias = await this.alumnoService.getAsistenciasByMateriaYFecha(
         this.materiaSeleccionada, 
         this.fechaSeleccionada
       );
@@ -191,14 +204,33 @@ export class AsistenciaComponent implements OnInit {
     }
   }
 
-  onMateriaChange(): void {
+  async onMateriaChange(): Promise<void> {
     if (!this.carreraSeleccionada) {
       this.notificationService.showWarning('Por favor seleccione primero una carrera');
       this.materiaSeleccionada = '';
       return;
     }
     this.cargarHorariosMateria();
-    this.cargarAsistencias();
+    await this.cargarAsistencias();
+    // Actualizar estadísticas para la materia seleccionada
+    if (this.materiaSeleccionada) {
+      await this.actualizarEstadisticasPorMateria(this.materiaSeleccionada);
+    }
+    // Si es alumno, cargar sus asistencias
+    if (this.permissionsService.esAlumno()) {
+      this.misAsistencias = await this.getMisAsistencias();
+      // Actualizar estadísticas para la materia seleccionada
+      if (this.materiaSeleccionada) {
+        await this.actualizarEstadisticasPorMateria(this.materiaSeleccionada);
+      }
+    } else {
+      // Si es profesor, actualizar estadísticas de todos los alumnos
+      if (this.materiaSeleccionada && this.alumnos.length > 0) {
+        for (const alumno of this.alumnos) {
+          await this.actualizarEstadisticasAlumno(alumno.id);
+        }
+      }
+    }
     this.generarCalendario();
   }
 
@@ -317,7 +349,7 @@ export class AsistenciaComponent implements OnInit {
     this.actualizarAsistencia(alumno, 'justificado');
   }
 
-  actualizarAsistencia(alumno: Alumno, estado: 'presente' | 'ausente' | 'tardanza' | 'justificado'): void {
+  async actualizarAsistencia(alumno: Alumno, estado: 'presente' | 'ausente' | 'tardanza' | 'justificado'): Promise<void> {
     if (!this.permissionsService.puedeVer('editarAsistencias')) {
       this.notificationService.showError('No tiene permisos para modificar asistencia');
       return;
@@ -358,7 +390,7 @@ export class AsistenciaComponent implements OnInit {
         editadaPor: usuario?.id,
         fechaEdicion: new Date().toISOString()
       };
-      this.alumnoService.updateAsistencia(asistenciaActualizada);
+      await this.alumnoService.updateAsistencia(asistenciaActualizada);
     } else {
       // Obtener horarioId si hay horarios
       const horarioId = this.horariosMateria.length > 0 ? this.horariosMateria[0].id : undefined;
@@ -378,10 +410,17 @@ export class AsistenciaComponent implements OnInit {
         fechaCarga: new Date().toISOString(),
         puedeEditar: true
       };
-      this.alumnoService.addAsistencia(nuevaAsistencia);
+      await this.alumnoService.addAsistencia(nuevaAsistencia);
     }
 
-    this.cargarAsistencias();
+    await this.cargarAsistencias();
+    // Actualizar estadísticas después de marcar asistencia
+    if (this.materiaSeleccionada && !this.permissionsService.esAlumno()) {
+      await this.actualizarEstadisticasPorMateria(this.materiaSeleccionada);
+      if (alumno.id) {
+        await this.actualizarEstadisticasAlumno(alumno.id);
+      }
+    }
     const mensajes = {
       'presente': 'Presente',
       'ausente': 'Ausente',
@@ -435,19 +474,25 @@ export class AsistenciaComponent implements OnInit {
     return alumnosFiltrados;
   }
 
-  getPorcentajeAsistencia(alumnoId: string): number {
+  async getPorcentajeAsistencia(alumnoId: string): Promise<number> {
     if (!this.materiaSeleccionada) return 0;
-    return this.alumnoService.getPorcentajeAsistencia(alumnoId, this.materiaSeleccionada);
+    return await this.alumnoService.getPorcentajeAsistencia(alumnoId, this.materiaSeleccionada);
   }
 
   getEstadisticasAlumno(alumnoId: string): { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number } {
+    return this.estadisticasAlumnoCache.get(alumnoId) || { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
+  }
+
+  async actualizarEstadisticasAlumno(alumnoId: string): Promise<void> {
     if (!this.materiaSeleccionada) {
-      return { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
+      this.estadisticasAlumnoCache.set(alumnoId, { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 });
+      return;
     }
     
     // Si hay curso actual, usar ese, sino buscar en todos los cursos
     if (this.cursoActual) {
-      return this.alumnoService.getEstadisticasAsistencia(alumnoId, this.materiaSeleccionada, this.cursoActual.id);
+      const estadisticas = await this.alumnoService.getEstadisticasAsistencia(alumnoId, this.materiaSeleccionada, this.cursoActual.id);
+      this.estadisticasAlumnoCache.set(alumnoId, estadisticas);
     } else {
       // Buscar en todos los cursos de la carrera que tienen esta materia
       const cursosConMateria = this.cursosDeCarrera.filter(c => 
@@ -456,14 +501,15 @@ export class AsistenciaComponent implements OnInit {
       
       if (cursosConMateria.length > 0) {
         // Usar el primer curso que tenga la materia
-        return this.alumnoService.getEstadisticasAsistencia(alumnoId, this.materiaSeleccionada, cursosConMateria[0].id);
+        const estadisticas = await this.alumnoService.getEstadisticasAsistencia(alumnoId, this.materiaSeleccionada, cursosConMateria[0].id);
+        this.estadisticasAlumnoCache.set(alumnoId, estadisticas);
+      } else {
+        this.estadisticasAlumnoCache.set(alumnoId, { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 });
       }
-      
-      return { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
     }
   }
 
-  getMisAsistencias(): Asistencia[] {
+  async getMisAsistencias(): Promise<Asistencia[]> {
     if (!this.permissionsService.esAlumno()) return [];
     
     const usuarioId = this.authService.getCurrentUser()?.id;
@@ -471,22 +517,26 @@ export class AsistenciaComponent implements OnInit {
     
     // Si hay materia seleccionada, filtrar por materia
     if (this.materiaSeleccionada) {
-      return this.alumnoService.getAsistenciasByAlumno(usuarioId)
-        .filter(a => a.materiaId === this.materiaSeleccionada);
+      const asistencias = await this.alumnoService.getAsistenciasByAlumno(usuarioId);
+      return asistencias.filter(a => a.materiaId === this.materiaSeleccionada);
     }
     
     // Si no hay materia seleccionada, mostrar todas las asistencias del alumno
-    return this.alumnoService.getAsistenciasByAlumno(usuarioId);
+    return await this.alumnoService.getAsistenciasByAlumno(usuarioId);
   }
 
   getEstadisticasPorMateria(materiaId: string): { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number } {
+    return this.estadisticasPorMateriaCache.get(materiaId) || { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
+  }
+
+  async actualizarEstadisticasPorMateria(materiaId: string): Promise<void> {
     if (!this.permissionsService.esAlumno()) {
-      return { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
+      return;
     }
     
     const usuarioId = this.authService.getCurrentUser()?.id;
     if (!usuarioId) {
-      return { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
+      return;
     }
     
     // Buscar cursos que tienen esta materia
@@ -495,10 +545,11 @@ export class AsistenciaComponent implements OnInit {
     );
     
     if (cursosConMateria.length > 0) {
-      return this.alumnoService.getEstadisticasAsistencia(usuarioId, materiaId, cursosConMateria[0].id);
+      const estadisticas = await this.alumnoService.getEstadisticasAsistencia(usuarioId, materiaId, cursosConMateria[0].id);
+      this.estadisticasPorMateriaCache.set(materiaId, estadisticas);
+    } else {
+      this.estadisticasPorMateriaCache.set(materiaId, { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 });
     }
-    
-    return { totalClases: 0, presentes: 0, ausentes: 0, tardanzas: 0, justificados: 0, porcentaje: 0 };
   }
 
   getAlertaAsistencia(porcentaje: number): { tipo: 'success' | 'warning' | 'danger', mensaje: string } {
@@ -581,8 +632,7 @@ export class AsistenciaComponent implements OnInit {
   }
 
   getAsistenciasPorMateria(materiaId: string): Asistencia[] {
-    const asistencias = this.getMisAsistencias();
-    return asistencias.filter(a => a.materiaId === materiaId);
+    return this.misAsistencias.filter(a => a.materiaId === materiaId);
   }
 
   getAsistenciasOrdenadasPorFecha(asistencias: Asistencia[]): Asistencia[] {

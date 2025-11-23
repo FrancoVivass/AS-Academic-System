@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Aula, HorarioAula } from '../models/aula.model';
+import { SupabaseService } from './supabase.service';
+import { InstitucionService } from './institucion.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,87 +10,242 @@ import { Aula, HorarioAula } from '../models/aula.model';
 export class AulaService {
   private readonly STORAGE_KEY = 'gestion_academica_aulas';
   private readonly HORARIOS_KEY = 'gestion_academica_horarios_aulas';
-  private aulasSubject = new BehaviorSubject<Aula[]>(this.getAulas());
+  private useSupabase = true;
+  private aulasSubject = new BehaviorSubject<Aula[]>([]);
   public aulas$ = this.aulasSubject.asObservable();
 
-  constructor() {
-    this.initializeDefaultData();
+  constructor(
+    private supabase: SupabaseService,
+    private institucionService: InstitucionService
+  ) {
+    this.loadAulas();
   }
 
-  private initializeDefaultData(): void {
-    const aulas = this.getAulas();
-    if (aulas.length === 0) {
-      const defaultAulas: Aula[] = [
-        {
-          id: '1',
-          nombre: 'Aula 101',
-          codigo: 'A101',
-          capacidad: 30,
-          tipo: 'aula',
-          recursos: [
-            { tipo: 'proyector', disponible: true },
-            { tipo: 'pizarra', disponible: true },
-            { tipo: 'wifi', disponible: true }
-          ],
-          estado: 'disponible',
-          edificio: 'Principal',
-          piso: 1
-        },
-        {
-          id: '2',
-          nombre: 'Laboratorio de Ciencias',
-          codigo: 'LAB-01',
-          capacidad: 20,
-          tipo: 'laboratorio',
-          recursos: [
-            { tipo: 'proyector', disponible: true },
-            { tipo: 'pc', disponible: true },
-            { tipo: 'wifi', disponible: true }
-          ],
-          estado: 'disponible',
-          edificio: 'Principal',
-          piso: 2
-        }
-      ];
-      this.saveAulas(defaultAulas);
+  private async loadAulas(): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const aulas = await this.getAulasFromSupabase();
+        this.aulasSubject.next(aulas);
+      } catch (error) {
+        const aulas = this.getAulasFromStorage();
+        this.aulasSubject.next(aulas);
+      }
+    } else {
+      const aulas = this.getAulasFromStorage();
+      this.aulasSubject.next(aulas);
     }
   }
 
-  getAulas(): Aula[] {
+  private async getAulasFromSupabase(): Promise<Aula[]> {
+    // Obtener la institución actual para filtrar
+    const currentInstitucion = this.institucionService.getCurrentInstitucion();
+    if (!currentInstitucion) {
+      return [];
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('aulas')
+      .select(`
+        *,
+        recursos:aula_recursos(*)
+      `)
+      .eq('institucion_id', currentInstitucion.id)
+      .order('nombre', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map((db: any) => ({
+      id: db.id,
+      nombre: db.nombre,
+      codigo: db.codigo,
+      capacidad: db.capacidad,
+      tipo: db.tipo || 'aula',
+      recursos: (db.recursos || []).map((r: any) => ({
+        tipo: r.tipo,
+        disponible: r.disponible !== false,
+        descripcion: r.descripcion
+      })),
+      estado: db.estado || 'disponible',
+      edificio: db.edificio,
+      piso: db.piso,
+      observaciones: db.observaciones
+    }));
+  }
+
+  private getAulasFromStorage(): Aula[] {
     const stored = localStorage.getItem(this.STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   }
 
-  getAulaById(id: string): Aula | undefined {
-    return this.getAulas().find(a => a.id === id);
+  async getAulas(): Promise<Aula[]> {
+    if (this.useSupabase) {
+      try {
+        return await this.getAulasFromSupabase();
+      } catch (error) {
+        return this.getAulasFromStorage();
+      }
+    }
+    return this.getAulasFromStorage();
   }
 
-  addAula(aula: Aula): void {
-    const aulas = this.getAulas();
-    aulas.push(aula);
-    this.saveAulas(aulas);
+  async getAulaById(id: string): Promise<Aula | undefined> {
+    if (this.useSupabase) {
+      try {
+        const { data, error } = await this.supabase.client
+          .from('aulas')
+          .select(`
+            *,
+            recursos:aula_recursos(*)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error || !data) return undefined;
+
+        return {
+          id: data.id,
+          nombre: data.nombre,
+          codigo: data.codigo,
+          capacidad: data.capacidad,
+          tipo: data.tipo || 'aula',
+          recursos: (data.recursos || []).map((r: any) => ({
+            tipo: r.tipo,
+            disponible: r.disponible !== false,
+            descripcion: r.descripcion
+          })),
+          estado: data.estado || 'disponible',
+          edificio: data.edificio,
+          piso: data.piso,
+          observaciones: data.observaciones
+        };
+      } catch (error) {
+        return undefined;
+      }
+    }
+    return this.getAulasFromStorage().find(a => a.id === id);
   }
 
-  updateAula(aula: Aula): void {
-    const aulas = this.getAulas();
-    const index = aulas.findIndex(a => a.id === aula.id);
-    if (index !== -1) {
-      aulas[index] = aula;
-      this.saveAulas(aulas);
+  async addAula(aula: Aula): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        // Obtener la institución actual
+        const currentInstitucion = this.institucionService.getCurrentInstitucion();
+        if (!currentInstitucion) {
+          throw new Error('Debe seleccionar una institución primero');
+        }
+
+        await this.supabase.create('aulas', {
+          id: aula.id,
+          nombre: aula.nombre,
+          codigo: aula.codigo,
+          capacidad: aula.capacidad,
+          tipo: aula.tipo || 'aula',
+          estado: aula.estado || 'disponible',
+          edificio: aula.edificio,
+          piso: aula.piso,
+          observaciones: aula.observaciones,
+          institucion_id: currentInstitucion.id // Asignar institución actual
+        });
+
+        // Agregar recursos
+        if (aula.recursos && aula.recursos.length > 0) {
+          for (const recurso of aula.recursos) {
+            await this.supabase.create('aula_recursos', {
+              aula_id: aula.id,
+              tipo: recurso.tipo,
+              disponible: recurso.disponible !== false,
+              descripcion: recurso.descripcion
+            });
+          }
+        }
+
+        await this.loadAulas();
+      } catch (error) {
+        console.error('Error agregando aula:', error);
+        throw error;
+      }
+    } else {
+      const aulas = this.getAulasFromStorage();
+      aulas.push(aula);
+      this.saveAulasToStorage(aulas);
+      this.aulasSubject.next(aulas);
     }
   }
 
-  deleteAula(id: string): void {
-    const aulas = this.getAulas().filter(a => a.id !== id);
-    this.saveAulas(aulas);
+  async updateAula(aula: Aula): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.update('aulas', aula.id, {
+          nombre: aula.nombre,
+          codigo: aula.codigo,
+          capacidad: aula.capacidad,
+          tipo: aula.tipo,
+          estado: aula.estado,
+          edificio: aula.edificio,
+          piso: aula.piso,
+          observaciones: aula.observaciones
+        });
+
+        // Actualizar recursos
+        if (aula.recursos) {
+          // Eliminar recursos existentes
+          const { data: existentes } = await this.supabase.client
+            .from('aula_recursos')
+            .select('id')
+            .eq('aula_id', aula.id);
+
+          for (const existente of existentes || []) {
+            await this.supabase.delete('aula_recursos', existente.id);
+          }
+
+          // Agregar los nuevos
+          for (const recurso of aula.recursos) {
+            await this.supabase.create('aula_recursos', {
+              aula_id: aula.id,
+              tipo: recurso.tipo,
+              disponible: recurso.disponible !== false,
+              descripcion: recurso.descripcion
+            });
+          }
+        }
+
+        await this.loadAulas();
+      } catch (error) {
+        console.error('Error actualizando aula:', error);
+        throw error;
+      }
+    } else {
+      const aulas = this.getAulasFromStorage();
+      const index = aulas.findIndex(a => a.id === aula.id);
+      if (index !== -1) {
+        aulas[index] = aula;
+        this.saveAulasToStorage(aulas);
+        this.aulasSubject.next(aulas);
+      }
+    }
   }
 
-  private saveAulas(aulas: Aula[]): void {
+  async deleteAula(id: string): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.delete('aulas', id);
+        await this.loadAulas();
+      } catch (error) {
+        console.error('Error eliminando aula:', error);
+        throw error;
+      }
+    } else {
+      const aulas = this.getAulasFromStorage().filter(a => a.id !== id);
+      this.saveAulasToStorage(aulas);
+      this.aulasSubject.next(aulas);
+    }
+  }
+
+  private saveAulasToStorage(aulas: Aula[]): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(aulas));
-    this.aulasSubject.next(aulas);
   }
 
-  // Horarios de Aulas
+  // Horarios de Aulas (se mantiene en localStorage por ahora)
   getHorariosAulas(): HorarioAula[] {
     const stored = localStorage.getItem(this.HORARIOS_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -102,7 +259,6 @@ export class AulaService {
     const horarios = this.getHorariosByAula(aulaId);
     return horarios.some(h => {
       if (h.dia !== dia) return false;
-      // Verificar solapamiento de horarios
       return (horaInicio < h.horaFin && horaFin > h.horaInicio);
     });
   }
@@ -113,4 +269,3 @@ export class AulaService {
     localStorage.setItem(this.HORARIOS_KEY, JSON.stringify(horarios));
   }
 }
-

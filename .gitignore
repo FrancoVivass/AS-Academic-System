@@ -42,6 +42,11 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Deployment files (opcional - descomenta si no quieres subirlos)
 # vercel.json
 # wrangler.toml

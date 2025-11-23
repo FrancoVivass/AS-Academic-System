@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { Materia, AlumnoMateria } from '../models/materia.model';
+import { SupabaseService } from './supabase.service';
+import { InstitucionService } from './institucion.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,149 +10,274 @@ import { Materia, AlumnoMateria } from '../models/materia.model';
 export class MateriaService {
   private readonly STORAGE_KEY = 'gestion_academica_materias';
   private readonly INSCRIPCIONES_KEY = 'gestion_academica_inscripciones';
-  private materiasSubject = new BehaviorSubject<Materia[]>(this.getMaterias());
+  private useSupabase = true;
+  private materiasSubject = new BehaviorSubject<Materia[]>([]);
   public materias$ = this.materiasSubject.asObservable();
 
-  constructor() {
-    this.initializeDefaultData();
+  constructor(
+    private supabase: SupabaseService,
+    private institucionService: InstitucionService
+  ) {
+    this.loadMaterias();
   }
 
-  private initializeDefaultData(): void {
-    const materias = this.getMaterias();
-    if (materias.length === 0) {
-      const defaultMaterias: Materia[] = [
-        {
-          id: '1',
-          nombre: 'Matemáticas',
-          codigo: 'MAT-101',
-          descripcion: 'Álgebra y geometría básica',
-          profesor: 'Dr. García',
-          curso: '1ro A',
-          horario: 'Lunes y Miércoles 8:00-10:00',
-          creditos: 4,
-          horasSemanales: 4,
-          correlatividades: [],
-          tipo: 'obligatoria',
-          estado: 'activa',
-          fechaCreacion: new Date().toISOString(),
-          configuracion: {
-            tieneNota: true,
-            tieneAsistencia: true,
-            requiereAprobacion: false,
-            notaMinimaAprobacion: 6,
-            porcentajeAsistenciaMinimo: 75
-          }
-        },
-        {
-          id: '2',
-          nombre: 'Lengua y Literatura',
-          codigo: 'LEN-101',
-          descripcion: 'Gramática y análisis literario',
-          profesor: 'Prof. Martínez',
-          curso: '1ro A',
-          horario: 'Martes y Jueves 8:00-10:00',
-          creditos: 3,
-          horasSemanales: 3,
-          correlatividades: [],
-          tipo: 'obligatoria',
-          estado: 'activa',
-          fechaCreacion: new Date().toISOString(),
-          configuracion: {
-            tieneNota: true,
-            tieneAsistencia: true,
-            requiereAprobacion: false,
-            notaMinimaAprobacion: 6,
-            porcentajeAsistenciaMinimo: 75
-          }
-        },
-        {
-          id: '3',
-          nombre: 'Ciencias Naturales',
-          codigo: 'CIE-101',
-          descripcion: 'Biología y química básica',
-          profesor: 'Dra. López',
-          curso: '2do B',
-          horario: 'Lunes y Viernes 10:00-12:00',
-          creditos: 4,
-          horasSemanales: 4,
-          correlatividades: [],
-          tipo: 'obligatoria',
-          estado: 'activa',
-          fechaCreacion: new Date().toISOString(),
-          configuracion: {
-            tieneNota: true,
-            tieneAsistencia: true,
-            requiereAprobacion: false,
-            notaMinimaAprobacion: 6,
-            porcentajeAsistenciaMinimo: 75
-          }
-        },
-        {
-          id: '4',
-          nombre: 'Historia',
-          codigo: 'HIS-101',
-          descripcion: 'Historia universal y nacional',
-          profesor: 'Prof. Fernández',
-          curso: '2do B',
-          horario: 'Miércoles 10:00-12:00',
-          creditos: 2,
-          horasSemanales: 2,
-          correlatividades: [],
-          tipo: 'obligatoria',
-          estado: 'activa',
-          fechaCreacion: new Date().toISOString(),
-          configuracion: {
-            tieneNota: true,
-            tieneAsistencia: true,
-            requiereAprobacion: false,
-            notaMinimaAprobacion: 6,
-            porcentajeAsistenciaMinimo: 75
-          }
-        }
-      ];
-      this.saveMaterias(defaultMaterias);
+  private async loadMaterias(): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const materias = await this.getMateriasFromSupabase();
+        this.materiasSubject.next(materias);
+      } catch (error) {
+        const materias = this.getMateriasFromStorage();
+        this.materiasSubject.next(materias);
+      }
+    } else {
+      const materias = this.getMateriasFromStorage();
+      this.materiasSubject.next(materias);
     }
   }
 
-  getMaterias(): Materia[] {
+  private async getMateriasFromSupabase(): Promise<Materia[]> {
+    // Obtener la institución actual para filtrar
+    const currentInstitucion = this.institucionService.getCurrentInstitucion();
+    if (!currentInstitucion) {
+      return [];
+    }
+
+    // Filtrar materias por institución a través de carreras
+    const { data, error } = await this.supabase.client
+      .from('materias')
+      .select(`
+        *,
+        correlatividades:materia_correlatividades(materia_correlativa_id),
+        carrera:carreras!inner(institucion_id)
+      `)
+      .eq('carrera.institucion_id', currentInstitucion.id)
+      .order('nombre', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map((db: any) => ({
+      id: db.id,
+      nombre: db.nombre,
+      codigo: db.codigo,
+      descripcion: db.descripcion,
+      profesor: '', // Se obtiene de docente_materias
+      curso: '', // Se obtiene de curso_materias
+      horario: '', // Se obtiene de curso_horarios
+      creditos: db.creditos || 0,
+      horasSemanales: db.horas_semanales,
+      carreraId: db.carrera_id,
+      correlatividades: (db.correlatividades || []).map((c: any) => c.materia_correlativa_id),
+      tipo: db.tipo || 'obligatoria',
+      estado: db.estado || 'activa',
+      fechaCreacion: db.fecha_creacion,
+      cuatrimestre: db.cuatrimestre,
+      año: db.año,
+      configuracion: {
+        tieneNota: db.tiene_nota !== false,
+        tieneAsistencia: db.tiene_asistencia !== false,
+        requiereAprobacion: db.requiere_aprobacion || false,
+        notaMinimaAprobacion: db.nota_minima_aprobacion || 6,
+        porcentajeAsistenciaMinimo: db.porcentaje_asistencia_minimo || 75
+      }
+    }));
+  }
+
+  private getMateriasFromStorage(): Materia[] {
     const stored = localStorage.getItem(this.STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   }
 
-  getMateriaById(id: string): Materia | undefined {
-    return this.getMaterias().find(m => m.id === id);
+  async getMaterias(): Promise<Materia[]> {
+    if (this.useSupabase) {
+      try {
+        return await this.getMateriasFromSupabase();
+      } catch (error) {
+        return this.getMateriasFromStorage();
+      }
+    }
+    return this.getMateriasFromStorage();
   }
 
-  addMateria(materia: Materia): void {
-    const materias = this.getMaterias();
-    materias.push(materia);
-    this.saveMaterias(materias);
+  async getMateriaById(id: string): Promise<Materia | undefined> {
+    if (this.useSupabase) {
+      try {
+        const { data, error } = await this.supabase.client
+          .from('materias')
+          .select(`
+            *,
+            correlatividades:materia_correlatividades(materia_correlativa_id)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error || !data) return undefined;
+
+        return {
+          id: data.id,
+          nombre: data.nombre,
+          codigo: data.codigo,
+          descripcion: data.descripcion,
+          profesor: '',
+          curso: '',
+          horario: '',
+          creditos: data.creditos || 0,
+          horasSemanales: data.horas_semanales,
+          carreraId: data.carrera_id,
+          correlatividades: (data.correlatividades || []).map((c: any) => c.materia_correlativa_id),
+          tipo: data.tipo || 'obligatoria',
+          estado: data.estado || 'activa',
+          fechaCreacion: data.fecha_creacion,
+          cuatrimestre: data.cuatrimestre,
+          año: data.año,
+          configuracion: {
+            tieneNota: data.tiene_nota !== false,
+            tieneAsistencia: data.tiene_asistencia !== false,
+            requiereAprobacion: data.requiere_aprobacion || false,
+            notaMinimaAprobacion: data.nota_minima_aprobacion || 6,
+            porcentajeAsistenciaMinimo: data.porcentaje_asistencia_minimo || 75
+          }
+        };
+      } catch (error) {
+        return undefined;
+      }
+    }
+    return this.getMateriasFromStorage().find(m => m.id === id);
   }
 
-  updateMateria(materia: Materia): void {
-    const materias = this.getMaterias();
-    const index = materias.findIndex(m => m.id === materia.id);
-    if (index !== -1) {
-      materias[index] = materia;
-      this.saveMaterias(materias);
+  async addMateria(materia: Materia): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.create('materias', {
+          id: materia.id,
+          nombre: materia.nombre,
+          codigo: materia.codigo,
+          descripcion: materia.descripcion,
+          creditos: materia.creditos || 0,
+          horas_semanales: materia.horasSemanales,
+          carrera_id: materia.carreraId,
+          tipo: materia.tipo || 'obligatoria',
+          estado: materia.estado || 'activa',
+          cuatrimestre: materia.cuatrimestre,
+          año: materia.año,
+          tiene_nota: materia.configuracion?.tieneNota !== false,
+          tiene_asistencia: materia.configuracion?.tieneAsistencia !== false,
+          requiere_aprobacion: materia.configuracion?.requiereAprobacion || false,
+          nota_minima_aprobacion: materia.configuracion?.notaMinimaAprobacion || 6,
+          porcentaje_asistencia_minimo: materia.configuracion?.porcentajeAsistenciaMinimo || 75,
+          fecha_creacion: materia.fechaCreacion || new Date().toISOString()
+        });
+
+        // Agregar correlatividades
+        if (materia.correlatividades && materia.correlatividades.length > 0) {
+          for (const corrId of materia.correlatividades) {
+            try {
+              await this.supabase.create('materia_correlatividades', {
+                materia_id: materia.id,
+                materia_correlativa_id: corrId
+              });
+            } catch (error: any) {
+              // Ignorar duplicados
+            }
+          }
+        }
+
+        await this.loadMaterias();
+      } catch (error) {
+        console.error('Error agregando materia:', error);
+        throw error;
+      }
+    } else {
+      const materias = this.getMateriasFromStorage();
+      materias.push(materia);
+      this.saveMateriasToStorage(materias);
+      this.materiasSubject.next(materias);
     }
   }
 
-  deleteMateria(id: string): void {
-    const materias = this.getMaterias().filter(m => m.id !== id);
-    this.saveMaterias(materias);
-    
-    // Eliminar inscripciones relacionadas
-    const inscripciones = this.getInscripciones().filter(i => i.materiaId !== id);
-    localStorage.setItem(this.INSCRIPCIONES_KEY, JSON.stringify(inscripciones));
+  async updateMateria(materia: Materia): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.update('materias', materia.id, {
+          nombre: materia.nombre,
+          codigo: materia.codigo,
+          descripcion: materia.descripcion,
+          creditos: materia.creditos,
+          horas_semanales: materia.horasSemanales,
+          carrera_id: materia.carreraId,
+          tipo: materia.tipo,
+          estado: materia.estado,
+          cuatrimestre: materia.cuatrimestre,
+          año: materia.año,
+          tiene_nota: materia.configuracion?.tieneNota,
+          tiene_asistencia: materia.configuracion?.tieneAsistencia,
+          requiere_aprobacion: materia.configuracion?.requiereAprobacion,
+          nota_minima_aprobacion: materia.configuracion?.notaMinimaAprobacion,
+          porcentaje_asistencia_minimo: materia.configuracion?.porcentajeAsistenciaMinimo
+        });
+
+        // Actualizar correlatividades
+        if (materia.correlatividades) {
+          // Eliminar todas las correlatividades existentes
+          const { data: existentes } = await this.supabase.client
+            .from('materia_correlatividades')
+            .select('id')
+            .eq('materia_id', materia.id);
+
+          for (const existente of existentes || []) {
+            await this.supabase.delete('materia_correlatividades', existente.id);
+          }
+
+          // Agregar las nuevas
+          for (const corrId of materia.correlatividades) {
+            try {
+              await this.supabase.create('materia_correlatividades', {
+                materia_id: materia.id,
+                materia_correlativa_id: corrId
+              });
+            } catch (error: any) {
+              // Ignorar errores
+            }
+          }
+        }
+
+        await this.loadMaterias();
+      } catch (error) {
+        console.error('Error actualizando materia:', error);
+        throw error;
+      }
+    } else {
+      const materias = this.getMateriasFromStorage();
+      const index = materias.findIndex(m => m.id === materia.id);
+      if (index !== -1) {
+        materias[index] = materia;
+        this.saveMateriasToStorage(materias);
+        this.materiasSubject.next(materias);
+      }
+    }
   }
 
-  private saveMaterias(materias: Materia[]): void {
+  async deleteMateria(id: string): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.delete('materias', id);
+        await this.loadMaterias();
+      } catch (error) {
+        console.error('Error eliminando materia:', error);
+        throw error;
+      }
+    } else {
+      const materias = this.getMateriasFromStorage().filter(m => m.id !== id);
+      this.saveMateriasToStorage(materias);
+      this.materiasSubject.next(materias);
+    }
+  }
+
+  private saveMateriasToStorage(materias: Materia[]): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(materias));
-    this.materiasSubject.next(materias);
   }
 
-  // Inscripciones
+  // Inscripciones (se mantiene en localStorage por ahora)
   getInscripciones(): AlumnoMateria[] {
     const stored = localStorage.getItem(this.INSCRIPCIONES_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -166,7 +293,6 @@ export class MateriaService {
 
   inscribirAlumno(inscripcion: AlumnoMateria): void {
     const inscripciones = this.getInscripciones();
-    // Verificar si ya está inscrito
     const existe = inscripciones.some(
       i => i.alumnoId === inscripcion.alumnoId && i.materiaId === inscripcion.materiaId
     );
@@ -183,4 +309,3 @@ export class MateriaService {
     localStorage.setItem(this.INSCRIPCIONES_KEY, JSON.stringify(inscripciones));
   }
 }
-

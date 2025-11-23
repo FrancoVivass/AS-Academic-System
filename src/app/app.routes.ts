@@ -24,6 +24,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/soporte/soporte').then(m => m.SoporteComponent)
   },
   {
+    path: 'test-conexion',
+    loadComponent: () => import('./components/test-conexion/test-conexion.component').then(m => m.TestConexionComponent)
+  },
+  {
+    path: 'migracion-datos',
+    loadComponent: () => import('./components/migracion-datos/migracion-datos.component').then(m => m.MigracionDatosComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
     canActivate: [institucionGuard]

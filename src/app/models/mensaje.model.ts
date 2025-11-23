@@ -7,6 +7,9 @@ export interface Mensaje {
   fecha: string;
   leido: boolean;
   importante: boolean;
+  fechaLeido?: string;
+  tipo?: 'mensaje' | 'notificacion' | 'anuncio';
+  prioridad?: 'baja' | 'normal' | 'alta' | 'urgente';
   adjuntos?: string[];
 }
 

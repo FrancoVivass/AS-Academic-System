@@ -70,12 +70,12 @@ export class AulasComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadAulas();
+  async ngOnInit(): Promise<void> {
+    await this.loadAulas();
   }
 
-  loadAulas(): void {
-    this.aulas = this.aulaService.getAulas();
+  async loadAulas(): Promise<void> {
+    this.aulas = await this.aulaService.getAulas();
   }
 
   abrirModalNuevo(): void {
@@ -97,7 +97,7 @@ export class AulasComponent implements OnInit {
     this.aulaForm.patchValue(aula);
   }
 
-  guardarAula(): void {
+  async guardarAula(): Promise<void> {
     if (this.aulaForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -108,7 +108,7 @@ export class AulasComponent implements OnInit {
         ...this.aulaSeleccionada,
         ...this.aulaForm.value
       };
-      this.aulaService.updateAula(aulaActualizada);
+      await this.aulaService.updateAula(aulaActualizada);
       this.notificationService.showSuccess('Aula actualizada correctamente');
     } else {
       const nuevaAula: Aula = {
@@ -116,18 +116,18 @@ export class AulasComponent implements OnInit {
         ...this.aulaForm.value,
         recursos: []
       };
-      this.aulaService.addAula(nuevaAula);
+      await this.aulaService.addAula(nuevaAula);
       this.notificationService.showSuccess('Aula creada correctamente');
     }
 
-    this.loadAulas();
+    await this.loadAulas();
     this.cerrarModal();
   }
 
-  eliminarAula(id: string): void {
+  async eliminarAula(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar esta aula?')) {
-      this.aulaService.deleteAula(id);
-      this.loadAulas();
+      await this.aulaService.deleteAula(id);
+      await this.loadAulas();
       this.notificationService.showSuccess('Aula eliminada correctamente');
     }
   }

@@ -110,14 +110,14 @@ export class MateriasComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Cargar datos básicos (cargar docentes primero para que estén disponibles al filtrar materias)
-    this.loadDocentes();
-    this.loadCarreras();
-    this.loadCursos();
-    this.loadMateriasDisponibles();
+    await this.loadDocentes();
+    await this.loadCarreras();
+    await this.loadCursos();
+    await this.loadMateriasDisponibles();
     // Cargar materias después de cargar docentes
-    this.loadMaterias();
+    await this.loadMaterias();
     
     // Verificar si viene desde carreras para crear una materia
     const datosTemporales = sessionStorage.getItem('crearMateriaDesdeCarrera');
@@ -155,32 +155,32 @@ export class MateriasComponent implements OnInit {
     }
   }
 
-  loadCarreras(): void {
+  async loadCarreras(): Promise<void> {
     if (!this.carreras || this.carreras.length === 0) {
-      this.carreras = this.carreraService.getCarreras();
+      this.carreras = await this.carreraService.getCarreras();
     }
   }
 
-  loadCursos(): void {
+  async loadCursos(): Promise<void> {
     if (!this.cursos || this.cursos.length === 0) {
-      this.cursos = this.cursoService.getCursos();
+      this.cursos = await this.cursoService.getCursos();
     }
   }
 
-  loadDocentes(): void {
+  async loadDocentes(): Promise<void> {
     if (!this.docentes || this.docentes.length === 0) {
-      this.docentes = this.docenteService.getDocentes();
+      this.docentes = await this.docenteService.getDocentes();
     }
   }
 
-  loadMateriasDisponibles(): void {
+  async loadMateriasDisponibles(): Promise<void> {
     if (!this.materiasDisponibles || this.materiasDisponibles.length === 0) {
-      this.materiasDisponibles = this.materiaService.getMaterias();
+      this.materiasDisponibles = await this.materiaService.getMaterias();
     }
   }
 
-  loadMaterias(): void {
-    let todasLasMaterias = this.materiaService.getMaterias();
+  async loadMaterias(): Promise<void> {
+    let todasLasMaterias = await this.materiaService.getMaterias();
     
     // Si es alumno, solo mostrar materias en las que está inscrito
     if (this.permissionsService.esAlumno()) {
@@ -197,7 +197,7 @@ export class MateriasComponent implements OnInit {
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
         // Intentar obtener el docente completo desde DocenteService
-        const docente = this.docenteService.getDocenteById(usuario.id);
+        const docente = await this.docenteService.getDocenteById(usuario.id);
         
         if (docente && docente.materiasAsignadas && docente.materiasAsignadas.length > 0) {
           // Filtrar por materias asignadas del docente
@@ -384,7 +384,7 @@ export class MateriasComponent implements OnInit {
     });
   }
   
-  finalizarWizardMateria(): void {
+  async finalizarWizardMateria(): Promise<void> {
     console.log('Finalizando wizard de materia...');
     console.log('Form value:', this.materiaForm.value);
     console.log('Wizard data:', this.wizardData);
@@ -507,7 +507,7 @@ export class MateriasComponent implements OnInit {
     }
     
     console.log('Recargando materias...');
-    this.loadMaterias();
+    await this.loadMaterias();
     this.loadMateriasDisponibles();
     console.log('Materias recargadas. Total:', this.materias.length);
     this.cerrarWizard();
@@ -561,7 +561,7 @@ export class MateriasComponent implements OnInit {
     this.loadMateriasDisponibles();
   }
 
-  guardarMateria(): void {
+  async guardarMateria(): Promise<void> {
     if (this.materiaForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -666,14 +666,14 @@ export class MateriasComponent implements OnInit {
       }
     }
 
-    this.loadMaterias();
+    await this.loadMaterias();
     this.cerrarModal();
   }
 
-  agregarMateriaACarrera(materia: Materia): void {
+  async agregarMateriaACarrera(materia: Materia): Promise<void> {
     if (!materia.carreraId) return;
     
-    const carrera = this.carreraService.getCarreraById(materia.carreraId);
+    const carrera = await this.carreraService.getCarreraById(materia.carreraId);
     if (carrera) {
       if (materia.tipo === 'obligatoria') {
         if (!carrera.materiasObligatorias.includes(materia.id)) {
@@ -684,7 +684,7 @@ export class MateriasComponent implements OnInit {
           carrera.materiasOptativas.push(materia.id);
         }
       }
-      this.carreraService.updateCarrera(carrera);
+      await this.carreraService.updateCarrera(carrera);
     }
   }
 
@@ -697,23 +697,23 @@ export class MateriasComponent implements OnInit {
     return this.tieneCorrelatividad(materiaId);
   }
 
-  eliminarMateria(id: string): void {
+  async eliminarMateria(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar esta materia?')) {
-      this.materiaService.deleteMateria(id);
-      this.loadMaterias();
+      await this.materiaService.deleteMateria(id);
+      await this.loadMaterias();
     }
   }
 
-  abrirInscripciones(materia: Materia): void {
+  async abrirInscripciones(materia: Materia): Promise<void> {
     this.materiaSeleccionada = materia;
     this.mostrarInscripciones = true;
-    this.cargarAlumnosInscripcion();
+    await this.cargarAlumnosInscripcion();
   }
 
-  cargarAlumnosInscripcion(): void {
+  async cargarAlumnosInscripcion(): Promise<void> {
     if (!this.materiaSeleccionada) return;
     
-    this.alumnosDisponibles = this.alumnoService.getAlumnos();
+    this.alumnosDisponibles = await this.alumnoService.getAlumnos();
     const inscripciones = this.materiaService.getInscripcionesByMateria(this.materiaSeleccionada.id);
     const idsInscritos = inscripciones.map(i => i.alumnoId);
     
@@ -721,7 +721,7 @@ export class MateriasComponent implements OnInit {
     this.alumnosDisponibles = this.alumnosDisponibles.filter(a => !idsInscritos.includes(a.id));
   }
 
-  inscribirAlumno(alumnoId: string): void {
+  async inscribirAlumno(alumnoId: string): Promise<void> {
     if (!this.materiaSeleccionada) return;
     
     const inscripcion: AlumnoMateria = {
@@ -732,14 +732,14 @@ export class MateriasComponent implements OnInit {
     };
     
     this.materiaService.inscribirAlumno(inscripcion);
-    this.cargarAlumnosInscripcion();
+    await this.cargarAlumnosInscripcion();
   }
 
-  desinscribirAlumno(alumnoId: string): void {
+  async desinscribirAlumno(alumnoId: string): Promise<void> {
     if (!this.materiaSeleccionada) return;
     
     this.materiaService.desinscribirAlumno(alumnoId, this.materiaSeleccionada.id);
-    this.cargarAlumnosInscripcion();
+    await this.cargarAlumnosInscripcion();
   }
 
   cerrarModal(): void {

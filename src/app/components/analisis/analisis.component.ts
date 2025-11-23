@@ -26,13 +26,13 @@ export class AnalisisComponent implements OnInit {
     public permissionsService: PermissionsService
   ) {}
 
-  ngOnInit(): void {
-    this.loadEstadisticas();
+  async ngOnInit(): Promise<void> {
+    await this.loadEstadisticas();
   }
 
-  loadEstadisticas(): void {
-    const reportesAlumnos = this.reportService.generarReporteAlumnos();
-    const reportesMaterias = this.reportService.generarReporteMaterias();
+  async loadEstadisticas(): Promise<void> {
+    const reportesAlumnos = await this.reportService.generarReporteAlumnos();
+    const reportesMaterias = await this.reportService.generarReporteMaterias();
 
     this.estadisticas = {
       totalAlumnos: reportesAlumnos.length,

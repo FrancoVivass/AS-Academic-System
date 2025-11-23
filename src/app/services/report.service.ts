@@ -30,13 +30,13 @@ export class ReportService {
     private materiaService: MateriaService
   ) {}
 
-  generarReporteAlumnos(): ReporteAlumno[] {
-    const alumnos = this.alumnoService.getAlumnos();
-    return alumnos.map(alumno => {
-      const promedio = this.alumnoService.getPromedioAlumno(alumno.id);
-      const porcentajeAsistencia = this.alumnoService.getPorcentajeAsistencia(alumno.id);
-      const notas = this.alumnoService.getNotasByAlumno(alumno.id);
-      const asistencias = this.alumnoService.getAsistenciasByAlumno(alumno.id);
+  async generarReporteAlumnos(): Promise<ReporteAlumno[]> {
+    const alumnos = await this.alumnoService.getAlumnos();
+    const reportes = await Promise.all(alumnos.map(async alumno => {
+      const promedio = await this.alumnoService.getPromedioAlumno(alumno.id);
+      const porcentajeAsistencia = await this.alumnoService.getPorcentajeAsistencia(alumno.id);
+      const notas = await this.alumnoService.getNotasByAlumno(alumno.id);
+      const asistencias = await this.alumnoService.getAsistenciasByAlumno(alumno.id);
       const inscripciones = this.materiaService.getInscripcionesByAlumno(alumno.id);
 
       return {
@@ -47,30 +47,32 @@ export class ReportService {
         cantidadAsistencias: asistencias.length,
         materiasInscritas: inscripciones.length
       };
-    });
+    }));
+    return reportes;
   }
 
-  generarReporteMaterias(): ReporteMateria[] {
-    const materias = this.materiaService.getMaterias();
-    return materias.map(materia => {
+  async generarReporteMaterias(): Promise<ReporteMateria[]> {
+    const materias = await this.materiaService.getMaterias();
+    const reportes = await Promise.all(materias.map(async materia => {
       const inscripciones = this.materiaService.getInscripcionesByMateria(materia.id);
-      const notas = this.alumnoService.getNotasByMateria(materia.id);
-      const asistencias = this.alumnoService.getAsistenciasByMateria(materia.id);
+      const notas = await this.alumnoService.getNotasByMateria(materia.id);
+      const asistencias = await this.alumnoService.getAsistenciasByMateria(materia.id);
 
-      const promediosAlumnos = inscripciones.map(insc => {
+      const promediosAlumnosPromises = inscripciones.map(async insc => {
         const notasAlumno = notas.filter(n => n.alumnoId === insc.alumnoId);
         const promedio = notasAlumno.length > 0
-          ? notasAlumno.reduce((sum, n) => sum + n.calificacion, 0) / notasAlumno.length
+          ? notasAlumno.reduce((sum: number, n) => sum + n.calificacion, 0) / notasAlumno.length
           : 0;
-        const alumno = this.alumnoService.getAlumnoById(insc.alumnoId);
+        const alumno = await this.alumnoService.getAlumnoById(insc.alumnoId);
         return {
           nombre: alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido',
           promedio: Math.round(promedio * 100) / 100
         };
-      }).sort((a, b) => b.promedio - a.promedio).slice(0, 5);
+      });
+      const promediosAlumnos = (await Promise.all(promediosAlumnosPromises)).sort((a, b) => b.promedio - a.promedio).slice(0, 5);
 
       const promedioGeneral = notas.length > 0
-        ? notas.reduce((sum, n) => sum + n.calificacion, 0) / notas.length
+        ? notas.reduce((sum: number, n) => sum + n.calificacion, 0) / notas.length
         : 0;
 
       const presentes = asistencias.filter(a => a.presente).length;
@@ -85,12 +87,13 @@ export class ReportService {
         porcentajeAsistencia: Math.round(porcentajeAsistencia * 100) / 100,
         mejoresAlumnos: promediosAlumnos
       };
-    });
+    }));
+    return reportes;
   }
 
-  exportarReporteCompleto(): string {
-    const reporteAlumnos = this.generarReporteAlumnos();
-    const reporteMaterias = this.generarReporteMaterias();
+  async exportarReporteCompleto(): Promise<string> {
+    const reporteAlumnos = await this.generarReporteAlumnos();
+    const reporteMaterias = await this.generarReporteMaterias();
 
     let csv = 'REPORTE COMPLETO - SISTEMA DE GESTIÓN ACADÉMICA\n';
     csv += `Fecha: ${new Date().toLocaleDateString('es-ES')}\n\n`;

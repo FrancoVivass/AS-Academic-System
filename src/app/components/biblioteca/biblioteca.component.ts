@@ -15,6 +15,7 @@ import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { NotificationService } from '../../services/notification.service';
 import { RecursoBiblioteca } from '../../models/biblioteca.model';
+import { Materia } from '../../models/materia.model';
 
 @Component({
   selector: 'app-biblioteca',
@@ -73,7 +74,8 @@ export class BibliotecaComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.actualizarCache();
     this.loadRecursos();
   }
 
@@ -199,14 +201,23 @@ export class BibliotecaComponent implements OnInit {
     this.mostrarModal = false;
   }
 
-  getNombreMateria(materiaId?: string): string {
-    if (!materiaId) return 'General';
-    const materia = this.materiaService.getMateriaById(materiaId);
-    return materia ? materia.nombre : 'Desconocida';
+  private materiasCache: Materia[] = [];
+  private nombresMaterias: Map<string, string> = new Map();
+
+  async actualizarCache(): Promise<void> {
+    this.materiasCache = await this.materiaService.getMaterias();
+    this.materiasCache.forEach(materia => {
+      this.nombresMaterias.set(materia.id, materia.nombre);
+    });
   }
 
-  getMaterias() {
-    return this.materiaService.getMaterias();
+  getNombreMateria(materiaId?: string): string {
+    if (!materiaId) return 'General';
+    return this.nombresMaterias.get(materiaId) || 'Desconocida';
+  }
+
+  getMaterias(): Materia[] {
+    return this.materiasCache;
   }
 
   getIconoTipo(tipo: string): string {

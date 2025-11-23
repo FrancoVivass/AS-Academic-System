@@ -55,19 +55,20 @@ export class MensajesComponent implements OnInit {
     private notificationService: NotificationService
   ) {}
 
-  ngOnInit(): void {
-    this.loadMensajes();
+  async ngOnInit(): Promise<void> {
+    await this.actualizarCache();
+    await this.loadMensajes();
   }
 
-  loadMensajes(): void {
+  async loadMensajes(): Promise<void> {
     const usuarioId = this.authService.getCurrentUser()?.id;
     if (usuarioId) {
-      this.mensajes = this.mensajeService.getMensajesByUsuario(usuarioId);
-      this.mensajesNoLeidos = this.mensajeService.getMensajesNoLeidos(usuarioId);
+      this.mensajes = await this.mensajeService.getMensajesByUsuario(usuarioId);
+      this.mensajesNoLeidos = await this.mensajeService.getMensajesNoLeidos(usuarioId);
     }
   }
 
-  enviarMensaje(): void {
+  async enviarMensaje(): Promise<void> {
     const usuarioId = this.authService.getCurrentUser()?.id;
     if (!usuarioId || !this.destinatarioSeleccionado || !this.nuevoMensaje.asunto || !this.nuevoMensaje.contenido) {
       this.notificationService.showWarning('Por favor complete todos los campos');
@@ -85,29 +86,36 @@ export class MensajesComponent implements OnInit {
       importante: false
     };
 
-    this.mensajeService.addMensaje(mensaje);
+    await this.mensajeService.addMensaje(mensaje);
     this.notificationService.showSuccess('Mensaje enviado correctamente');
     this.nuevoMensaje = { asunto: '', contenido: '' };
     this.destinatarioSeleccionado = '';
-    this.loadMensajes();
+    await this.loadMensajes();
   }
 
-  marcarComoLeido(mensajeId: string): void {
-    this.mensajeService.marcarComoLeido(mensajeId);
-    this.loadMensajes();
+  async marcarComoLeido(mensajeId: string): Promise<void> {
+    await this.mensajeService.marcarComoLeido(mensajeId);
+    await this.loadMensajes();
+  }
+
+  // Cache para nombres de usuarios
+  private nombresUsuarios: Map<string, string> = new Map();
+  private alumnosCache: any[] = [];
+
+  async actualizarCache(): Promise<void> {
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    this.alumnosCache = todosLosAlumnos;
+    todosLosAlumnos.forEach(alumno => {
+      this.nombresUsuarios.set(alumno.id, `${alumno.nombre} ${alumno.apellido}`);
+    });
   }
 
   getNombreUsuario(usuarioId: string): string {
-    // Buscar en alumnos
-    const alumno = this.alumnoService.getAlumnoById(usuarioId);
-    if (alumno) return `${alumno.nombre} ${alumno.apellido}`;
-    
-    // Buscar en usuarios (simulado)
-    return 'Usuario';
+    return this.nombresUsuarios.get(usuarioId) || 'Usuario';
   }
 
   getAlumnos() {
-    return this.alumnoService.getAlumnos();
+    return this.alumnosCache;
   }
 
   esRemitente(mensaje: Mensaje): boolean {

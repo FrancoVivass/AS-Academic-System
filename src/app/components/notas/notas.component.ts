@@ -86,9 +86,10 @@ export class NotasComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadCarreras();
-    this.loadNotas();
+  async ngOnInit(): Promise<void> {
+    await this.loadCarreras();
+    await this.loadNotas();
+    await this.actualizarCacheNombres();
     
     // Si es profesor, asegurar que se carguen las carreras correctamente
     if (this.permissionsService.esProfesor()) {
@@ -101,26 +102,26 @@ export class NotasComponent implements OnInit {
     }
   }
 
-  loadCarreras(): void {
+  async loadCarreras(): Promise<void> {
     if (this.permissionsService.esAdmin() || this.permissionsService.esSecretario()) {
-      this.carreras = this.carreraService.getCarreras();
+      this.carreras = await this.carreraService.getCarreras();
     } else if (this.permissionsService.esProfesor()) {
       // Profesor: solo carreras donde tiene materias
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
         // Intentar obtener docente por ID
-        let docente = this.docenteService.getDocenteById(usuario.id);
+        let docente = await this.docenteService.getDocenteById(usuario.id);
         
         // Si no se encuentra por ID, buscar por nombre
         if (!docente) {
-          const todosLosDocentes = this.docenteService.getDocentes();
+          const todosLosDocentes = await this.docenteService.getDocentes();
           docente = todosLosDocentes.find(d => 
             d.nombre === usuario.nombre && d.apellido === usuario.apellido
           );
         }
         
         const materiasAsignadas = docente?.materiasAsignadas || [];
-        const todasLasMaterias = this.materiaService.getMaterias();
+        const todasLasMaterias = await this.materiaService.getMaterias();
         const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
         
         // Filtrar materias del profesor
@@ -144,8 +145,8 @@ export class NotasComponent implements OnInit {
         });
         
         // También buscar en cursos que tienen estas materias
-        const todasLasCarreras = this.carreraService.getCarreras();
-        const cursos = this.cursoService.getCursos();
+        const todasLasCarreras = await this.carreraService.getCarreras();
+        const cursos = await this.cursoService.getCursos();
         
         cursos.forEach(curso => {
           if (curso.materias.some(mId => materiasProfesor.some(m => m.id === mId))) {
@@ -160,22 +161,22 @@ export class NotasComponent implements OnInit {
         // Si hay carreras, seleccionar la primera por defecto en los filtros
         if (this.carreras.length > 0 && !this.filtroCarrera) {
           this.filtroCarrera = this.carreras[0].id;
-          this.onCarreraChange();
+          await this.onCarreraChange();
         }
       }
     }
   }
 
-  onCarreraChange(): void {
+  async onCarreraChange(): Promise<void> {
     this.filtroMateria = '';
     this.filtroAlumno = '';
     this.notaForm.patchValue({ materiaId: '', alumnoId: '' });
-    this.loadMateriasPorCarrera();
-    this.loadAlumnosPorCarrera();
-    this.aplicarFiltros();
+    await this.loadMateriasPorCarrera();
+    await this.loadAlumnosPorCarrera();
+    await this.aplicarFiltros();
   }
 
-  loadMateriasPorCarrera(): void {
+  async loadMateriasPorCarrera(): Promise<void> {
     // Usar carreraId del formulario si está disponible, sino usar filtroCarrera
     const carreraId = this.notaForm.get('carreraId')?.value || this.filtroCarrera;
     
@@ -184,7 +185,7 @@ export class NotasComponent implements OnInit {
       return;
     }
 
-    let todasLasMaterias = this.materiaService.getMaterias();
+    let todasLasMaterias = await this.materiaService.getMaterias();
     
     // Si es profesor, primero obtener sus materias
     let materiasProfesor: Materia[] = [];
@@ -192,11 +193,11 @@ export class NotasComponent implements OnInit {
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
         // Intentar obtener docente por ID
-        let docente = this.docenteService.getDocenteById(usuario.id);
+        let docente = await this.docenteService.getDocenteById(usuario.id);
         
         // Si no se encuentra por ID, buscar por nombre
         if (!docente) {
-          const todosLosDocentes = this.docenteService.getDocentes();
+          const todosLosDocentes = await this.docenteService.getDocentes();
           docente = todosLosDocentes.find(d => 
             d.nombre === usuario.nombre && d.apellido === usuario.apellido
           );
@@ -223,7 +224,8 @@ export class NotasComponent implements OnInit {
     }
     
     // Ahora filtrar por carrera: materias que tienen el carreraId O que están en cursos de esa carrera
-    const cursosDeCarrera = this.cursoService.getCursos().filter(c => c.carreraId === carreraId);
+    const todosLosCursos = await this.cursoService.getCursos();
+    const cursosDeCarrera = todosLosCursos.filter(c => c.carreraId === carreraId);
     const materiasIdsEnCursos = new Set<string>();
     cursosDeCarrera.forEach(curso => {
       if (curso.materias) {
@@ -254,7 +256,7 @@ export class NotasComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  loadAlumnosPorCarrera(): void {
+  async loadAlumnosPorCarrera(): Promise<void> {
     // Usar carreraId del formulario si está disponible, sino usar filtroCarrera
     const carreraId = this.notaForm.get('carreraId')?.value || this.filtroCarrera;
     
@@ -264,14 +266,15 @@ export class NotasComponent implements OnInit {
     }
 
     // Obtener alumnos de la carrera
-    let alumnos = this.alumnoService.getAlumnos().filter(a => 
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    let alumnos = todosLosAlumnos.filter(a => 
       a.carreraId === carreraId
     );
     
     this.alumnosDisponibles = alumnos;
   }
 
-  loadAlumnosPorMateria(): void {
+  async loadAlumnosPorMateria(): Promise<void> {
     // Usar materiaId del formulario si está disponible, sino usar filtroMateria
     const materiaId = this.notaForm.get('materiaId')?.value || this.filtroMateria;
     // Usar carreraId del formulario si está disponible, sino usar filtroCarrera
@@ -283,20 +286,21 @@ export class NotasComponent implements OnInit {
     }
 
     // Obtener cursos de la carrera que tienen esta materia
-    this.cursos = this.cursoService.getCursosByCarrera(carreraId);
+    this.cursos = await this.cursoService.getCursosByCarrera(carreraId);
     const cursosConMateria = this.cursos.filter(c => c.materias.includes(materiaId));
     
     // Obtener IDs de alumnos de esos cursos
     const idsAlumnos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
     
     // Filtrar alumnos que pertenecen a la carrera y están en los cursos
-    let alumnos = this.alumnoService.getAlumnos().filter(a => 
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    let alumnos = todosLosAlumnos.filter(a => 
       a.carreraId === carreraId && idsAlumnos.includes(a.id)
     );
     
     // Si no hay alumnos en cursos, mostrar todos los de la carrera
     if (alumnos.length === 0) {
-      alumnos = this.alumnoService.getAlumnos().filter(a => 
+      alumnos = todosLosAlumnos.filter(a => 
         a.carreraId === carreraId
       );
     }
@@ -304,8 +308,8 @@ export class NotasComponent implements OnInit {
     this.alumnosDisponibles = alumnos;
   }
 
-  loadNotas(): void {
-    let todasLasNotas = this.alumnoService.getNotas();
+  async loadNotas(): Promise<void> {
+    let todasLasNotas = await this.alumnoService.getNotas();
     
     // Si es alumno, solo ver sus propias notas
     if (this.permissionsService.esAlumno()) {
@@ -317,18 +321,18 @@ export class NotasComponent implements OnInit {
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
         // Intentar obtener docente por ID
-        let docente = this.docenteService.getDocenteById(usuario.id);
+        let docente = await this.docenteService.getDocenteById(usuario.id);
         
         // Si no se encuentra por ID, buscar por nombre
         if (!docente) {
-          const todosLosDocentes = this.docenteService.getDocentes();
+          const todosLosDocentes = await this.docenteService.getDocentes();
           docente = todosLosDocentes.find(d => 
             d.nombre === usuario.nombre && d.apellido === usuario.apellido
           );
         }
         
         const materiasAsignadas = docente?.materiasAsignadas || [];
-        const todasLasMaterias = this.materiaService.getMaterias();
+        const todasLasMaterias = await this.materiaService.getMaterias();
         const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
         
         // Filtrar materias del profesor
@@ -352,7 +356,7 @@ export class NotasComponent implements OnInit {
         });
         
         // También buscar en cursos que tienen estas materias
-        const todosLosCursos = this.cursoService.getCursos();
+        const todosLosCursos = await this.cursoService.getCursos();
         todosLosCursos.forEach(curso => {
           if (curso.materias.some(mId => materiasProfesor.some(m => m.id === mId))) {
             if (curso.carreraId) {
@@ -365,36 +369,42 @@ export class NotasComponent implements OnInit {
         const materiasIdsProfesor = new Set<string>(materiasProfesor.map(m => m.id));
         
         // Filtrar notas: solo de materias del profesor y alumnos de sus carreras
-        todasLasNotas = todasLasNotas.filter(n => {
+        const notasFiltradas = [];
+        for (const nota of todasLasNotas) {
           // Verificar que la nota sea de una materia del profesor
-          if (!materiasIdsProfesor.has(n.materiaId)) {
-            return false;
+          if (!materiasIdsProfesor.has(nota.materiaId)) {
+            continue;
           }
           
-          const alumno = this.alumnoService.getAlumnoById(n.alumnoId);
-          if (!alumno) return false;
+          const alumno = await this.alumnoService.getAlumnoById(nota.alumnoId);
+          if (!alumno) continue;
           
           // Verificar que el alumno pertenezca a una carrera del profesor
           // Si el alumno no tiene carreraId, también mostrarlo (puede ser que aún no esté asignado)
           if (!alumno.carreraId) {
-            return true; // Mostrar notas de alumnos sin carrera asignada
+            notasFiltradas.push(nota); // Mostrar notas de alumnos sin carrera asignada
+            continue;
           }
           
-          return carrerasIds.has(alumno.carreraId);
-        });
+          if (carrerasIds.has(alumno.carreraId)) {
+            notasFiltradas.push(nota);
+          }
+        }
+        todasLasNotas = notasFiltradas;
       }
     }
     
     this.notas = todasLasNotas;
-    this.aplicarFiltros();
+    await this.aplicarFiltros();
   }
 
-  aplicarFiltros(): void {
+  async aplicarFiltros(): Promise<void> {
     let filtradas = [...this.notas];
 
     if (this.filtroCarrera) {
       // Filtrar por carrera: solo notas de alumnos de esa carrera
-      const alumnosCarrera = this.alumnoService.getAlumnos()
+      const todosLosAlumnos = await this.alumnoService.getAlumnos();
+      const alumnosCarrera = todosLosAlumnos
         .filter(a => a.carreraId === this.filtroCarrera)
         .map(a => a.id);
       filtradas = filtradas.filter(n => alumnosCarrera.includes(n.alumnoId));
@@ -467,7 +477,7 @@ export class NotasComponent implements OnInit {
     this.mostrarModal = true;
   }
 
-  abrirModalEditar(nota: Nota): void {
+  async abrirModalEditar(nota: Nota): Promise<void> {
     if (!this.permissionsService.puedeVer('editarNotas')) {
       this.notificationService.showError('No tiene permisos para editar notas');
       return;
@@ -476,7 +486,7 @@ export class NotasComponent implements OnInit {
     this.notaSeleccionada = nota;
     
     // Obtener carrera del alumno
-    const alumno = this.alumnoService.getAlumnoById(nota.alumnoId);
+    const alumno = await this.alumnoService.getAlumnoById(nota.alumnoId);
     const carreraId = alumno?.carreraId || '';
     
     this.notaForm.patchValue({
@@ -487,49 +497,49 @@ export class NotasComponent implements OnInit {
     // Cargar datos relacionados
     if (carreraId) {
       this.filtroCarrera = carreraId;
-      this.loadMateriasPorCarrera();
-      this.loadAlumnosPorMateria();
+      await this.loadMateriasPorCarrera();
+      await this.loadAlumnosPorMateria();
     }
     
     this.mostrarModal = true;
   }
 
-  onCarreraChangeModal(): void {
+  async onCarreraChangeModal(): Promise<void> {
     const carreraId = this.notaForm.get('carreraId')?.value;
     if (carreraId) {
       this.filtroCarrera = carreraId;
       // Limpiar materia y alumno
       this.notaForm.patchValue({ materiaId: '', alumnoId: '' });
       // Cargar materias del profesor para esta carrera
-      this.loadMateriasPorCarrera();
+      await this.loadMateriasPorCarrera();
       // Cargar alumnos de la carrera
-      this.loadAlumnosPorCarrera();
+      await this.loadAlumnosPorCarrera();
     } else {
       this.materiasDisponibles = [];
       this.alumnosDisponibles = [];
     }
   }
 
-  onMateriaChangeModal(): void {
+  async onMateriaChangeModal(): Promise<void> {
     const materiaId = this.notaForm.get('materiaId')?.value;
     if (materiaId) {
       this.filtroMateria = materiaId;
       // Limpiar alumno seleccionado
       this.notaForm.patchValue({ alumnoId: '' });
       // Cargar alumnos de la materia (filtrados por carrera y materia)
-      this.loadAlumnosPorMateria();
+      await this.loadAlumnosPorMateria();
     } else {
       // Si no hay materia, cargar todos los alumnos de la carrera
       const carreraId = this.notaForm.get('carreraId')?.value || this.filtroCarrera;
       if (carreraId) {
-        this.loadAlumnosPorCarrera();
+        await this.loadAlumnosPorCarrera();
       } else {
         this.alumnosDisponibles = [];
       }
     }
   }
 
-  guardarNota(): void {
+  async guardarNota(): Promise<void> {
     if (this.notaForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -540,7 +550,7 @@ export class NotasComponent implements OnInit {
     const carreraId = formValue.carreraId;
     
     // Validar que el alumno pertenezca a la carrera seleccionada
-    const alumno = this.alumnoService.getAlumnoById(formValue.alumnoId);
+    const alumno = await this.alumnoService.getAlumnoById(formValue.alumnoId);
     if (alumno && carreraId && alumno.carreraId !== carreraId) {
       this.notificationService.showError('El alumno seleccionado no pertenece a la carrera seleccionada');
       return;
@@ -550,9 +560,9 @@ export class NotasComponent implements OnInit {
     if (this.permissionsService.esProfesor()) {
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
-        const docente = this.docenteService.getDocenteById(usuario.id);
+        const docente = await this.docenteService.getDocenteById(usuario.id);
         const materiasAsignadas = docente?.materiasAsignadas || [];
-        const materia = this.materiaService.getMateriaById(materiaId);
+        const materia = await this.materiaService.getMateriaById(materiaId);
         
         if (materiasAsignadas.length > 0 && !materiasAsignadas.includes(materiaId)) {
           this.notificationService.showError('No tiene permisos para cargar notas en esta materia. Solo puede cargar notas en sus materias asignadas.');
@@ -572,9 +582,9 @@ export class NotasComponent implements OnInit {
       if (this.permissionsService.esProfesor()) {
         const usuario = this.authService.getCurrentUser();
         if (usuario) {
-          const docente = this.docenteService.getDocenteById(usuario.id);
+          const docente = await this.docenteService.getDocenteById(usuario.id);
           const materiasAsignadas = docente?.materiasAsignadas || [];
-          const materia = this.materiaService.getMateriaById(this.notaSeleccionada.materiaId);
+          const materia = await this.materiaService.getMateriaById(this.notaSeleccionada.materiaId);
           
           if (materiasAsignadas.length > 0 && !materiasAsignadas.includes(this.notaSeleccionada.materiaId)) {
             this.notificationService.showError('No tiene permisos para editar esta nota');
@@ -596,7 +606,7 @@ export class NotasComponent implements OnInit {
         ...this.notaSeleccionada,
         ...notaData
       };
-      this.alumnoService.updateNota(notaActualizada);
+      await this.alumnoService.updateNota(notaActualizada);
       this.notificationService.showSuccess('Nota actualizada correctamente');
     } else {
       // Remover carreraId antes de guardar (no es parte del modelo Nota)
@@ -607,7 +617,7 @@ export class NotasComponent implements OnInit {
         ...notaData,
         estado: 'cargada'
       };
-      this.alumnoService.addNota(nuevaNota);
+      await this.alumnoService.addNota(nuevaNota);
       this.notificationService.showSuccess('Nota registrada correctamente');
     }
 
@@ -615,11 +625,11 @@ export class NotasComponent implements OnInit {
     this.cerrarModal();
     
     // Recargar notas (esto actualizará la lista)
-    this.loadNotas();
+    await this.loadNotas();
     
     // Recargar alumnos y materias si hay filtros activos (para los dropdowns)
     if (this.filtroCarrera) {
-      this.onCarreraChange();
+      await this.onCarreraChange();
     }
   }
 
@@ -629,59 +639,50 @@ export class NotasComponent implements OnInit {
     this.modoEdicion = false;
   }
 
-  eliminarNota(id: string): void {
+  async eliminarNota(id: string): Promise<void> {
     if (!this.permissionsService.puedeVer('editarNotas')) {
       this.notificationService.showError('No tiene permisos para eliminar notas');
       return;
     }
     if (confirm('¿Está seguro de eliminar esta nota?')) {
-      this.alumnoService.deleteNota(id);
-      this.loadNotas();
+      await this.alumnoService.deleteNota(id);
+      await this.loadNotas();
       this.notificationService.showSuccess('Nota eliminada correctamente');
     }
   }
 
+  // Cache para nombres (se actualiza cuando se cargan los datos)
+  private nombresAlumnos: Map<string, string> = new Map();
+  private nombresMaterias: Map<string, string> = new Map();
+
+  async actualizarCacheNombres(): Promise<void> {
+    // Actualizar cache de nombres de alumnos
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    todosLosAlumnos.forEach(alumno => {
+      this.nombresAlumnos.set(alumno.id, `${alumno.nombre} ${alumno.apellido}`);
+    });
+
+    // Actualizar cache de nombres de materias
+    const todasLasMaterias = await this.materiaService.getMaterias();
+    todasLasMaterias.forEach(materia => {
+      this.nombresMaterias.set(materia.id, materia.nombre);
+    });
+  }
+
   getNombreAlumno(alumnoId: string): string {
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
-    return alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido';
+    return this.nombresAlumnos.get(alumnoId) || 'Desconocido';
   }
 
   getNombreMateria(materiaId: string): string {
-    const materia = this.materiaService.getMateriaById(materiaId);
-    return materia ? materia.nombre : 'Desconocida';
+    return this.nombresMaterias.get(materiaId) || 'Desconocida';
   }
 
-  getMaterias() {
-    let materias = this.materiaService.getMaterias();
-    
-    // Si es profesor, solo mostrar sus materias asignadas
-    if (this.permissionsService.esProfesor()) {
-      const usuario = this.authService.getCurrentUser();
-      const materiasAsignadas = (usuario as any).materiasAsignadas || [];
-      materias = materias.filter(m => materiasAsignadas.includes(m.id));
-    }
-    
-    return materias;
+  getMaterias(): Materia[] {
+    return this.materiasDisponibles;
   }
 
   getAlumnos() {
-    let alumnos = this.alumnoService.getAlumnos();
-    
-    // Si es profesor, solo mostrar alumnos de sus materias
-    if (this.permissionsService.esProfesor()) {
-      const usuario = this.authService.getCurrentUser();
-      const materiasAsignadas = (usuario as any).materiasAsignadas || [];
-      const notasMaterias = this.notas.filter(n => materiasAsignadas.includes(n.materiaId));
-      const idsAlumnos = [...new Set(notasMaterias.map(n => n.alumnoId))];
-      alumnos = alumnos.filter(a => idsAlumnos.includes(a.id));
-    }
-    // Si es alumno, solo ver sus propios datos
-    else if (this.permissionsService.esAlumno()) {
-      const usuarioId = this.authService.getCurrentUser()?.id;
-      alumnos = alumnos.filter(a => a.id === usuarioId);
-    }
-    
-    return alumnos;
+    return this.alumnosDisponibles;
   }
 }
 

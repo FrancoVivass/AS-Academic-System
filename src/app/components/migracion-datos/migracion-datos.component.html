@@ -1,0 +1,62 @@
+<div class="migracion-container">
+  <mat-card class="migracion-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud_upload</mat-icon>
+        Migración de Datos a Supabase
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="info-section">
+        <p>
+          Este proceso migrará todos los datos almacenados en <strong>localStorage</strong> 
+          a la base de datos <strong>Supabase</strong>.
+        </p>
+        <p>
+          <strong>⚠️ Importante:</strong> Asegúrate de haber ejecutado los scripts SQL 
+          para crear las tablas antes de ejecutar la migración.
+        </p>
+      </div>
+
+      <div *ngIf="migrando" class="migrando-section">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p>Migrando datos... Por favor espera.</p>
+      </div>
+
+      <div *ngIf="resultado" class="resultado-section">
+        <div [ngClass]="{
+          'resultado-success': resultado.success,
+          'resultado-error': !resultado.success
+        }">
+          <div class="resultado-header">
+            <mat-icon>
+              {{ resultado.success ? 'check_circle' : 'error' }}
+            </mat-icon>
+            <h3>{{ resultado.message }}</h3>
+          </div>
+
+          <div *ngIf="resultado.details" class="resultado-detalles">
+            <details>
+              <summary>Ver detalles de la migración</summary>
+              <pre>{{ resultado.details | json }}</pre>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="ejecutarMigracion()"
+          [disabled]="migrando || (resultado?.success && migrationService.isMigrated())"
+          [matTooltip]="migrationService.isMigrated() ? 'Los datos ya fueron migrados' : ''">
+          <mat-icon>cloud_upload</mat-icon>
+          {{ migrando ? 'Migrando...' : 'Ejecutar Migración' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+

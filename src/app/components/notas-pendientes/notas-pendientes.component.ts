@@ -36,19 +36,29 @@ export class NotasPendientesComponent implements OnInit {
     public permissionsService: PermissionsService
   ) {}
 
-  ngOnInit(): void {
-    this.loadNotasPendientes();
+  private nombresAlumnos: Map<string, string> = new Map();
+
+  async ngOnInit(): Promise<void> {
+    await this.actualizarCacheAlumnos();
+    await this.loadNotasPendientes();
   }
 
-  loadNotasPendientes(): void {
-    const todasLasNotas = this.alumnoService.getNotas();
+  async actualizarCacheAlumnos(): Promise<void> {
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    todosLosAlumnos.forEach(alumno => {
+      this.nombresAlumnos.set(alumno.id, `${alumno.nombre} ${alumno.apellido}`);
+    });
+  }
+
+  async loadNotasPendientes(): Promise<void> {
+    const todasLasNotas = await this.alumnoService.getNotas();
     this.notasPendientes = todasLasNotas.filter(
       n => n.estado === 'pendiente_revision' || n.estado === 'cargada'
     );
   }
 
-  aprobarNota(id: string): void {
-    const todasLasNotas = this.alumnoService.getNotas();
+  async aprobarNota(id: string): Promise<void> {
+    const todasLasNotas = await this.alumnoService.getNotas();
     const nota = todasLasNotas.find(n => n.id === id);
     if (nota) {
       const usuario = this.authService.getCurrentUser();
@@ -59,30 +69,29 @@ export class NotasPendientesComponent implements OnInit {
           aprobadaPor: usuario.id,
           fechaAprobacion: new Date().toISOString()
         };
-        this.alumnoService.updateNota(notaActualizada);
+        await this.alumnoService.updateNota(notaActualizada);
         this.notificationService.showSuccess('Nota aprobada');
-        this.loadNotasPendientes();
+        await this.loadNotasPendientes();
       }
     }
   }
 
-  rechazarNota(id: string): void {
-    const todasLasNotas = this.alumnoService.getNotas();
+  async rechazarNota(id: string): Promise<void> {
+    const todasLasNotas = await this.alumnoService.getNotas();
     const nota = todasLasNotas.find(n => n.id === id);
     if (nota) {
       const notaActualizada: Nota = {
         ...nota,
         estado: 'rechazada'
       };
-      this.alumnoService.updateNota(notaActualizada);
+      await this.alumnoService.updateNota(notaActualizada);
       this.notificationService.showSuccess('Nota rechazada');
-      this.loadNotasPendientes();
+      await this.loadNotasPendientes();
     }
   }
 
   getAlumnoNombre(alumnoId: string): string {
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
-    return alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido';
+    return this.nombresAlumnos.get(alumnoId) || 'Desconocido';
   }
 }
 

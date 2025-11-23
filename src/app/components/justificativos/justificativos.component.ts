@@ -41,33 +41,42 @@ export class JustificativosComponent implements OnInit {
     public permissionsService: PermissionsService
   ) {}
 
-  ngOnInit(): void {
-    this.loadJustificativos();
+  async ngOnInit(): Promise<void> {
+    await this.loadJustificativos();
   }
 
-  loadJustificativos(): void {
-    this.justificativos = this.justificativoService.getJustificativos();
-    this.justificativosPendientes = this.justificativoService.getJustificativosPendientes();
+  private nombresAlumnos: Map<string, string> = new Map();
+
+  async loadJustificativos(): Promise<void> {
+    this.justificativos = await this.justificativoService.getJustificativos();
+    this.justificativosPendientes = await this.justificativoService.getJustificativosPendientes();
+    await this.actualizarCacheAlumnos();
   }
 
-  aprobarJustificativo(id: string): void {
-    this.justificativoService.aprobarJustificativo(id);
+  async actualizarCacheAlumnos(): Promise<void> {
+    const todosLosAlumnos = await this.alumnoService.getAlumnos();
+    todosLosAlumnos.forEach(alumno => {
+      this.nombresAlumnos.set(alumno.id, `${alumno.nombre} ${alumno.apellido}`);
+    });
+  }
+
+  async aprobarJustificativo(id: string): Promise<void> {
+    await this.justificativoService.aprobarJustificativo(id);
     this.notificationService.showSuccess('Justificativo aprobado');
-    this.loadJustificativos();
+    await this.loadJustificativos();
   }
 
-  rechazarJustificativo(id: string): void {
+  async rechazarJustificativo(id: string): Promise<void> {
     const motivo = prompt('Ingrese el motivo del rechazo:');
     if (motivo) {
-      this.justificativoService.rechazarJustificativo(id, motivo);
+      await this.justificativoService.rechazarJustificativo(id, motivo);
       this.notificationService.showSuccess('Justificativo rechazado');
-      this.loadJustificativos();
+      await this.loadJustificativos();
     }
   }
 
   getAlumnoNombre(alumnoId: string): string {
-    const alumno = this.alumnoService.getAlumnoById(alumnoId);
-    return alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido';
+    return this.nombresAlumnos.get(alumnoId) || 'Desconocido';
   }
 
   verComprobante(url: string): void {

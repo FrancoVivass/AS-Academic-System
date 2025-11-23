@@ -72,19 +72,19 @@ export class CursosComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Redirigir a la gestión desde carreras
     this.notificationService.showInfo('La gestión de cursos se realiza desde la sección de Carreras. Seleccione una carrera y luego "Ver Cursos"');
     // Opcional: redirigir automáticamente
     // this.router.navigate(['/app/carreras']);
   }
 
-  loadDocentes(): void {
-    this.docentes = this.docenteService.getDocentes();
+  async loadDocentes(): Promise<void> {
+    this.docentes = await this.docenteService.getDocentes();
   }
 
-  loadCursos(): void {
-    this.cursos = this.cursoService.getCursos();
+  async loadCursos(): Promise<void> {
+    this.cursos = await this.cursoService.getCursos();
   }
 
   abrirModalNuevo(): void {
@@ -101,7 +101,7 @@ export class CursosComponent implements OnInit {
     this.cursoForm.patchValue(curso);
   }
 
-  guardarCurso(): void {
+  async guardarCurso(): Promise<void> {
     if (this.cursoForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -112,7 +112,7 @@ export class CursosComponent implements OnInit {
         ...this.cursoSeleccionado,
         ...this.cursoForm.value
       };
-      this.cursoService.updateCurso(cursoActualizado);
+      await this.cursoService.updateCurso(cursoActualizado);
       this.notificationService.showSuccess('Curso actualizado correctamente');
     } else {
       const nuevoCurso: Curso = {
@@ -133,18 +133,18 @@ export class CursosComponent implements OnInit {
           activaListaEspera: true
         }
       };
-      this.cursoService.addCurso(nuevoCurso);
+      await this.cursoService.addCurso(nuevoCurso);
       this.notificationService.showSuccess('Curso creado correctamente');
     }
 
-    this.loadCursos();
+    await this.loadCursos();
     this.cerrarModal();
   }
 
-  eliminarCurso(id: string): void {
+  async eliminarCurso(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar este curso?')) {
-      this.cursoService.deleteCurso(id);
-      this.loadCursos();
+      await this.cursoService.deleteCurso(id);
+      await this.loadCursos();
       this.notificationService.showSuccess('Curso eliminado correctamente');
     }
   }

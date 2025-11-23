@@ -72,12 +72,12 @@ export class DocentesComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadDocentes();
+  async ngOnInit(): Promise<void> {
+    await this.loadDocentes();
   }
 
-  loadDocentes(): void {
-    this.docentes = this.docenteService.getDocentes();
+  async loadDocentes(): Promise<void> {
+    this.docentes = await this.docenteService.getDocentes();
     this.aplicarFiltros();
   }
 
@@ -116,7 +116,7 @@ export class DocentesComponent implements OnInit {
     this.scrollLockService.unlockScroll();
   }
   
-  finalizarWizardDocente(): void {
+  async finalizarWizardDocente(): Promise<void> {
     if (this.docenteForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -132,9 +132,9 @@ export class DocentesComponent implements OnInit {
       activo: true
     };
     
-    this.docenteService.addDocente(nuevoDocente);
+    await this.docenteService.addDocente(nuevoDocente);
     this.notificationService.showSuccess(`Docente creado exitosamente. Las materias se asignarán cuando se creen materias o se configuren los cursos. Usuario: ${nuevoDocente.username}`);
-    this.loadDocentes();
+    await this.loadDocentes();
     this.cerrarWizard();
   }
 
@@ -147,7 +147,7 @@ export class DocentesComponent implements OnInit {
     this.mostrarModal = true;
   }
 
-  guardarDocente(): void {
+  async guardarDocente(): Promise<void> {
     if (this.docenteForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -161,7 +161,7 @@ export class DocentesComponent implements OnInit {
         ...formValue,
         rol: 'profesor'
       };
-      this.docenteService.updateDocente(docenteActualizado);
+      await this.docenteService.updateDocente(docenteActualizado);
       this.notificationService.showSuccess('Docente actualizado correctamente');
     } else {
       const nuevoDocente: Docente = {
@@ -172,20 +172,20 @@ export class DocentesComponent implements OnInit {
         fechaRegistro: new Date().toISOString(),
         activo: true
       };
-      this.docenteService.addDocente(nuevoDocente);
+      await this.docenteService.addDocente(nuevoDocente);
       
       // El servicio ya crea el usuario, pero mostramos las credenciales
       this.notificationService.showSuccess(`Docente agregado correctamente. Usuario: ${nuevoDocente.username}, Password: ${nuevoDocente.password}`);
     }
 
-    this.loadDocentes();
+    await this.loadDocentes();
     this.cerrarModal();
   }
 
-  eliminarDocente(id: string): void {
+  async eliminarDocente(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar este docente?')) {
-      this.docenteService.deleteDocente(id);
-      this.loadDocentes();
+      await this.docenteService.deleteDocente(id);
+      await this.loadDocentes();
       this.notificationService.showSuccess('Docente eliminado correctamente');
     }
   }

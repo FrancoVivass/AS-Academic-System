@@ -38,6 +38,7 @@ export interface Nota {
   id: string;
   alumnoId: string;
   materiaId: string;
+  cursoId?: string; // ID del curso (opcional)
   calificacion: number;
   fecha: string;
   tipo: 'parcial' | 'final' | 'trabajo' | 'practico' | 'recuperatorio';
@@ -47,6 +48,7 @@ export interface Nota {
   fechaAprobacion?: string;
   esRecuperatorio?: boolean;
   notaOriginalId?: string; // Si es recuperatorio, referencia a la nota original
+  cargadaPor?: string; // ID del profesor/secretario que cargó la nota
 }
 
 export interface Asistencia {

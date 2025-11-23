@@ -17,6 +17,7 @@ import { MateriaService } from '../../services/materia.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { Evento } from '../../models/evento.model';
+import { Materia } from '../../models/materia.model';
 
 @Component({
   selector: 'app-calendario',
@@ -77,13 +78,36 @@ export class CalendarioComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadEventos();
+  private materiasCache: Materia[] = [];
+  private nombresMaterias: Map<string, string> = new Map();
+  private eventosPorFecha: Map<string, Evento[]> = new Map();
+
+  async ngOnInit(): Promise<void> {
+    await this.loadEventos();
+    await this.actualizarCacheMaterias();
+    await this.cargarEventosPorFecha();
   }
 
-  loadEventos(): void {
-    this.eventos = this.eventoService.getEventos();
-    this.eventosProximos = this.eventoService.getEventosProximos(30);
+  async actualizarCacheMaterias(): Promise<void> {
+    this.materiasCache = await this.materiaService.getMaterias();
+    this.materiasCache.forEach(materia => {
+      this.nombresMaterias.set(materia.id, materia.nombre);
+    });
+  }
+
+  async loadEventos(): Promise<void> {
+    this.eventos = await this.eventoService.getEventos();
+    this.eventosProximos = await this.eventoService.getEventosProximos(30);
+  }
+
+  async cargarEventosPorFecha(): Promise<void> {
+    // Cargar eventos de todos los días del mes actual
+    const diasDelMes = this.getDiasDelMes();
+    for (const dia of diasDelMes) {
+      const fechaStr = dia.toISOString().split('T')[0];
+      const eventos = await this.eventoService.getEventosByFecha(fechaStr);
+      this.eventosPorFecha.set(fechaStr, eventos);
+    }
   }
 
   getEventosDelMes(): Evento[] {
@@ -96,7 +120,7 @@ export class CalendarioComponent implements OnInit {
 
   getEventosDelDia(fecha: Date): Evento[] {
     const fechaStr = fecha.toISOString().split('T')[0];
-    return this.eventoService.getEventosByFecha(fechaStr);
+    return this.eventosPorFecha.get(fechaStr) || [];
   }
 
   cambiarMes(direccion: number): void {
@@ -176,12 +200,11 @@ export class CalendarioComponent implements OnInit {
 
   getNombreMateria(materiaId?: string): string {
     if (!materiaId) return '';
-    const materia = this.materiaService.getMateriaById(materiaId);
-    return materia ? materia.nombre : '';
+    return this.nombresMaterias.get(materiaId) || '';
   }
 
-  getMaterias() {
-    return this.materiaService.getMaterias();
+  getMaterias(): Materia[] {
+    return this.materiasCache;
   }
 
   getDiasDelMes(): Date[] {

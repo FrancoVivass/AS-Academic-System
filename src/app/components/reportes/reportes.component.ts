@@ -355,36 +355,43 @@ export class ReportesComponent implements OnInit {
     private docenteService: DocenteService
   ) {}
 
-  ngOnInit(): void {
-    this.loadData();
-    this.loadReportes();
-    this.loadEstadisticas();
+  async ngOnInit(): Promise<void> {
+    await this.loadMateriasFiltradas();
+    await this.loadData();
+    await this.loadReportes();
+    await this.loadEstadisticas();
     this.loadChartData();
   }
 
-  loadData(): void {
-    // Cargar datos base según el rol
+  async loadMateriasFiltradas(): Promise<void> {
     if (this.permissionsService.esAdmin() || this.permissionsService.esSecretario()) {
-      // Admin/Secretario: cargar todas las carreras, materias y cursos para filtros
-      // Esto se puede hacer si hay un servicio de carreras
+      // Admin/Secretario: todas las materias
+      this.materiasFiltradas = await this.materiaService.getMaterias();
     } else if (this.permissionsService.esProfesor()) {
       // Profesor: cargar solo sus materias
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
-        const docente = this.docenteService.getDocenteById(usuario.id);
+        const docente = await this.docenteService.getDocenteById(usuario.id);
         if (docente && docente.materiasAsignadas) {
-          const todasLasMaterias = this.materiaService.getMaterias();
+          const todasLasMaterias = await this.materiaService.getMaterias();
           this.materiasFiltradas = todasLasMaterias.filter(m => 
             docente.materiasAsignadas!.includes(m.id)
           );
         }
       }
+    } else {
+      this.materiasFiltradas = [];
     }
   }
 
-  loadReportes(): void {
-    let reportesAlumnos = this.reportService.generarReporteAlumnos();
-    let reportesMaterias = this.reportService.generarReporteMaterias();
+  async loadData(): Promise<void> {
+    // Cargar datos base según el rol
+    await this.loadMateriasFiltradas();
+  }
+
+  async loadReportes(): Promise<void> {
+    let reportesAlumnos = await this.reportService.generarReporteAlumnos();
+    let reportesMaterias = await this.reportService.generarReporteMaterias();
 
     // Filtrar según el rol del usuario
     if (this.permissionsService.esAlumno()) {
@@ -399,7 +406,7 @@ export class ReportesComponent implements OnInit {
       // Profesor: solo sus materias y alumnos de esas materias
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
-        const docente = this.docenteService.getDocenteById(usuario.id);
+        const docente = await this.docenteService.getDocenteById(usuario.id);
         if (docente && docente.materiasAsignadas) {
           // Filtrar materias
           reportesMaterias = reportesMaterias.filter(r => 
@@ -407,7 +414,7 @@ export class ReportesComponent implements OnInit {
           );
           
           // Filtrar alumnos: solo los que están en cursos con sus materias
-          const cursos = this.cursoService.getCursos();
+          const cursos = await this.cursoService.getCursos();
           const cursosConMaterias = cursos.filter(c => 
             c.materias.some(mId => docente.materiasAsignadas!.includes(mId))
           );
@@ -420,7 +427,7 @@ export class ReportesComponent implements OnInit {
             r.materia.profesor === nombreProfesor || r.materia.profesor?.includes(usuario.nombre)
           );
           const materiasIds = reportesMaterias.map(r => r.materia.id);
-          const cursos = this.cursoService.getCursos();
+          const cursos = await this.cursoService.getCursos();
           const cursosConMaterias = cursos.filter(c => 
             c.materias.some(mId => materiasIds.includes(mId))
           );
@@ -448,10 +455,10 @@ export class ReportesComponent implements OnInit {
     this.reportesMaterias = reportesMaterias;
   }
 
-  loadEstadisticas(): void {
+  async loadEstadisticas(): Promise<void> {
     // Cargar datos según el rol
-    let alumnos = this.alumnoService.getAlumnos();
-    let materias = this.materiaService.getMaterias();
+    let alumnos = await this.alumnoService.getAlumnos();
+    let materias = await this.materiaService.getMaterias();
 
     if (this.permissionsService.esAlumno()) {
       // Alumno: solo sus datos
@@ -464,10 +471,10 @@ export class ReportesComponent implements OnInit {
       // Profesor: solo sus materias y alumnos de esas materias
       const usuario = this.authService.getCurrentUser();
       if (usuario) {
-        const docente = this.docenteService.getDocenteById(usuario.id);
+        const docente = await this.docenteService.getDocenteById(usuario.id);
         if (docente && docente.materiasAsignadas) {
           materias = materias.filter(m => docente.materiasAsignadas!.includes(m.id));
-          const cursos = this.cursoService.getCursos();
+          const cursos = await this.cursoService.getCursos();
           const cursosConMaterias = cursos.filter(c => 
             c.materias.some(mId => docente.materiasAsignadas!.includes(mId))
           );
@@ -610,17 +617,17 @@ export class ReportesComponent implements OnInit {
     return [...new Set(this.reportesAlumnos.map(r => r.alumno.curso))].sort();
   }
 
-  limpiarFiltros(): void {
+  async limpiarFiltros(): Promise<void> {
     this.filtroMateria = '';
     this.filtroCurso = '';
     this.filtroCarrera = '';
-    this.loadReportes();
-    this.loadEstadisticas();
+    await this.loadReportes();
+    await this.loadEstadisticas();
     this.loadChartData();
   }
 
-  exportarReporte(): void {
-    const csv = this.reportService.exportarReporteCompleto();
+  async exportarReporte(): Promise<void> {
+    const csv = await this.reportService.exportarReporteCompleto();
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
