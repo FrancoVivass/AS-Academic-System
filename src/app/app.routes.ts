@@ -119,6 +119,14 @@ export const routes: Routes = [
         loadComponent: () => import('./components/notas-pendientes/notas-pendientes.component').then(m => m.NotasPendientesComponent)
       },
       {
+        path: 'documentacion',
+        loadComponent: () => import('./components/documentacion/documentacion.component').then(m => m.DocumentacionComponent)
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./components/usuarios/usuarios.component').then(m => m.UsuariosComponent)
+      },
+      {
         path: 'analisis',
         loadComponent: () => import('./components/analisis/analisis.component').then(m => m.AnalisisComponent)
       },

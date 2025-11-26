@@ -1,0 +1,199 @@
+<div class="documentacion-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>description</mat-icon>
+        @if (permissionsService.esAlumno()) {
+          Mi Documentación
+        } @else {
+          Documentación del Alumno
+        }
+      </h1>
+      <p>
+        @if (permissionsService.esAlumno()) {
+          Carga y envía tu documentación médica y académica para su validación (opcional - también puedes presentarla en persona). Solo archivos PDF.
+        } @else {
+          Revisa y valida la documentación de los alumnos
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (alumno) {
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="alumno-info">
+          <h3>{{ alumno.nombre }} {{ alumno.apellido }}</h3>
+          <p>DNI: {{ alumno.dni }}</p>
+          <p>Email: {{ alumno.email }}</p>
+        </div>
+        <div class="estado-validacion">
+          <mat-chip [class.validado]="estaValidado()" [class.pendiente]="!estaValidado()">
+            <mat-icon>{{ estaValidado() ? 'check_circle' : 'pending' }}</mat-icon>
+            {{ getEstadoValidacion() }}
+          </mat-chip>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <form [formGroup]="documentacionForm" class="documentacion-form">
+      <!-- Fotocopia de DNI -->
+      <mat-card class="documento-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>badge</mat-icon>
+            Fotocopia de DNI
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="documento-content">
+            @if (tieneDocumento('fotocopiaDni')) {
+              <div class="documento-preview">
+                <mat-icon class="documento-icon">description</mat-icon>
+                <span>Documento cargado</span>
+                <div class="documento-actions">
+                  <button mat-icon-button (click)="descargarDocumento(documentacionForm.value.fotocopiaDni, 'fotocopia-dni.pdf')" matTooltip="Descargar">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                  @if (permissionsService.esAlumno()) {
+                    <button mat-icon-button (click)="eliminarDocumento('fotocopiaDni')" matTooltip="Eliminar">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="upload-area">
+                <input type="file" #fotocopiaDniInput accept=".pdf" (change)="onFileSelected($event, 'fotocopiaDni')" [disabled]="uploading['fotocopiaDni']">
+                <button mat-raised-button color="primary" (click)="fotocopiaDniInput.click()" [disabled]="uploading['fotocopiaDni']">
+                  <mat-icon>upload</mat-icon>
+                  Cargar Fotocopia de DNI
+                </button>
+                @if (uploading['fotocopiaDni']) {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                }
+              </div>
+            }
+            @if (alumno.documentacion?.dniCompleto) {
+              <mat-chip class="completo-chip">
+                <mat-icon>check</mat-icon>
+                Completo
+              </mat-chip>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Analítico -->
+      <mat-card class="documento-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>school</mat-icon>
+            Analítico
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="documento-content">
+            @if (tieneDocumento('analitico')) {
+              <div class="documento-preview">
+                <mat-icon class="documento-icon">description</mat-icon>
+                <span>Documento cargado</span>
+                <div class="documento-actions">
+                  <button mat-icon-button (click)="descargarDocumento(documentacionForm.value.analitico, 'analitico.pdf')" matTooltip="Descargar">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                  @if (permissionsService.esAlumno()) {
+                    <button mat-icon-button (click)="eliminarDocumento('analitico')" matTooltip="Eliminar">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="upload-area">
+                <input type="file" #analiticoInput accept=".pdf" (change)="onFileSelected($event, 'analitico')" [disabled]="uploading['analitico']">
+                <button mat-raised-button color="primary" (click)="analiticoInput.click()" [disabled]="uploading['analitico']">
+                  <mat-icon>upload</mat-icon>
+                  Cargar Analítico
+                </button>
+                @if (uploading['analitico']) {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                }
+              </div>
+            }
+            @if (alumno.documentacion?.analiticoCompleto) {
+              <mat-chip class="completo-chip">
+                <mat-icon>check</mat-icon>
+                Completo
+              </mat-chip>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Apto Médico -->
+      <mat-card class="documento-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>medical_services</mat-icon>
+            Apto Médico
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="documento-content">
+            @if (tieneDocumento('aptoMedico')) {
+              <div class="documento-preview">
+                <mat-icon class="documento-icon">description</mat-icon>
+                <span>Documento cargado</span>
+                <div class="documento-actions">
+                  <button mat-icon-button (click)="descargarDocumento(documentacionForm.value.aptoMedico, 'apto-medico.pdf')" matTooltip="Descargar">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                  @if (permissionsService.esAlumno()) {
+                    <button mat-icon-button (click)="eliminarDocumento('aptoMedico')" matTooltip="Eliminar">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="upload-area">
+                <input type="file" #aptoMedicoInput accept=".pdf" (change)="onFileSelected($event, 'aptoMedico')" [disabled]="uploading['aptoMedico']">
+                <button mat-raised-button color="primary" (click)="aptoMedicoInput.click()" [disabled]="uploading['aptoMedico']">
+                  <mat-icon>upload</mat-icon>
+                  Cargar Apto Médico
+                </button>
+                @if (uploading['aptoMedico']) {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                }
+              </div>
+            }
+            @if (alumno.documentacion?.aptoMedicoCompleto) {
+              <mat-chip class="completo-chip">
+                <mat-icon>check</mat-icon>
+                Completo
+              </mat-chip>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      @if (permissionsService.esAlumno()) {
+        <div class="form-actions">
+          <button mat-raised-button color="primary" (click)="enviarASecretaria()">
+            <mat-icon>send</mat-icon>
+            Enviar a Secretaría (si cargaste documentos)
+          </button>
+          <p class="info-text">Nota: La carga de documentación es opcional. Puedes presentarla en persona en secretaría.</p>
+        </div>
+      }
+    </form>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <p>No se encontró información del alumno.</p>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+

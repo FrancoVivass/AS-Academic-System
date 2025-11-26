@@ -66,13 +66,7 @@ body.dark-mode {
   color: #e8e8e8;
 }
 
-.main-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 80px;
-  padding-top: 100px;
-}
+
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeIn {
@@ -405,8 +399,7 @@ body.dark-mode .theme-toggle:hover {
   margin-bottom: 140px;
   position: relative;
   overflow: hidden;
-  width: 100vw;
-  margin-left: calc(-49.7vw + 49.1%);
+  width: 100%;
 }
 
 .hero-section::before {
@@ -1188,12 +1181,11 @@ color: #ffffff;
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
-  .main-container {
-    padding: 0 24px;
-    padding-top: 100px;
-  }
+
 
   .hero-section {
+
+
     padding: 100px 0;
     margin-bottom: 80px;
   }

@@ -1,0 +1,196 @@
+@import '../shared-gestion-styles.css';
+
+.documentacion-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-section h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-family: "Raleway", sans-serif;
+}
+
+.header-section p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-family: "Raleway", sans-serif;
+}
+
+.info-card {
+  margin-bottom: 24px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.info-card mat-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.alumno-info h3 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-family: "Raleway", sans-serif;
+}
+
+.alumno-info p {
+  margin: 4px 0;
+  color: var(--text-secondary);
+  font-family: "Raleway", sans-serif;
+}
+
+.estado-validacion mat-chip {
+  font-weight: 600;
+  font-family: "Raleway", sans-serif;
+}
+
+.estado-validacion mat-chip.validado {
+  background-color: #4caf50;
+  color: white;
+}
+
+.estado-validacion mat-chip.pendiente {
+  background-color: #ff9800;
+  color: white;
+}
+
+.documentacion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.documento-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s ease;
+}
+
+.documento-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.documento-card mat-card-header {
+  padding: 20px 20px 0 20px;
+}
+
+.documento-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "Raleway", sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.documento-card mat-card-content {
+  padding: 20px;
+}
+
+.documento-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.upload-area input[type="file"] {
+  display: none;
+}
+
+.upload-area button {
+  font-family: "Raleway", sans-serif;
+  font-weight: 600;
+}
+
+.documento-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-hover);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.documento-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: var(--institucion-primary);
+}
+
+.documento-preview span {
+  flex: 1;
+  font-family: "Raleway", sans-serif;
+  color: var(--text-primary);
+}
+
+.documento-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.completo-chip {
+  background-color: #4caf50;
+  color: white;
+  font-weight: 600;
+  font-family: "Raleway", sans-serif;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.form-actions button {
+  font-family: "Raleway", sans-serif;
+  font-weight: 600;
+  padding: 12px 24px;
+}
+
+@media (max-width: 768px) {
+  .documentacion-container {
+    padding: 16px;
+  }
+
+  .info-card mat-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .documento-preview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .documento-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+

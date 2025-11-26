@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { RecursoBiblioteca, CategoriaRecurso } from '../models/biblioteca.model';
+import { SupabaseService } from './supabase.service';
+import { InstitucionService } from './institucion.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,104 +11,245 @@ import { RecursoBiblioteca, CategoriaRecurso } from '../models/biblioteca.model'
 export class BibliotecaService {
   private readonly STORAGE_KEY = 'gestion_academica_recursos';
   private readonly CATEGORIAS_KEY = 'gestion_academica_categorias';
-  private recursosSubject = new BehaviorSubject<RecursoBiblioteca[]>(this.getRecursos());
+  private useSupabase = true;
+  private recursosSubject = new BehaviorSubject<RecursoBiblioteca[]>([]);
   public recursos$ = this.recursosSubject.asObservable();
 
-  constructor() {
-    this.initializeDefaultData();
+  constructor(
+    private supabase: SupabaseService,
+    private institucionService: InstitucionService,
+    private authService: AuthService
+  ) {
+    this.loadRecursos();
   }
 
-  private initializeDefaultData(): void {
-    const recursos = this.getRecursos();
-    if (recursos.length === 0) {
-      const defaultRecursos: RecursoBiblioteca[] = [
-        {
-          id: '1',
-          titulo: 'Guía de Álgebra Básica',
-          descripcion: 'Material de estudio para el primer parcial',
-          tipo: 'pdf',
-          url: '#',
-          materiaId: '1',
-          autorId: '1',
-          fechaSubida: new Date().toISOString(),
-          tamano: '2.5 MB',
-          etiquetas: ['álgebra', 'matemáticas', 'parcial'],
-          descargas: 0,
-          visible: true
-        },
-        {
-          id: '2',
-          titulo: 'Video: Introducción a la Literatura',
-          descripcion: 'Clase grabada sobre análisis literario',
-          tipo: 'video',
-          url: '#',
-          materiaId: '2',
-          autorId: '2',
-          fechaSubida: new Date().toISOString(),
-          tamano: '150 MB',
-          etiquetas: ['literatura', 'video', 'clase'],
-          descargas: 0,
-          visible: true
-        }
-      ];
-      this.saveRecursos(defaultRecursos);
+  private async loadRecursos(): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const recursos = await this.getRecursosFromSupabase();
+        this.recursosSubject.next(recursos);
+      } catch (error) {
+        const recursos = this.getRecursosFromStorage();
+        this.recursosSubject.next(recursos);
+      }
+    } else {
+      const recursos = this.getRecursosFromStorage();
+      this.recursosSubject.next(recursos);
     }
   }
 
-  getRecursos(): RecursoBiblioteca[] {
+  private async getRecursosFromSupabase(): Promise<RecursoBiblioteca[]> {
+    const currentInstitucion = this.institucionService.getCurrentInstitucion();
+    if (!currentInstitucion) {
+      return [];
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('biblioteca_recursos')
+      .select('*')
+      .eq('institucion_id', currentInstitucion.id)
+      .eq('visible', true)
+      .order('fecha_subida', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((db: any) => ({
+      id: db.id,
+      titulo: db.titulo,
+      descripcion: db.descripcion || '',
+      tipo: db.tipo,
+      url: db.url,
+      materiaId: db.materia_id,
+      cursoId: db.curso_id,
+      autorId: db.autor_id,
+      fechaSubida: db.fecha_subida,
+      tamano: db.tamano,
+      etiquetas: db.etiquetas || [],
+      descargas: db.descargas || 0,
+      visible: db.visible !== false
+    }));
+  }
+
+  private getRecursosFromStorage(): RecursoBiblioteca[] {
     const stored = localStorage.getItem(this.STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   }
 
-  getRecursoById(id: string): RecursoBiblioteca | undefined {
-    return this.getRecursos().find(r => r.id === id);
+  async getRecursos(): Promise<RecursoBiblioteca[]> {
+    if (this.useSupabase) {
+      try {
+        return await this.getRecursosFromSupabase();
+      } catch (error) {
+        return this.getRecursosFromStorage();
+      }
+    }
+    return this.getRecursosFromStorage();
   }
 
-  getRecursosByMateria(materiaId: string): RecursoBiblioteca[] {
-    return this.getRecursos().filter(r => r.materiaId === materiaId && r.visible);
+  async getRecursoById(id: string): Promise<RecursoBiblioteca | undefined> {
+    if (this.useSupabase) {
+      try {
+        const { data, error } = await this.supabase.client
+          .from('biblioteca_recursos')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error || !data) return undefined;
+
+        return {
+          id: data.id,
+          titulo: data.titulo,
+          descripcion: data.descripcion || '',
+          tipo: data.tipo,
+          url: data.url,
+          materiaId: data.materia_id,
+          cursoId: data.curso_id,
+          autorId: data.autor_id,
+          fechaSubida: data.fecha_subida,
+          tamano: data.tamano,
+          etiquetas: data.etiquetas || [],
+          descargas: data.descargas || 0,
+          visible: data.visible !== false
+        };
+      } catch (error) {
+        return undefined;
+      }
+    }
+    return this.getRecursosFromStorage().find(r => r.id === id);
   }
 
-  buscarRecursos(termino: string): RecursoBiblioteca[] {
+  async getRecursosByMateria(materiaId: string): Promise<RecursoBiblioteca[]> {
+    const recursos = await this.getRecursos();
+    return recursos.filter(r => r.materiaId === materiaId && r.visible);
+  }
+
+  async buscarRecursos(termino: string): Promise<RecursoBiblioteca[]> {
     const terminoLower = termino.toLowerCase();
-    return this.getRecursos().filter(r => 
+    const recursos = await this.getRecursos();
+    return recursos.filter(r => 
       r.titulo.toLowerCase().includes(terminoLower) ||
       r.descripcion.toLowerCase().includes(terminoLower) ||
       r.etiquetas.some(t => t.toLowerCase().includes(terminoLower))
     );
   }
 
-  addRecurso(recurso: RecursoBiblioteca): void {
-    const recursos = this.getRecursos();
-    recursos.push(recurso);
-    this.saveRecursos(recursos);
-  }
+  async addRecurso(recurso: RecursoBiblioteca): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const currentInstitucion = this.institucionService.getCurrentInstitucion();
+        if (!currentInstitucion) {
+          throw new Error('Debe seleccionar una institución primero');
+        }
 
-  updateRecurso(recurso: RecursoBiblioteca): void {
-    const recursos = this.getRecursos();
-    const index = recursos.findIndex(r => r.id === recurso.id);
-    if (index !== -1) {
-      recursos[index] = recurso;
-      this.saveRecursos(recursos);
+        const usuario = this.authService.getCurrentUser();
+        if (!usuario) {
+          throw new Error('Debe estar autenticado para agregar recursos');
+        }
+
+        await this.supabase.create('biblioteca_recursos', {
+          id: recurso.id,
+          titulo: recurso.titulo,
+          descripcion: recurso.descripcion || null,
+          tipo: recurso.tipo,
+          url: recurso.url,
+          materia_id: recurso.materiaId || null,
+          curso_id: recurso.cursoId || null,
+          autor_id: recurso.autorId || usuario.id,
+          fecha_subida: recurso.fechaSubida || new Date().toISOString(),
+          tamano: recurso.tamano || null,
+          etiquetas: recurso.etiquetas || [],
+          descargas: recurso.descargas || 0,
+          visible: recurso.visible !== false,
+          institucion_id: currentInstitucion.id
+        });
+
+        await this.loadRecursos();
+      } catch (error) {
+        console.error('Error agregando recurso:', error);
+        throw error;
+      }
+    } else {
+      const recursos = this.getRecursosFromStorage();
+      recursos.push(recurso);
+      this.saveRecursosToStorage(recursos);
+      this.recursosSubject.next(recursos);
     }
   }
 
-  deleteRecurso(id: string): void {
-    const recursos = this.getRecursos().filter(r => r.id !== id);
-    this.saveRecursos(recursos);
-  }
+  async updateRecurso(recurso: RecursoBiblioteca): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.update('biblioteca_recursos', recurso.id, {
+          titulo: recurso.titulo,
+          descripcion: recurso.descripcion || null,
+          tipo: recurso.tipo,
+          url: recurso.url,
+          materia_id: recurso.materiaId || null,
+          curso_id: recurso.cursoId || null,
+          tamano: recurso.tamano || null,
+          etiquetas: recurso.etiquetas || [],
+          visible: recurso.visible !== false
+        });
 
-  incrementarDescargas(id: string): void {
-    const recursos = this.getRecursos();
-    const recurso = recursos.find(r => r.id === id);
-    if (recurso) {
-      recurso.descargas++;
-      this.saveRecursos(recursos);
+        await this.loadRecursos();
+      } catch (error) {
+        console.error('Error actualizando recurso:', error);
+        throw error;
+      }
+    } else {
+      const recursos = this.getRecursosFromStorage();
+      const index = recursos.findIndex(r => r.id === recurso.id);
+      if (index !== -1) {
+        recursos[index] = recurso;
+        this.saveRecursosToStorage(recursos);
+        this.recursosSubject.next(recursos);
+      }
     }
   }
 
-  private saveRecursos(recursos: RecursoBiblioteca[]): void {
+  async deleteRecurso(id: string): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        await this.supabase.delete('biblioteca_recursos', id);
+        await this.loadRecursos();
+      } catch (error) {
+        console.error('Error eliminando recurso:', error);
+        throw error;
+      }
+    } else {
+      const recursos = this.getRecursosFromStorage().filter(r => r.id !== id);
+      this.saveRecursosToStorage(recursos);
+      this.recursosSubject.next(recursos);
+    }
+  }
+
+  async incrementarDescargas(id: string): Promise<void> {
+    if (this.useSupabase) {
+      try {
+        const recurso = await this.getRecursoById(id);
+        if (recurso) {
+          await this.supabase.update('biblioteca_recursos', id, {
+            descargas: (recurso.descargas || 0) + 1
+          });
+          await this.loadRecursos();
+        }
+      } catch (error) {
+        console.error('Error incrementando descargas:', error);
+      }
+    } else {
+      const recursos = this.getRecursosFromStorage();
+      const recurso = recursos.find(r => r.id === id);
+      if (recurso) {
+        recurso.descargas++;
+        this.saveRecursosToStorage(recursos);
+        this.recursosSubject.next(recursos);
+      }
+    }
+  }
+
+  private saveRecursosToStorage(recursos: RecursoBiblioteca[]): void {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(recursos));
-    this.recursosSubject.next(recursos);
   }
 
   getCategorias(): CategoriaRecurso[] {

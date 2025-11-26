@@ -549,6 +549,63 @@ CREATE INDEX idx_auditoria_accion ON auditoria(accion);
 CREATE INDEX idx_auditoria_institucion ON auditoria(institucion_id);
 
 -- ============================================
+-- SCRIPT 15.1: Tabla de Biblioteca Digital
+-- ============================================
+CREATE TABLE IF NOT EXISTS biblioteca_recursos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  titulo VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('pdf', 'video', 'imagen', 'enlace', 'documento', 'presentacion')),
+  url TEXT NOT NULL,
+  materia_id UUID REFERENCES materias(id) ON DELETE SET NULL,
+  curso_id UUID REFERENCES cursos(id) ON DELETE SET NULL,
+  autor_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  fecha_subida TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  tamano VARCHAR(50),
+  etiquetas TEXT[], -- Array de strings
+  descargas INTEGER DEFAULT 0,
+  visible BOOLEAN DEFAULT true,
+  institucion_id UUID NOT NULL REFERENCES instituciones(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_biblioteca_materia ON biblioteca_recursos(materia_id);
+CREATE INDEX idx_biblioteca_curso ON biblioteca_recursos(curso_id);
+CREATE INDEX idx_biblioteca_autor ON biblioteca_recursos(autor_id);
+CREATE INDEX idx_biblioteca_institucion ON biblioteca_recursos(institucion_id);
+CREATE INDEX idx_biblioteca_visible ON biblioteca_recursos(visible);
+CREATE INDEX idx_biblioteca_tipo ON biblioteca_recursos(tipo);
+
+-- ============================================
+-- SCRIPT 15.2: Tabla de Solicitudes
+-- ============================================
+CREATE TABLE IF NOT EXISTS solicitudes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('inscripcion', 'equivalencia', 'cambio_carrera', 'baja', 'justificativo', 'otro')),
+  solicitante_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  destinatario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+  asunto VARCHAR(255) NOT NULL,
+  descripcion TEXT NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada', 'en_revision')),
+  fecha_solicitud TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  fecha_resolucion TIMESTAMP WITH TIME ZONE,
+  resuelta_por UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+  observaciones TEXT,
+  datos_adicionales JSONB, -- Para datos específicos según el tipo de solicitud
+  institucion_id UUID NOT NULL REFERENCES instituciones(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_solicitudes_solicitante ON solicitudes(solicitante_id);
+CREATE INDEX idx_solicitudes_destinatario ON solicitudes(destinatario_id);
+CREATE INDEX idx_solicitudes_estado ON solicitudes(estado);
+CREATE INDEX idx_solicitudes_tipo ON solicitudes(tipo);
+CREATE INDEX idx_solicitudes_fecha ON solicitudes(fecha_solicitud);
+CREATE INDEX idx_solicitudes_institucion ON solicitudes(institucion_id);
+
+-- ============================================
 -- SCRIPT 16: Funciones y Triggers
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -603,6 +660,12 @@ CREATE TRIGGER update_mensajes_updated_at BEFORE UPDATE ON mensajes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_equivalencias_updated_at BEFORE UPDATE ON equivalencias
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_biblioteca_recursos_updated_at BEFORE UPDATE ON biblioteca_recursos
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_solicitudes_updated_at BEFORE UPDATE ON solicitudes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Función para validar institucion_id antes de insertar/actualizar usuarios
@@ -691,6 +754,27 @@ BEFORE INSERT OR UPDATE ON materias
 FOR EACH ROW
 EXECUTE FUNCTION validate_institucion_id_required();
 
+-- Trigger para validar institucion_id en biblioteca_recursos
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_biblioteca ON biblioteca_recursos;
+CREATE TRIGGER trigger_validate_institucion_id_biblioteca
+BEFORE INSERT OR UPDATE ON biblioteca_recursos
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en solicitudes
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_solicitudes ON solicitudes;
+CREATE TRIGGER trigger_validate_institucion_id_solicitudes
+BEFORE INSERT OR UPDATE ON solicitudes
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en auditoria
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_auditoria ON auditoria;
+CREATE TRIGGER trigger_validate_institucion_id_auditoria
+BEFORE INSERT OR UPDATE ON auditoria
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
 -- ============================================
 -- SCRIPT 17: Row Level Security (RLS)
 -- ============================================
@@ -709,6 +793,8 @@ ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equivalencias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
+ALTER TABLE biblioteca_recursos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE solicitudes ENABLE ROW LEVEL SECURITY;
 
 -- Políticas básicas para desarrollo (ajustar en producción)
 CREATE POLICY "dev_all_instituciones" ON instituciones FOR ALL USING (true);
@@ -726,6 +812,8 @@ CREATE POLICY "dev_all_eventos" ON eventos FOR ALL USING (true);
 CREATE POLICY "dev_all_mensajes" ON mensajes FOR ALL USING (true);
 CREATE POLICY "dev_all_equivalencias" ON equivalencias FOR ALL USING (true);
 CREATE POLICY "dev_all_auditoria" ON auditoria FOR ALL USING (true);
+CREATE POLICY "dev_all_biblioteca_recursos" ON biblioteca_recursos FOR ALL USING (true);
+CREATE POLICY "dev_all_solicitudes" ON solicitudes FOR ALL USING (true);
 
 -- ============================================
 -- SCRIPT 18: Datos Iniciales - Instituciones

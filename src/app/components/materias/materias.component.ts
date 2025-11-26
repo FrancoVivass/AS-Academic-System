@@ -101,6 +101,7 @@ export class MateriasComponent implements OnInit {
       año: [1, [Validators.min(1)]], // Opcional
       cuatrimestre: [1, [Validators.min(1), Validators.max(2)]], // Opcional
       tipo: ['obligatoria'], // Opcional
+      estado: ['activa'], // Estado de la materia
       tieneNota: [true],
       tieneAsistencia: [true],
       requiereAprobacion: [false],
@@ -184,14 +185,29 @@ export class MateriasComponent implements OnInit {
       let todasLasMaterias = await this.materiaService.getMaterias();
       console.log('Materias obtenidas del servicio:', todasLasMaterias.length, todasLasMaterias);
       
-      // Si es alumno, solo mostrar materias en las que está inscrito
+      // Si es alumno, obtener materias desde los cursos donde está inscrito
       if (this.permissionsService.esAlumno()) {
         const usuarioId = this.authService.getCurrentUser()?.id;
         if (usuarioId) {
-          const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId);
-          todasLasMaterias = todasLasMaterias.filter(m => 
-            inscripciones.some(i => i.materiaId === m.id)
-          );
+          const alumno = await this.alumnoService.getAlumnoById(usuarioId);
+          if (alumno) {
+            // Obtener cursos donde está inscrito el alumno
+            const todosLosCursos = await this.cursoService.getCursos();
+            const cursosDelAlumno = todosLosCursos.filter(c => 
+              c.alumnos.includes(usuarioId) || 
+              (alumno.cursoId && c.id === alumno.cursoId) ||
+              (alumno.cursoIds && alumno.cursoIds.includes(c.id))
+            );
+            
+            // Obtener todas las materias de esos cursos
+            const materiasIds = new Set<string>();
+            cursosDelAlumno.forEach(curso => {
+              curso.materias.forEach(materiaId => materiasIds.add(materiaId));
+            });
+            
+            // Filtrar materias que están en los cursos del alumno
+            todasLasMaterias = todasLasMaterias.filter(m => materiasIds.has(m.id));
+          }
         }
       }
       // Si es profesor, mostrar sus materias asignadas
@@ -447,7 +463,7 @@ export class MateriasComponent implements OnInit {
         tipo: formValue.tipo || this.materiaSeleccionada!.tipo || 'obligatoria',
         correlatividades: this.materiaSeleccionada!.correlatividades || [],
         configuracion,
-        estado: this.materiaSeleccionada!.estado || 'activa',
+        estado: formValue.estado || this.materiaSeleccionada!.estado || 'activa',
         fechaCreacion: this.materiaSeleccionada!.fechaCreacion || new Date().toISOString()
       };
       
@@ -497,7 +513,7 @@ export class MateriasComponent implements OnInit {
         tipo: formValue.tipo || 'obligatoria',
         correlatividades: [], // Las correlatividades se configuran después cuando se asigna a la carrera
         configuracion,
-        estado: 'activa',
+        estado: formValue.estado || 'activa',
         fechaCreacion: new Date().toISOString()
       };
       
@@ -578,7 +594,8 @@ export class MateriasComponent implements OnInit {
       tieneAsistencia: materia.configuracion?.tieneAsistencia ?? true,
       requiereAprobacion: materia.configuracion?.requiereAprobacion ?? false,
       notaMinimaAprobacion: materia.configuracion?.notaMinimaAprobacion ?? 6,
-      porcentajeAsistenciaMinimo: materia.configuracion?.porcentajeAsistenciaMinimo ?? 75
+      porcentajeAsistenciaMinimo: materia.configuracion?.porcentajeAsistenciaMinimo ?? 75,
+      estado: materia.estado || 'activa'
     });
     
     this.loadCarreras();
@@ -633,7 +650,7 @@ export class MateriasComponent implements OnInit {
         profesor: nombreProfesor,
         correlatividades: this.correlatividadesSeleccionadas,
         configuracion,
-        estado: this.materiaSeleccionada.estado || 'activa',
+        estado: formValue.estado || this.materiaSeleccionada.estado || 'activa',
         fechaCreacion: this.materiaSeleccionada.fechaCreacion || new Date().toISOString()
       };
       await this.materiaService.updateMateria(materiaActualizada);
@@ -669,7 +686,7 @@ export class MateriasComponent implements OnInit {
         profesor: nombreProfesor,
         correlatividades: this.correlatividadesSeleccionadas,
         configuracion,
-        estado: 'activa',
+        estado: formValue.estado || 'activa',
         fechaCreacion: new Date().toISOString()
       };
       await this.materiaService.addMateria(nuevaMateria);
@@ -756,7 +773,7 @@ export class MateriasComponent implements OnInit {
     if (!this.materiaSeleccionada) return;
     
     const inscripcion: AlumnoMateria = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       alumnoId,
       materiaId: this.materiaSeleccionada.id,
       fechaInscripcion: new Date().toISOString()
@@ -786,6 +803,19 @@ export class MateriasComponent implements OnInit {
   getCursosUnicos(): string[] {
     const cursos = this.materias.map(m => m.curso).filter((c, i, arr) => arr.indexOf(c) === i);
     return cursos.sort();
+  }
+
+  getCursosDeMateria(materiaId: string): Curso[] {
+    return this.cursos.filter(c => c.materias.includes(materiaId));
+  }
+
+  getCursosNombreDeMateria(materiaId: string): string {
+    const cursosMateria = this.getCursosDeMateria(materiaId);
+    if (cursosMateria.length === 0) return 'Sin curso';
+    return cursosMateria.map(c => {
+      const año = c.año || (c as any)['año'] || 0;
+      return `${año}° ${c.division}`;
+    }).join(', ');
   }
 
   getCantidadInscritos(materiaId: string): number {

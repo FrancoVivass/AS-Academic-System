@@ -76,11 +76,11 @@ export class BibliotecaComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.actualizarCache();
-    this.loadRecursos();
+    await this.loadRecursos();
   }
 
-  loadRecursos(): void {
-    let todosLosRecursos = this.bibliotecaService.getRecursos();
+  async loadRecursos(): Promise<void> {
+    let todosLosRecursos = await this.bibliotecaService.getRecursos();
     
     // Si es alumno, solo mostrar recursos de sus materias o generales
     if (this.permissionsService.esAlumno()) {
@@ -106,11 +106,11 @@ export class BibliotecaComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  aplicarFiltros(): void {
+  async aplicarFiltros(): Promise<void> {
     let filtrados = [...this.recursos];
 
     if (this.busqueda) {
-      filtrados = this.bibliotecaService.buscarRecursos(this.busqueda);
+      filtrados = await this.bibliotecaService.buscarRecursos(this.busqueda);
     }
 
     if (this.filtroMateria) {
@@ -124,8 +124,8 @@ export class BibliotecaComponent implements OnInit {
     this.recursosFiltrados = filtrados;
   }
 
-  onBusquedaChange(): void {
-    this.aplicarFiltros();
+  async onBusquedaChange(): Promise<void> {
+    await this.aplicarFiltros();
   }
 
   abrirModalNuevo(): void {
@@ -146,53 +146,67 @@ export class BibliotecaComponent implements OnInit {
     });
   }
 
-  guardarRecurso(): void {
+  async guardarRecurso(): Promise<void> {
     if (this.recursoForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
     }
 
-    const formValue = this.recursoForm.value;
-    const etiquetas = formValue.etiquetas ? formValue.etiquetas.split(',').map((e: string) => e.trim()) : [];
+    try {
+      const formValue = this.recursoForm.value;
+      const etiquetas = formValue.etiquetas ? formValue.etiquetas.split(',').map((e: string) => e.trim()) : [];
 
-    if (this.modoEdicion && this.recursoSeleccionado) {
-      const recursoActualizado: RecursoBiblioteca = {
-        ...this.recursoSeleccionado,
-        ...formValue,
-        etiquetas
-      };
-      this.bibliotecaService.updateRecurso(recursoActualizado);
-      this.notificationService.showSuccess('Recurso actualizado correctamente');
-    } else {
-      const nuevoRecurso: RecursoBiblioteca = {
-        id: Date.now().toString(),
-        ...formValue,
-        etiquetas,
-        autorId: this.authService.getCurrentUser()?.id || '',
-        fechaSubida: new Date().toISOString(),
-        descargas: 0,
-        visible: true
-      };
-      this.bibliotecaService.addRecurso(nuevoRecurso);
-      this.notificationService.showSuccess('Recurso agregado correctamente');
+      if (this.modoEdicion && this.recursoSeleccionado) {
+        const recursoActualizado: RecursoBiblioteca = {
+          ...this.recursoSeleccionado,
+          ...formValue,
+          etiquetas
+        };
+        await this.bibliotecaService.updateRecurso(recursoActualizado);
+        this.notificationService.showSuccess('Recurso actualizado correctamente');
+      } else {
+        const nuevoRecurso: RecursoBiblioteca = {
+          id: crypto.randomUUID(),
+          ...formValue,
+          etiquetas,
+          autorId: this.authService.getCurrentUser()?.id || '',
+          fechaSubida: new Date().toISOString(),
+          descargas: 0,
+          visible: true
+        };
+        await this.bibliotecaService.addRecurso(nuevoRecurso);
+        this.notificationService.showSuccess('Recurso agregado correctamente');
+      }
+
+      await this.loadRecursos();
+      this.cerrarModal();
+    } catch (error) {
+      console.error('Error guardando recurso:', error);
+      this.notificationService.showError('Error al guardar el recurso');
     }
-
-    this.loadRecursos();
-    this.cerrarModal();
   }
 
-  eliminarRecurso(id: string): void {
+  async eliminarRecurso(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar este recurso?')) {
-      this.bibliotecaService.deleteRecurso(id);
-      this.loadRecursos();
-      this.notificationService.showSuccess('Recurso eliminado correctamente');
+      try {
+        await this.bibliotecaService.deleteRecurso(id);
+        await this.loadRecursos();
+        this.notificationService.showSuccess('Recurso eliminado correctamente');
+      } catch (error) {
+        console.error('Error eliminando recurso:', error);
+        this.notificationService.showError('Error al eliminar el recurso');
+      }
     }
   }
 
-  descargarRecurso(recurso: RecursoBiblioteca): void {
-    this.bibliotecaService.incrementarDescargas(recurso.id);
-    this.notificationService.showInfo(`Descargando: ${recurso.titulo}`);
-    // Simulación de descarga
+  async descargarRecurso(recurso: RecursoBiblioteca): Promise<void> {
+    try {
+      await this.bibliotecaService.incrementarDescargas(recurso.id);
+      this.notificationService.showInfo(`Descargando: ${recurso.titulo}`);
+      // Simulación de descarga
+    } catch (error) {
+      console.error('Error incrementando descargas:', error);
+    }
   }
 
   cerrarModal(): void {

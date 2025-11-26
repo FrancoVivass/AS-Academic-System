@@ -91,6 +91,46 @@
             </mat-select>
             <mat-hint>Seleccione una carrera para ver los alumnos</mat-hint>
           </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filtrar por Curso</mat-label>
+            <mat-select [(ngModel)]="filtroCurso" (selectionChange)="onFiltroCursoChange()">
+              <mat-option value="">Todos los cursos</mat-option>
+              @for (curso of cursosParaFiltro; track curso.id) {
+                <mat-option [value]="getAnioCurso(curso) + '° ' + curso.division">
+                  {{ getAnioCurso(curso) }}° {{ curso.division }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filtrar por Materia</mat-label>
+            <mat-select [(ngModel)]="filtroMateria" (selectionChange)="onMateriaChange()">
+              <mat-option value="">Todas las materias</mat-option>
+              @for (materia of materiasDisponibles; track materia.id) {
+                <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (filtroMateria) {
+            @let stats = getEstadisticasPorMateria(filtroMateria);
+            <div class="estadisticas-materia-card">
+              <h4>Estadísticas de la Materia</h4>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-label">Promedio:</span>
+                  <span class="stat-value">{{ stats.promedio.toFixed(2) }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Asistencia:</span>
+                  <span class="stat-value">{{ stats.asistencia.toFixed(1) }}%</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Total Alumnos:</span>
+                  <span class="stat-value">{{ stats.totalAlumnos }}</span>
+                </div>
+              </div>
+            </div>
+          }
         }
         <mat-form-field appearance="outline" class="search-field">
           <mat-label>Buscar alumno</mat-label>
@@ -243,13 +283,28 @@
                 </button>
               }
               @if (permissionsService.puedeVer('cambiarEstadoAlumnos')) {
-                <button mat-icon-button color="accent" (click)="cambiarEstadoAlumno(alumno)" matTooltip="Cambiar Estado">
-                  <mat-icon>swap_vert</mat-icon>
-                </button>
+                <mat-form-field appearance="outline" class="estado-form-field">
+                  <mat-select 
+                    [value]="alumno.estado || 'regular'" 
+                    (selectionChange)="cambiarEstadoAlumno(alumno, $event.value)">
+                    <mat-option value="regular">Regular</mat-option>
+                    <mat-option value="irregular">Irregular</mat-option>
+                    <mat-option value="egresado">Egresado</mat-option>
+                    <mat-option value="expulsado">Expulsado</mat-option>
+                    <mat-option value="suspendido">Suspendido</mat-option>
+                    <mat-option value="libre">Libre</mat-option>
+                  </mat-select>
+                </mat-form-field>
               }
               @if (permissionsService.esSecretario() || permissionsService.esAdmin()) {
-                <button mat-icon-button color="primary" (click)="validarDocumentacion(alumno)" matTooltip="Validar Documentación">
-                  <mat-icon>verified</mat-icon>
+                <button 
+                  mat-raised-button 
+                  [color]="estaDocumentacionValidada(alumno) ? 'primary' : 'accent'"
+                  [class.validated]="estaDocumentacionValidada(alumno)"
+                  (click)="abrirModalValidacion(alumno)" 
+                  matTooltip="Validar Documentación">
+                  <mat-icon>{{ estaDocumentacionValidada(alumno) ? 'verified' : 'verified_user' }}</mat-icon>
+                  {{ estaDocumentacionValidada(alumno) ? 'Validada' : 'Validar' }}
                 </button>
               }
               @if (permissionsService.puedeVer('eliminarAlumnos')) {
@@ -439,6 +494,48 @@
           <div class="modal-actions">
             <button mat-button (click)="cerrarModalImportar()">Cerrar</button>
           </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Validación de Documentación -->
+  @if (mostrarModalValidacion && alumnoValidacion) {
+    <div class="modal-overlay" (click)="cerrarModalValidacion()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>verified_user</mat-icon>
+            Validar Documentación
+          </h2>
+          <button mat-icon-button (click)="cerrarModalValidacion()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="alumno-info-modal">
+            <p><strong>Alumno:</strong> {{ alumnoValidacion.nombre }} {{ alumnoValidacion.apellido }}</p>
+            <p><strong>DNI:</strong> {{ alumnoValidacion.dni }}</p>
+          </div>
+          
+          <div class="validacion-form">
+            <mat-checkbox [(ngModel)]="validacionForm.dniCompleto" color="primary">
+              DNI Completo
+            </mat-checkbox>
+            <mat-checkbox [(ngModel)]="validacionForm.analiticoCompleto" color="primary">
+              Analítico Completo
+            </mat-checkbox>
+            <mat-checkbox [(ngModel)]="validacionForm.aptoMedicoCompleto" color="primary">
+              Apto Médico Completo
+            </mat-checkbox>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button mat-button (click)="cerrarModalValidacion()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="validarDocumentacion()">
+            <mat-icon>verified</mat-icon>
+            Validar Documentación
+          </button>
         </div>
       </div>
     </div>

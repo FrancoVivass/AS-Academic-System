@@ -24,8 +24,14 @@ export class AlumnoService {
       this.alumnosSubject.next(alumnos);
     } catch (error) {
       console.error('Error cargando alumnos:', error);
+      console.error('Detalle del error:', JSON.stringify(error, null, 2));
       this.alumnosSubject.next([]);
     }
+  }
+
+  // Método público para forzar recarga de alumnos desde la base de datos
+  async recargarAlumnos(): Promise<void> {
+    await this.loadAlumnos();
   }
 
   private async getAlumnosFromSupabase(): Promise<Alumno[]> {
@@ -55,18 +61,19 @@ export class AlumnoService {
     }
 
     const usuarioIds = usuariosData.map((u: any) => u.id);
+    console.log(`Encontrados ${usuarioIds.length} usuarios de la institución ${currentInstitucion.nombre}`);
 
     // Ahora obtener los alumnos de esos usuarios
+    // Nota: La relación entre alumnos y usuarios es que alumnos.id = usuarios.id
+    // Usar una consulta más simple sin join para evitar errores
     const { data: alumnosData, error: alumnosError } = await this.supabase.client
       .from('alumnos')
-      .select(`
-        *,
-        usuarios:usuarios(*)
-      `)
+      .select('*')
       .in('id', usuarioIds);
 
     if (alumnosError) {
       console.error('Error obteniendo alumnos:', alumnosError);
+      console.error('Detalle del error:', JSON.stringify(alumnosError, null, 2));
       throw alumnosError;
     }
 
@@ -77,11 +84,19 @@ export class AlumnoService {
 
     const alumnos: Alumno[] = [];
     for (const db of alumnosData) {
-      const usuario = db.usuarios;
-      if (!usuario) {
-        console.warn('Alumno sin usuario asociado:', db.id);
+      // Obtener el usuario correspondiente por separado
+      const { data: usuarioData, error: usuarioError } = await this.supabase.client
+        .from('usuarios')
+        .select('*')
+        .eq('id', db.id)
+        .single();
+      
+      if (usuarioError || !usuarioData) {
+        console.warn('Alumno sin usuario asociado:', db.id, usuarioError);
         continue;
       }
+      
+      const usuario = usuarioData;
 
       // Obtener historial de estados
       const { data: historial } = await this.supabase.client
@@ -90,19 +105,31 @@ export class AlumnoService {
         .eq('alumno_id', db.id)
         .order('fecha', { ascending: false });
 
-      // Obtener curso del alumno desde alumno_cursos (tomar el primero si hay múltiples)
+      // Obtener todos los cursos del alumno desde alumno_cursos
       let cursoNombre = '';
+      let cursoIdPrincipal: string | undefined;
+      const cursoIds: string[] = [];
+      
       try {
         const { data: alumnoCursosData } = await this.supabase.client
           .from('alumno_cursos')
           .select('curso_id')
           .eq('alumno_id', db.id)
-          .eq('estado', 'inscrito')
-          .limit(1);
+          .eq('estado', 'inscrito');
 
         if (alumnoCursosData && alumnoCursosData.length > 0) {
+          // Guardar todos los cursoIds
+          alumnoCursosData.forEach((ac: any) => {
+            if (ac.curso_id) {
+              cursoIds.push(ac.curso_id);
+            }
+          });
+          
+          // El primer curso es el principal
           const cursoId = alumnoCursosData[0].curso_id;
-          // Obtener datos del curso - usar select con todas las columnas necesarias
+          cursoIdPrincipal = cursoId;
+          
+          // Obtener datos del curso principal - usar select con todas las columnas necesarias
           const { data: cursoData, error: cursoError } = await this.supabase.client
             .from('cursos')
             .select('*')
@@ -131,6 +158,8 @@ export class AlumnoService {
         email: usuario.email || '',
         telefono: usuario.telefono || '',
         curso: cursoNombre,
+        cursoId: cursoIdPrincipal,
+        cursoIds: cursoIds.length > 0 ? cursoIds : undefined,
         carreraId: db.carrera_id || '',
         fechaNacimiento: db.fecha_nacimiento || usuario.fecha_nacimiento,
         direccion: usuario.direccion || '',
@@ -162,9 +191,16 @@ export class AlumnoService {
 
   async getAlumnos(): Promise<Alumno[]> {
     try {
+      // Primero intentar obtener del observable (más rápido si ya está cargado)
+      const alumnosActuales = this.alumnosSubject.value;
+      if (alumnosActuales && alumnosActuales.length > 0) {
+        return alumnosActuales;
+      }
+      // Si no hay en el observable, cargar desde la base de datos
       return await this.getAlumnosFromSupabase();
     } catch (error) {
       console.error('Error obteniendo alumnos:', error);
+      console.error('Detalle del error:', JSON.stringify(error, null, 2));
       return [];
     }
   }
@@ -348,9 +384,31 @@ export class AlumnoService {
   // Notas
   async getNotas(): Promise<Nota[]> {
     try {
+      // Obtener la institución actual para filtrar
+      const currentInstitucion = this.institucionService.getCurrentInstitucion();
+      if (!currentInstitucion) {
+        console.warn('No hay institución seleccionada');
+        return [];
+      }
+
+      // Obtener IDs de alumnos de la institución actual
+      const { data: usuariosData } = await this.supabase.client
+        .from('usuarios')
+        .select('id')
+        .eq('institucion_id', currentInstitucion.id)
+        .eq('rol', 'alumno');
+
+      if (!usuariosData || usuariosData.length === 0) {
+        return [];
+      }
+
+      const alumnoIds = usuariosData.map(u => u.id);
+
+      // Obtener notas de alumnos de la institución actual
       const { data, error } = await this.supabase.client
         .from('notas')
         .select('*')
+        .in('alumno_id', alumnoIds)
         .order('fecha', { ascending: false });
 
       if (error) throw error;
@@ -358,6 +416,7 @@ export class AlumnoService {
         id: db.id,
         alumnoId: db.alumno_id,
         materiaId: db.materia_id,
+        cursoId: db.curso_id,
         calificacion: Number(db.calificacion),
         fecha: db.fecha,
         tipo: db.tipo,
@@ -366,7 +425,8 @@ export class AlumnoService {
         aprobadaPor: db.aprobada_por,
         fechaAprobacion: db.fecha_aprobacion,
         esRecuperatorio: db.es_recuperatorio || false,
-        notaOriginalId: db.nota_original_id
+        notaOriginalId: db.nota_original_id,
+        cargadaPor: db.cargada_por
       }));
     } catch (error) {
       console.error('Error obteniendo notas:', error);

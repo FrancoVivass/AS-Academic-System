@@ -287,19 +287,70 @@ export class NotasComponent implements OnInit {
 
     // Obtener cursos de la carrera que tienen esta materia
     this.cursos = await this.cursoService.getCursosByCarrera(carreraId);
-    const cursosConMateria = this.cursos.filter(c => c.materias.includes(materiaId));
+    let cursosConMateria = this.cursos.filter(c => c.materias.includes(materiaId));
     
-    // Obtener IDs de alumnos de esos cursos
-    const idsAlumnos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
+    // Si es profesor, asegurar que solo se muestren cursos donde tiene materias asignadas
+    if (this.permissionsService.esProfesor()) {
+      const usuario = this.authService.getCurrentUser();
+      if (usuario) {
+        let docente = await this.docenteService.getDocenteById(usuario.id);
+        if (!docente) {
+          const todosLosDocentes = await this.docenteService.getDocentes();
+          docente = todosLosDocentes.find(d => 
+            d.nombre === usuario.nombre && d.apellido === usuario.apellido
+          );
+        }
+
+        const materiasAsignadas = docente?.materiasAsignadas || [];
+        const todasLasMaterias = await this.materiaService.getMaterias();
+        const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+        
+        // Filtrar materias del profesor
+        const materiasProfesor = todasLasMaterias.filter(m => {
+          if (materiasAsignadas.length > 0) {
+            return materiasAsignadas.includes(m.id);
+          }
+          return m.profesor === nombreProfesor || 
+                 m.profesor?.includes(usuario.nombre) ||
+                 m.profesor?.includes(usuario.apellido);
+        });
+
+        const materiasIdsProfesor = new Set(materiasProfesor.map(m => m.id));
+        
+        // Filtrar cursos donde el profesor tiene materias Y la materia seleccionada
+        cursosConMateria = cursosConMateria.filter(c => 
+          c.materias.some(mId => materiasIdsProfesor.has(mId)) &&
+          c.materias.includes(materiaId)
+        );
+      }
+    }
+    
+    // Obtener IDs de cursos que tienen esta materia
+    const idsCursosConMateria = cursosConMateria.map(c => c.id);
+    
+    // Obtener IDs de alumnos de esos cursos (desde c.alumnos)
+    const idsAlumnosCursos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
     
     // Filtrar alumnos que pertenecen a la carrera y están en los cursos
     const todosLosAlumnos = await this.alumnoService.getAlumnos();
-    let alumnos = todosLosAlumnos.filter(a => 
-      a.carreraId === carreraId && idsAlumnos.includes(a.id)
-    );
+    let alumnos = todosLosAlumnos.filter(a => {
+      // Verificar si pertenece a la carrera
+      if (a.carreraId !== carreraId) {
+        return false;
+      }
+      
+      // Verificar si está en los cursos usando c.alumnos
+      const estaEnCurso = idsAlumnosCursos.includes(a.id);
+      
+      // Verificar si tiene cursoId o cursoIds que coinciden
+      const tieneCursoId = a.cursoId && idsCursosConMateria.includes(a.cursoId);
+      const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => idsCursosConMateria.includes(cId));
+      
+      return estaEnCurso || tieneCursoId || tieneCursoIds;
+    });
     
-    // Si no hay alumnos en cursos, mostrar todos los de la carrera
-    if (alumnos.length === 0) {
+    // Si no hay alumnos en cursos, mostrar todos los de la carrera (solo si no es profesor)
+    if (alumnos.length === 0 && !this.permissionsService.esProfesor()) {
       alumnos = todosLosAlumnos.filter(a => 
         a.carreraId === carreraId
       );
@@ -309,93 +360,84 @@ export class NotasComponent implements OnInit {
   }
 
   async loadNotas(): Promise<void> {
-    let todasLasNotas = await this.alumnoService.getNotas();
-    
-    // Si es alumno, solo ver sus propias notas
-    if (this.permissionsService.esAlumno()) {
-      const usuarioId = this.authService.getCurrentUser()?.id;
-      todasLasNotas = todasLasNotas.filter(n => n.alumnoId === usuarioId);
-    }
-    // Si es profesor, solo ver notas de sus materias y alumnos de sus carreras
-    else if (this.permissionsService.esProfesor()) {
-      const usuario = this.authService.getCurrentUser();
-      if (usuario) {
-        // Intentar obtener docente por ID
-        let docente = await this.docenteService.getDocenteById(usuario.id);
-        
-        // Si no se encuentra por ID, buscar por nombre
-        if (!docente) {
-          const todosLosDocentes = await this.docenteService.getDocentes();
-          docente = todosLosDocentes.find(d => 
-            d.nombre === usuario.nombre && d.apellido === usuario.apellido
-          );
-        }
-        
-        const materiasAsignadas = docente?.materiasAsignadas || [];
-        const todasLasMaterias = await this.materiaService.getMaterias();
-        const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
-        
-        // Filtrar materias del profesor
-        const materiasProfesor = todasLasMaterias.filter(m => {
-          // Por materiasAsignadas si existe
-          if (materiasAsignadas.length > 0) {
-            return materiasAsignadas.includes(m.id);
-          }
-          // Fallback: por nombre del profesor
-          return m.profesor === nombreProfesor || 
-                 m.profesor?.includes(usuario.nombre) ||
-                 m.profesor?.includes(usuario.apellido);
-        });
-        
-        // Obtener carreras del profesor (de materias y de cursos)
-        const carrerasIds = new Set<string>();
-        materiasProfesor.forEach(m => {
-          if (m.carreraId) {
-            carrerasIds.add(m.carreraId);
-          }
-        });
-        
-        // También buscar en cursos que tienen estas materias
-        const todosLosCursos = await this.cursoService.getCursos();
-        todosLosCursos.forEach(curso => {
-          if (curso.materias.some(mId => materiasProfesor.some(m => m.id === mId))) {
-            if (curso.carreraId) {
-              carrerasIds.add(curso.carreraId);
-            }
-          }
-        });
-        
-        // Obtener IDs de materias del profesor
-        const materiasIdsProfesor = new Set<string>(materiasProfesor.map(m => m.id));
-        
-        // Filtrar notas: solo de materias del profesor y alumnos de sus carreras
-        const notasFiltradas = [];
-        for (const nota of todasLasNotas) {
-          // Verificar que la nota sea de una materia del profesor
-          if (!materiasIdsProfesor.has(nota.materiaId)) {
-            continue;
-          }
-          
-          const alumno = await this.alumnoService.getAlumnoById(nota.alumnoId);
-          if (!alumno) continue;
-          
-          // Verificar que el alumno pertenezca a una carrera del profesor
-          // Si el alumno no tiene carreraId, también mostrarlo (puede ser que aún no esté asignado)
-          if (!alumno.carreraId) {
-            notasFiltradas.push(nota); // Mostrar notas de alumnos sin carrera asignada
-            continue;
-          }
-          
-          if (carrerasIds.has(alumno.carreraId)) {
-            notasFiltradas.push(nota);
-          }
-        }
-        todasLasNotas = notasFiltradas;
+    try {
+      let todasLasNotas = await this.alumnoService.getNotas();
+      
+      // Si es alumno, solo ver sus propias notas
+      if (this.permissionsService.esAlumno()) {
+        const usuarioId = this.authService.getCurrentUser()?.id;
+        todasLasNotas = todasLasNotas.filter(n => n.alumnoId === usuarioId);
       }
+      // Si es profesor, solo ver notas de sus materias y alumnos de sus carreras
+      else if (this.permissionsService.esProfesor()) {
+        const usuario = this.authService.getCurrentUser();
+        if (usuario) {
+          // Intentar obtener docente por ID
+          let docente = await this.docenteService.getDocenteById(usuario.id);
+          
+          // Si no se encuentra por ID, buscar por nombre
+          if (!docente) {
+            const todosLosDocentes = await this.docenteService.getDocentes();
+            docente = todosLosDocentes.find(d => 
+              d.nombre === usuario.nombre && d.apellido === usuario.apellido
+            );
+          }
+          
+          const materiasAsignadas = docente?.materiasAsignadas || [];
+          const todasLasMaterias = await this.materiaService.getMaterias();
+          const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+          
+          // Filtrar materias del profesor
+          const materiasProfesor = todasLasMaterias.filter(m => {
+            // Por materiasAsignadas si existe
+            if (materiasAsignadas.length > 0) {
+              return materiasAsignadas.includes(m.id);
+            }
+            // Fallback: por nombre del profesor
+            return m.profesor === nombreProfesor || 
+                   m.profesor?.includes(usuario.nombre) ||
+                   m.profesor?.includes(usuario.apellido);
+          });
+          
+          // Obtener carreras del profesor (de materias y de cursos)
+          const carrerasIds = new Set<string>();
+          materiasProfesor.forEach(m => {
+            if (m.carreraId) {
+              carrerasIds.add(m.carreraId);
+            }
+          });
+          
+          // También buscar en cursos que tienen estas materias
+          const todosLosCursos = await this.cursoService.getCursos();
+          todosLosCursos.forEach(curso => {
+            if (curso.materias.some(mId => materiasProfesor.some(m => m.id === mId))) {
+              if (curso.carreraId) {
+                carrerasIds.add(curso.carreraId);
+              }
+            }
+          });
+          
+          // Obtener IDs de materias del profesor
+          const materiasIdsProfesor = new Set<string>(materiasProfesor.map(m => m.id));
+          
+          // Filtrar notas: solo de materias del profesor
+          // Simplificar: si la nota es de una materia del profesor, mostrarla
+          // No filtrar por carrera del alumno, ya que el profesor puede tener alumnos de diferentes carreras
+          todasLasNotas = todasLasNotas.filter(nota => {
+            return materiasIdsProfesor.has(nota.materiaId);
+          });
+          
+          console.log(`Notas filtradas para profesor: ${todasLasNotas.length} de ${todasLasNotas.length + (await this.alumnoService.getNotas()).length - todasLasNotas.length} totales`);
+          console.log('Materias del profesor:', materiasProfesor.map(m => m.nombre));
+        }
+      }
+      
+      this.notas = todasLasNotas;
+      await this.aplicarFiltros();
+    } catch (error) {
+      console.error('Error al cargar notas:', error);
+      this.notificationService.showError('Error al cargar las notas');
     }
-    
-    this.notas = todasLasNotas;
-    await this.aplicarFiltros();
   }
 
   async aplicarFiltros(): Promise<void> {
@@ -613,7 +655,7 @@ export class NotasComponent implements OnInit {
       const { carreraId, ...notaData } = formValue;
       
       const nuevaNota: Nota = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         ...notaData,
         estado: 'cargada'
       };
@@ -621,15 +663,58 @@ export class NotasComponent implements OnInit {
       this.notificationService.showSuccess('Nota registrada correctamente');
     }
 
+    // Guardar valores del formulario antes de cerrar el modal
+    const materiaIdGuardada = formValue.materiaId;
+    const alumnoIdGuardada = formValue.alumnoId;
+    const carreraIdGuardada = formValue.carreraId;
+    
     // Cerrar modal primero
     this.cerrarModal();
+    
+    // Esperar un momento para que Supabase procese la inserción
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // Recargar notas (esto actualizará la lista)
     await this.loadNotas();
     
-    // Recargar alumnos y materias si hay filtros activos (para los dropdowns)
-    if (this.filtroCarrera) {
+    // Actualizar cache de nombres para mostrar correctamente en la tabla
+    await this.actualizarCacheNombres();
+    
+    // Ajustar filtros para mostrar la nota recién guardada
+    // Si hay filtros activos que no coinciden con la nota guardada, ajustarlos
+    if (this.filtroCarrera && this.filtroCarrera !== carreraIdGuardada) {
+      // Si el filtro de carrera no coincide, ajustarlo para mostrar la nota
+      this.filtroCarrera = carreraIdGuardada || '';
       await this.onCarreraChange();
+    }
+    
+    if (this.filtroMateria && this.filtroMateria !== materiaIdGuardada) {
+      // Si el filtro de materia no coincide, ajustarlo
+      this.filtroMateria = materiaIdGuardada || '';
+      await this.onMateriaChange();
+    }
+    
+    if (this.filtroAlumno && this.filtroAlumno !== alumnoIdGuardada) {
+      // Si el filtro de alumno no coincide, ajustarlo
+      this.filtroAlumno = alumnoIdGuardada || '';
+    }
+    
+    // Aplicar filtros actualizados
+    await this.aplicarFiltros();
+    
+    // Verificar que la nota aparezca en la tabla
+    const notaEncontrada = this.notasFiltradas.find(n => 
+      n.materiaId === materiaIdGuardada && 
+      n.alumnoId === alumnoIdGuardada
+    );
+    
+    if (!notaEncontrada && (this.filtroCarrera || this.filtroMateria || this.filtroAlumno)) {
+      // Si la nota no aparece y hay filtros, limpiarlos para mostrarla
+      console.log('Nota no encontrada con filtros activos, limpiando filtros...');
+      this.filtroCarrera = '';
+      this.filtroMateria = '';
+      this.filtroAlumno = '';
+      await this.aplicarFiltros();
     }
   }
 

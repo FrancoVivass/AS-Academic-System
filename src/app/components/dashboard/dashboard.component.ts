@@ -213,12 +213,22 @@ export class DashboardComponent implements OnInit {
     const alumno = await this.alumnoService.getAlumnoById(usuarioId);
     if (!alumno) return;
 
-    // Obtener materias inscritas
-    const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId);
-    const todasLasMaterias = await this.materiaService.getMaterias();
-    this.materias = todasLasMaterias.filter(m => 
-      inscripciones.some(i => i.materiaId === m.id)
+    // Obtener materias desde los cursos donde está inscrito
+    const todosLosCursos = await this.cursoService.getCursos();
+    const cursosDelAlumno = todosLosCursos.filter(c => 
+      c.alumnos.includes(usuarioId) || 
+      (alumno.cursoId && c.id === alumno.cursoId) ||
+      (alumno.cursoIds && alumno.cursoIds.includes(c.id))
     );
+    
+    // Obtener todas las materias de esos cursos
+    const materiasIds = new Set<string>();
+    cursosDelAlumno.forEach(curso => {
+      curso.materias.forEach(materiaId => materiasIds.add(materiaId));
+    });
+    
+    const todasLasMaterias = await this.materiaService.getMaterias();
+    this.materias = todasLasMaterias.filter(m => materiasIds.has(m.id));
 
     // Calcular resumen por materia
     const notasAlumno = await this.alumnoService.getNotasByAlumno(usuarioId);
@@ -745,11 +755,20 @@ export class DashboardComponent implements OnInit {
     const alumno = await this.alumnoService.getAlumnoById(alumnoId);
     if (!alumno) return;
 
+    // Asegurar que los cursos estén cargados
+    if (this.cursos.length === 0) {
+      this.cursos = await this.cursoService.getCursos();
+    }
+
     const hoy = new Date();
     const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][hoy.getDay()];
     
-    // Obtener cursos del alumno
-    const cursosDelAlumno = this.cursos.filter(c => c.alumnos.includes(alumnoId));
+    // Obtener cursos del alumno usando múltiples métodos
+    const cursosDelAlumno = this.cursos.filter(c => 
+      c.alumnos.includes(alumnoId) || 
+      (alumno.cursoId && c.id === alumno.cursoId) ||
+      (alumno.cursoIds && alumno.cursoIds.includes(c.id))
+    );
     
     this.clasesDelDia = [];
     for (const curso of cursosDelAlumno) {

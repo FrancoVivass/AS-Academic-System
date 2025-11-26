@@ -76,7 +76,7 @@ export class MensajesComponent implements OnInit {
     }
 
     const mensaje: Mensaje = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       remitenteId: usuarioId,
       destinatarioId: this.destinatarioSeleccionado,
       asunto: this.nuevoMensaje.asunto!,

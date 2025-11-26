@@ -30,13 +30,48 @@
 <!-- Mobile Overlay -->
 <section class="mobile-overlay" id="mobileOverlay">
     <div class="mobile-menu" id="mobileMenu">
-        <div class="close-button"><p id="closeButton">Cerrar</p></div>
-        <ul>
-            <li><a [routerLink]="['/']">Inicio</a></li>
-            <li><a [routerLink]="['/como-funciona']">Cómo Funciona</a></li>
-            <li><a [routerLink]="['/acerca-de']">Acerca De</a></li>
-            <li><a [routerLink]="['/soporte']">Soporte</a></li>
-            <li><a class="cta-button" [routerLink]="['/instituciones']">Comenzar a Gestionar</a></li>
-        </ul>
+        <div class="close-button">
+            <p id="closeButton"></p>
+        </div>
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <div class="mobile-logo">
+                    <div class="company-col"></div>
+                    <span class="company-name">AcademicSystem</span>
+                </div>
+            </div>
+            <ul>
+                <li>
+                    <a [routerLink]="['/']" (click)="closeMobileMenu()">
+                        <mat-icon>home</mat-icon>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a [routerLink]="['/como-funciona']" (click)="closeMobileMenu()">
+                        <mat-icon>info</mat-icon>
+                        <span>Cómo Funciona</span>
+                    </a>
+                </li>
+                <li>
+                    <a [routerLink]="['/acerca-de']" (click)="closeMobileMenu()">
+                        <mat-icon>people</mat-icon>
+                        <span>Acerca De</span>
+                    </a>
+                </li>
+                <li>
+                    <a [routerLink]="['/soporte']" (click)="closeMobileMenu()">
+                        <mat-icon>support</mat-icon>
+                        <span>Soporte</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="cta-button" [routerLink]="['/instituciones']" (click)="closeMobileMenu()">
+                        <mat-icon>rocket_launch</mat-icon>
+                        <span>Comenzar a Gestionar</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 </section>

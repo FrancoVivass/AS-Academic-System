@@ -26,6 +26,17 @@ export class EncabezadoPrincipal implements AfterViewInit {
     this.updateScrollState();
   }
 
+  closeMobileMenu(): void {
+    const mobileOverlay = document.querySelector('.mobile-overlay') || document.getElementById('mobileOverlay');
+    const mobileMenu = document.querySelector('.mobile-menu') || document.getElementById('mobileMenu');
+    
+    if (mobileOverlay && mobileMenu) {
+      (mobileOverlay as HTMLElement).classList.remove('show');
+      (mobileMenu as HTMLElement).classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  }
+
   private initMobileMenu() {
     // Usar setTimeout para asegurar que el DOM esté listo
     setTimeout(() => {
@@ -42,16 +53,12 @@ export class EncabezadoPrincipal implements AfterViewInit {
         });
 
         closeButton.addEventListener('click', () => {
-          (mobileOverlay as HTMLElement).classList.remove('show');
-          (mobileMenu as HTMLElement).classList.remove('show');
-          document.body.style.overflow = '';
+          this.closeMobileMenu();
         });
 
         mobileOverlay.addEventListener('click', (event) => {
           if (event.target === mobileOverlay) {
-            (mobileOverlay as HTMLElement).classList.remove('show');
-            (mobileMenu as HTMLElement).classList.remove('show');
-            document.body.style.overflow = '';
+            this.closeMobileMenu();
           }
         });
       }

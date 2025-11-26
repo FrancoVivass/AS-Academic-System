@@ -56,9 +56,25 @@
                   <mat-select formControlName="estado" required>
                     <mat-option value="activa">Activa</mat-option>
                     <mat-option value="inactiva">Inactiva</mat-option>
+                    <mat-option value="suspendida">Suspendida</mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Coordinador</mat-label>
+                  <mat-select formControlName="coordinadorId">
+                    <mat-option value="">Sin coordinador</mat-option>
+                    @for (docente of docentesDisponibles; track docente.id) {
+                      <mat-option [value]="docente.id">{{ docente.nombre }} {{ docente.apellido }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-icon matPrefix>person</mat-icon>
+                  <mat-hint>Seleccione un coordinador para esta carrera (opcional)</mat-hint>
+                </mat-form-field>
+              </div>
+              
               <div class="wizard-actions">
                 <button mat-button (click)="cerrarWizard()">Cancelar</button>
                 <button mat-raised-button color="primary" (click)="completarPaso1(); stepper.next()" [disabled]="carreraForm.invalid">
@@ -685,17 +701,47 @@
 
           <div class="form-row">
             <mat-form-field>
-              <mat-label>Capacidad</mat-label>
+              <mat-label>Capacidad *</mat-label>
               <input matInput type="number" formControlName="capacidad" min="1" required>
             </mat-form-field>
 
             <mat-form-field>
-              <mat-label>Modalidad</mat-label>
+              <mat-label>Cupo Máximo</mat-label>
+              <input matInput type="number" formControlName="cupoMaximo" min="1">
+              <mat-hint>Si no se especifica, será igual a la capacidad</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Modalidad *</mat-label>
               <mat-select formControlName="modalidad" required>
                 <mat-option value="presencial">Presencial</mat-option>
                 <mat-option value="virtual">Virtual</mat-option>
                 <mat-option value="mixta">Mixta</mat-option>
               </mat-select>
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Estado *</mat-label>
+              <mat-select formControlName="estado" required>
+                <mat-option value="activo">Activo</mat-option>
+                <mat-option value="inactivo">Inactivo</mat-option>
+                <mat-option value="completo">Completo</mat-option>
+                <mat-option value="cancelado">Cancelado</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Fecha de Inicio</mat-label>
+              <input matInput type="date" formControlName="fechaInicio">
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>Fecha de Fin</mat-label>
+              <input matInput type="date" formControlName="fechaFin">
             </mat-form-field>
           </div>
 
@@ -710,6 +756,35 @@
               }
             </mat-select>
           </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Tutor/Preceptor</mat-label>
+            <mat-select formControlName="tutorId">
+              <mat-option value="">Sin tutor asignado</mat-option>
+              @for (docente of docentesDisponibles; track docente.id) {
+                <mat-option [value]="docente.id">{{ docente.nombre }} {{ docente.apellido }}</mat-option>
+              }
+            </mat-select>
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <div class="form-section">
+            <h4>Configuración del Curso</h4>
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="permiteAutoinscripcion">
+                Permite Auto-inscripción
+              </mat-checkbox>
+              <mat-checkbox formControlName="permiteEdicionHorariosProfesor">
+                Permite Edición de Horarios por Profesor
+              </mat-checkbox>
+              <mat-checkbox formControlName="requiereAprobacionInscripcion">
+                Requiere Aprobación de Inscripción
+              </mat-checkbox>
+              <mat-checkbox formControlName="activaListaEspera">
+                Activa Lista de Espera
+              </mat-checkbox>
+            </div>
+          </div>
 
           <div class="modal-actions">
             <button mat-button type="button" (click)="cerrarModalCurso()">Cancelar</button>
@@ -1131,4 +1206,5 @@
     </div>
   }
 </div>
+
 

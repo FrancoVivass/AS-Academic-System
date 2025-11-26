@@ -17,28 +17,83 @@
     </div>
   </div>
 
-  @if (permissionsService.esAdmin() || permissionsService.esSecretario()) {
+  @if (permissionsService.esAdmin() || permissionsService.esSecretario() || permissionsService.esProfesor()) {
     <div class="filters-section">
-      <div class="filter-group">
-        <label>Filtrar por Materia</label>
-        <select [(ngModel)]="filtroMateria" (change)="loadReportes(); loadEstadisticas(); loadChartData();" class="filter-select">
-          <option value="">Todas las materias</option>
-          @for (materia of materiasFiltradas; track materia.id) {
-            <option [value]="materia.id">{{ materia.nombre }}</option>
-          }
-        </select>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Filtrar por Carrera</label>
+          <select [(ngModel)]="filtroCarrera" (change)="onFiltroChange()" class="filter-select">
+            <option value="">Todas las carreras</option>
+            @for (carrera of carreras; track carrera.id) {
+              <option [value]="carrera.id">{{ carrera.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Filtrar por Materia</label>
+          <select [(ngModel)]="filtroMateria" (change)="onFiltroChange()" class="filter-select">
+            <option value="">Todas las materias</option>
+            @for (materia of materiasFiltradas; track materia.id) {
+              <option [value]="materia.id">{{ materia.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Filtrar por Curso</label>
+          <select [(ngModel)]="filtroCurso" (change)="onFiltroChange()" class="filter-select">
+            <option value="">Todos los cursos</option>
+            @for (curso of cursosFiltrados; track curso.id) {
+              <option [value]="getCursoDisplayValue(curso)">
+                {{ getCursoDisplayValue(curso) }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Filtrar por Estado</label>
+          <select [(ngModel)]="filtroEstado" (change)="onFiltroChange()" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="regular">Regular</option>
+            <option value="irregular">Irregular</option>
+            <option value="libre">Libre</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Promedio Mínimo</label>
+          <input type="number" [(ngModel)]="filtroPromedioMin" min="0" max="10" step="0.1" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Promedio Máximo</label>
+          <input type="number" [(ngModel)]="filtroPromedioMax" min="0" max="10" step="0.1" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Asistencia Mínima (%)</label>
+          <input type="number" [(ngModel)]="filtroAsistenciaMin" min="0" max="100" step="1" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Asistencia Máxima (%)</label>
+          <input type="number" [(ngModel)]="filtroAsistenciaMax" min="0" max="100" step="1" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Fecha Desde</label>
+          <input type="date" [(ngModel)]="filtroFechaDesde" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Fecha Hasta</label>
+          <input type="date" [(ngModel)]="filtroFechaHasta" 
+                 (change)="onFiltroChange()" class="filter-input">
+        </div>
       </div>
-      <div class="filter-group">
-        <label>Filtrar por Curso</label>
-        <select [(ngModel)]="filtroCurso" (change)="loadReportes(); loadEstadisticas(); loadChartData();" class="filter-select">
-          <option value="">Todos los cursos</option>
-          @for (curso of cursosFiltrados.length > 0 ? cursosFiltrados : getCursosUnicos(); track curso) {
-            <option [value]="curso">{{ curso }}</option>
-          }
-        </select>
-      </div>
-      <div class="filter-group">
-        <button mat-button (click)="limpiarFiltros()">Limpiar Filtros</button>
+      <div class="filter-actions">
+        <button mat-raised-button color="accent" (click)="limpiarFiltros()">
+          <mat-icon>clear</mat-icon>
+          Limpiar Filtros
+        </button>
       </div>
     </div>
   }
@@ -115,6 +170,174 @@
                 <div class="stat-info">
                   <div class="stat-value">{{ estadisticas.alumnosIrregulares }}</div>
                   <div class="stat-label">Alumnos Irregulares</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon primary">class</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.totalCursos }}</div>
+                  <div class="stat-label">Total Cursos</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon info">person</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.totalDocentes }}</div>
+                  <div class="stat-label">Total Docentes</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon success">check_circle</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.cantidadNotas }}</div>
+                  <div class="stat-label">Total Notas</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon warning">event_available</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.cantidadAsistencias }}</div>
+                  <div class="stat-label">Total Asistencias</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon success">trending_up</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.porcentajeAprobados }}%</div>
+                  <div class="stat-label">% Aprobados</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon error">trending_down</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.porcentajeDesaprobados }}%</div>
+                  <div class="stat-label">% Desaprobados</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon primary">star</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionNotas.excelente }}</div>
+                  <div class="stat-label">Notas Excelentes (9-10)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon success">check_circle</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionNotas.bueno }}</div>
+                  <div class="stat-label">Notas Buenas (7-8.9)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon warning">warning</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionNotas.regular }}</div>
+                  <div class="stat-label">Notas Regulares (6-6.9)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon error">cancel</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionNotas.insuficiente }}</div>
+                  <div class="stat-label">Notas Insuficientes (&lt;6)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon success">check_circle</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionAsistencia.excelente }}</div>
+                  <div class="stat-label">Asistencia Excelente (90-100%)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon info">info</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionAsistencia.buena }}</div>
+                  <div class="stat-label">Asistencia Buena (75-89%)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon warning">warning</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionAsistencia.regular }}</div>
+                  <div class="stat-label">Asistencia Regular (60-74%)</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon error">error</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{ estadisticas.distribucionAsistencia.baja }}</div>
+                  <div class="stat-label">Asistencia Baja (&lt;60%)</div>
                 </div>
               </div>
             </mat-card-content>
@@ -354,37 +577,121 @@
     <!-- Tab: Análisis Detallado -->
     <mat-tab label="Análisis">
       <div class="analisis-tab-content">
-        <mat-card class="analisis-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>analytics</mat-icon>
-              Análisis Detallado
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="analisis-section">
-              <h3>Mejores Alumnos por Materia</h3>
-              <div class="mejores-alumnos-list">
-                @for (reporte of reportesMaterias; track reporte.materia.id) {
-                  <div class="materia-mejores">
-                    <h4>{{ reporte.materia.nombre }}</h4>
-                    <div class="alumnos-list">
-                      @for (alumno of reporte.mejoresAlumnos; track alumno.nombre) {
-                        <div class="alumno-item">
-                          <span class="alumno-name">{{ alumno.nombre }}</span>
-                          <mat-chip color="primary">{{ alumno.promedio }}</mat-chip>
-                        </div>
-                      }
-                      @if (reporte.mejoresAlumnos.length === 0) {
-                        <p class="empty-text">No hay datos disponibles</p>
-                      }
-                    </div>
+        <div class="analisis-grid">
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>analytics</mat-icon>
+                Top 10 Mejores Alumnos
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="top-alumnos-list">
+                @for (alumno of estadisticas.alumnosMejorPromedio; track alumno.nombre) {
+                  <div class="alumno-item">
+                    <span class="alumno-name">{{ alumno.nombre }}</span>
+                    <mat-chip color="primary">{{ alumno.promedio }}</mat-chip>
                   </div>
                 }
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>trending_down</mat-icon>
+                Alumnos con Bajo Rendimiento
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="top-alumnos-list">
+                @for (alumno of estadisticas.alumnosPeorPromedio; track alumno.nombre) {
+                  <div class="alumno-item">
+                    <span class="alumno-name">{{ alumno.nombre }}</span>
+                    <mat-chip color="warn">{{ alumno.promedio }}</mat-chip>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>check_circle</mat-icon>
+                Mejor Asistencia
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="top-alumnos-list">
+                @for (alumno of estadisticas.alumnosMejorAsistencia; track alumno.nombre) {
+                  <div class="alumno-item">
+                    <span class="alumno-name">{{ alumno.nombre }}</span>
+                    <mat-chip color="primary">{{ alumno.asistencia }}%</mat-chip>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>warning</mat-icon>
+                Baja Asistencia
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="top-alumnos-list">
+                @for (alumno of estadisticas.alumnosPeorAsistencia; track alumno.nombre) {
+                  <div class="alumno-item">
+                    <span class="alumno-name">{{ alumno.nombre }}</span>
+                    <mat-chip color="warn">{{ alumno.asistencia }}%</mat-chip>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>trending_up</mat-icon>
+                Materias Más Inscritas
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="materias-list">
+                @for (materia of estadisticas.materiasMasInscritas; track materia.nombre) {
+                  <div class="materia-item">
+                    <span class="materia-name">{{ materia.nombre }}</span>
+                    <mat-chip color="primary">{{ materia.inscritos }} alumnos</mat-chip>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analisis-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>trending_down</mat-icon>
+                Materias Menos Inscritas
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="materias-list">
+                @for (materia of estadisticas.materiasMenosInscritas; track materia.nombre) {
+                  <div class="materia-item">
+                    <span class="materia-name">{{ materia.nombre }}</span>
+                    <mat-chip color="accent">{{ materia.inscritos }} alumnos</mat-chip>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
       </div>
     </mat-tab>
   </mat-tab-group>

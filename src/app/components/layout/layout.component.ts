@@ -84,11 +84,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
     });
     this.updateNavItems();
     
-    // Scroll to top cuando cambia la ruta
+    // Scroll to top y cerrar sidenav cuando cambia la ruta
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Cerrar el sidenav cuando se navega a una nueva ruta
+        this.sidenavOpened = false;
       });
 
     // Mostrar modal de bienvenida si es la primera vez
@@ -131,6 +133,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
         { label: 'Mis Materias', icon: 'menu_book', route: '/app/materias', visible: true },
         { label: 'Mis Asistencias', icon: 'check_circle', route: '/app/asistencia', visible: true },
         { label: 'Mis Notas', icon: 'grade', route: '/app/notas', visible: true },
+        { label: 'Mi Documentación', icon: 'description', route: '/app/documentacion', visible: true },
         { label: 'Calendario', icon: 'calendar_today', route: '/app/calendario', visible: true },
         { label: 'Biblioteca', icon: 'library_books', route: '/app/biblioteca', visible: true },
         { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
@@ -150,31 +153,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];
-    } else if (this.permissionsService.esSecretario()) {
-      // Secretario: Todo
-      this.navItems = [
-        { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
-        { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: true },
-        { label: 'Docentes', icon: 'person', route: '/app/docentes', visible: true },
-        { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: true },
-        { label: 'Cursos', icon: 'class', route: '/app/cursos', visible: true },
-        { label: 'Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
-        { label: 'Notas', icon: 'grade', route: '/app/notas', visible: true },
-        { label: 'Calendario', icon: 'calendar_today', route: '/app/calendario', visible: true },
-        { label: 'Biblioteca', icon: 'library_books', route: '/app/biblioteca', visible: true },
-        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
-        { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: true },
-        { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
-        { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
-      ];
     } else if (this.permissionsService.esAdmin()) {
       // Admin: Todo de administración y más
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
+        { label: 'Usuarios', icon: 'people_outline', route: '/app/usuarios', visible: true },
         { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: true },
         { label: 'Docentes', icon: 'person', route: '/app/docentes', visible: true },
         { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: true },
-        { label: 'Cursos', icon: 'class', route: '/app/cursos', visible: true },
         { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: permisos.verCarreras },
         { label: 'Aulas', icon: 'meeting_room', route: '/app/aulas', visible: permisos.gestionarAulas },
         { label: 'Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
@@ -230,8 +216,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   closeSidenavOnMobile(): void {
-    if (this.isMobile) {
-      this.sidenavOpened = false;
-    }
+    // Cerrar el sidenav siempre que se hace clic en un enlace
+    this.sidenavOpened = false;
   }
 }

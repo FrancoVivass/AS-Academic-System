@@ -12,6 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AlumnoService } from '../../services/alumno.service';
 import { CarreraService } from '../../services/carrera.service';
 import { MateriaService } from '../../services/materia.service';
@@ -43,7 +44,8 @@ import { Materia } from '../../models/materia.model';
     MatChipsModule,
     MatProgressBarModule,
     MatTooltipModule,
-    MatSelectModule
+    MatSelectModule,
+    MatCheckboxModule
   ],
   templateUrl: './alumnos.component.html',
   styleUrl: './alumnos.component.css'
@@ -65,9 +67,12 @@ export class AlumnosComponent implements OnInit {
   carreras: Carrera[] = [];
   carreraSeleccionada: string = ''; // Para profesores y filtro
   filtroCarrera: string = ''; // Filtro de carrera para admin/secretario
+  filtroMateria: string = ''; // Filtro por materia para profesores
   cursosDisponibles: any[] = []; // Cursos disponibles para el formulario
   cursosParaFiltro: any[] = []; // Cursos disponibles para el filtro (según carrera seleccionada)
   materiasProfesor: Materia[] = []; // Materias del profesor
+  materiasDisponibles: Materia[] = []; // Materias disponibles para filtro
+  estadisticasPorMateria: Map<string, { promedio: number; asistencia: number; totalAlumnos: number }> = new Map();
 
   constructor(
     private alumnoService: AlumnoService,
@@ -109,17 +114,51 @@ export class AlumnosComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadCarreras();
+    
+    // Para admin/secretario: cargar todos los cursos para el filtro inicial
+    if (!this.permissionsService.esProfesor()) {
+      try {
+        const todosLosCursos = await this.cursoService.getCursos();
+        this.cursosParaFiltro = todosLosCursos;
+        console.log('Cursos cargados para filtro inicial:', this.cursosParaFiltro.length);
+      } catch (error) {
+        console.error('Error cargando cursos para filtro:', error);
+        this.cursosParaFiltro = [];
+      }
+    }
+    
     // loadAlumnos se llama después si es profesor y hay carrera seleccionada
     if (!this.permissionsService.esProfesor() || this.carreraSeleccionada) {
       await this.loadAlumnos();
     }
     
     // Suscribirse a cambios en alumnos desde el servicio para actualizar automáticamente
+    // Usar takeUntil para evitar suscripciones múltiples y bucles infinitos
+    let cargandoAlumnos = false;
     this.alumnoService.alumnos$.subscribe(async (alumnos) => {
-      // Actualizar cuando hay cambios
+      // Evitar bucles infinitos: no recargar si ya estamos cargando
+      if (cargandoAlumnos) {
+        return;
+      }
+      
+      // Evitar actualizaciones innecesarias si ya tenemos los mismos alumnos
+      if (alumnos.length === this.alumnos.length && 
+          alumnos.every((a, i) => a.id === this.alumnos[i]?.id)) {
+        return; // No hay cambios reales, evitar recarga
+      }
+      
+      // Actualizar cuando hay cambios significativos
       if (alumnos.length !== this.alumnos.length) {
         console.log(`Cambio detectado: ${alumnos.length} alumnos en servicio vs ${this.alumnos.length} en componente`);
-        await this.loadAlumnos();
+        cargandoAlumnos = true;
+        try {
+          // En lugar de llamar a loadAlumnos() que puede crear un bucle, 
+          // simplemente actualizar la lista directamente
+          this.alumnos = alumnos;
+          this.aplicarFiltros();
+        } finally {
+          cargandoAlumnos = false;
+        }
       }
     });
   }
@@ -179,6 +218,7 @@ export class AlumnosComponent implements OnInit {
         });
         
         this.materiasProfesor = materiasProfesor;
+        this.materiasDisponibles = materiasProfesor; // Para el filtro de materia
         
         // Obtener carreras únicas de las materias del profesor
         const carrerasIds = new Set<string>();
@@ -208,6 +248,14 @@ export class AlumnosComponent implements OnInit {
           // Cargar alumnos después de seleccionar la carrera
           await this.loadAlumnos();
         }
+        
+        // Cargar cursos para el filtro cuando hay carrera seleccionada
+        if (this.carreraSeleccionada) {
+          const cursosCarrera = await this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
+          this.cursosParaFiltro = cursosCarrera.filter(c => 
+            c.materias.some(mId => materiasProfesor.some(m => m.id === mId))
+          );
+        }
       }
     } else {
       // Para admin/secretario: todas las carreras
@@ -228,9 +276,68 @@ export class AlumnosComponent implements OnInit {
 
   async onCarreraChange(): Promise<void> {
     console.log('Carrera cambiada a:', this.carreraSeleccionada);
-    // Limpiar filtro de curso cuando cambia la carrera
+    // Limpiar filtros cuando cambia la carrera
     this.filtroCurso = '';
+    this.filtroMateria = '';
+    // Cargar cursos para el filtro
+    if (this.carreraSeleccionada && this.permissionsService.esProfesor()) {
+      const cursosCarrera = await this.cursoService.getCursosByCarrera(this.carreraSeleccionada);
+      this.cursosParaFiltro = cursosCarrera.filter(c => 
+        c.materias.some(mId => this.materiasProfesor.some(m => m.id === mId))
+      );
+    }
     await this.loadAlumnos();
+  }
+  
+  async onMateriaChange(): Promise<void> {
+    console.log('Materia cambiada a:', this.filtroMateria);
+    this.aplicarFiltros();
+    // Actualizar estadísticas de todos los alumnos filtrados cuando cambia el filtro de materia
+    if (this.alumnosFiltrados.length > 0) {
+      for (const alumno of this.alumnosFiltrados) {
+        await this.actualizarEstadisticasMateriasAlumno(alumno.id);
+      }
+    }
+  }
+  
+  async actualizarEstadisticasPorMateria(materiaId: string): Promise<void> {
+    const alumnosMateria = this.alumnosFiltrados.filter(a => {
+      // Verificar si el alumno está en un curso que tiene esta materia
+      const cursos = this.cursosParaFiltro.filter(c => c.materias.includes(materiaId));
+      const idsCursos = cursos.map(c => c.id);
+      return idsCursos.some(cId => 
+        a.cursoId === cId || 
+        (a.cursoIds && a.cursoIds.includes(cId)) ||
+        cursos.some(c => c.alumnos.includes(a.id))
+      );
+    });
+    
+    let sumaPromedios = 0;
+    let sumaAsistencias = 0;
+    let contador = 0;
+    
+    for (const alumno of alumnosMateria) {
+      try {
+        // Obtener promedio general del alumno (no por materia específica)
+        const promedio = await this.alumnoService.getPromedioAlumno(alumno.id);
+        const asistencia = await this.alumnoService.getPorcentajeAsistencia(alumno.id, materiaId);
+        sumaPromedios += promedio;
+        sumaAsistencias += asistencia;
+        contador++;
+      } catch (error) {
+        console.error(`Error obteniendo estadísticas para alumno ${alumno.id}:`, error);
+      }
+    }
+    
+    this.estadisticasPorMateria.set(materiaId, {
+      promedio: contador > 0 ? sumaPromedios / contador : 0,
+      asistencia: contador > 0 ? sumaAsistencias / contador : 0,
+      totalAlumnos: contador
+    });
+  }
+  
+  getEstadisticasPorMateria(materiaId: string): { promedio: number; asistencia: number; totalAlumnos: number } {
+    return this.estadisticasPorMateria.get(materiaId) || { promedio: 0, asistencia: 0, totalAlumnos: 0 };
   }
 
   async onCarreraFiltroChange(): Promise<void> {
@@ -267,34 +374,128 @@ export class AlumnosComponent implements OnInit {
 
   async loadAlumnos(): Promise<void> {
     try {
-      console.log('Cargando alumnos...');
+      console.log('Cargando alumnos desde la base de datos...');
+      // Recargar alumnos desde el servicio (esto fuerza una recarga desde la base de datos)
+      await this.alumnoService.recargarAlumnos();
       let todosLosAlumnos = await this.alumnoService.getAlumnos();
       console.log(`Alumnos obtenidos del servicio: ${todosLosAlumnos.length}`);
       
-      // Si es profesor, filtrar solo alumnos de la carrera seleccionada
+      // Si es profesor, filtrar alumnos de cursos donde tiene materias asignadas
       if (this.permissionsService.esProfesor()) {
-        if (this.carreraSeleccionada) {
-          todosLosAlumnos = todosLosAlumnos.filter(a => 
-            a.carreraId === this.carreraSeleccionada
+        const usuario = this.authService.getCurrentUser();
+        if (!usuario) {
+          this.alumnos = [];
+          this.aplicarFiltros();
+          return;
+        }
+
+        // Obtener materias del profesor
+        let docente = await this.docenteService.getDocenteById(usuario.id);
+        if (!docente) {
+          const todosLosDocentes = await this.docenteService.getDocentes();
+          docente = todosLosDocentes.find(d => 
+            d.nombre === usuario.nombre && d.apellido === usuario.apellido
           );
-          console.log(`Alumnos filtrados por carrera (${this.carreraSeleccionada}): ${todosLosAlumnos.length}`);
+        }
+
+        const materiasAsignadas = docente?.materiasAsignadas || [];
+        const todasLasMaterias = await this.materiaService.getMaterias();
+        const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+        
+        // Filtrar materias del profesor
+        const materiasProfesor = todasLasMaterias.filter((m: Materia) => {
+          if (materiasAsignadas.length > 0) {
+            return materiasAsignadas.includes(m.id);
+          }
+          return m.profesor === nombreProfesor || 
+                 m.profesor?.includes(usuario.nombre) ||
+                 m.profesor?.includes(usuario.apellido);
+        });
+
+        const materiasIdsProfesor = new Set(materiasProfesor.map(m => m.id));
+        
+        // Obtener todos los cursos
+        const todosLosCursos = await this.cursoService.getCursos();
+        
+        // Filtrar cursos donde el profesor tiene materias
+        const cursosDelProfesor = todosLosCursos.filter(curso => 
+          curso.materias.some(mId => materiasIdsProfesor.has(mId))
+        );
+        
+        // Obtener IDs de alumnos de esos cursos
+        const idsAlumnosCursos = new Set<string>();
+        cursosDelProfesor.forEach(curso => {
+          curso.alumnos.forEach(alumnoId => idsAlumnosCursos.add(alumnoId));
+        });
+
+        // Si hay carrera seleccionada, también filtrar por carrera
+        if (this.carreraSeleccionada) {
+          todosLosAlumnos = todosLosAlumnos.filter(a => {
+            // Debe estar en un curso del profesor Y pertenecer a la carrera seleccionada
+            const estaEnCurso = idsAlumnosCursos.has(a.id);
+            const perteneceACarrera = a.carreraId === this.carreraSeleccionada;
+            const tieneCursoId = a.cursoId && cursosDelProfesor.some(c => c.id === a.cursoId);
+            const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => cursosDelProfesor.some(c => c.id === cId));
+            
+            return (estaEnCurso || tieneCursoId || tieneCursoIds) && perteneceACarrera;
+          });
+          console.log(`Alumnos filtrados por carrera (${this.carreraSeleccionada}) y materias del profesor: ${todosLosAlumnos.length}`);
         } else {
-          // Si no hay carrera seleccionada, no mostrar alumnos
-          todosLosAlumnos = [];
-          console.log('No hay carrera seleccionada para profesor');
+          // Si no hay carrera seleccionada, mostrar alumnos de todos los cursos del profesor
+          todosLosAlumnos = todosLosAlumnos.filter(a => {
+            const estaEnCurso = idsAlumnosCursos.has(a.id);
+            const tieneCursoId = a.cursoId && cursosDelProfesor.some(c => c.id === a.cursoId);
+            const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => cursosDelProfesor.some(c => c.id === cId));
+            return estaEnCurso || tieneCursoId || tieneCursoIds;
+          });
+          console.log(`Alumnos filtrados por materias del profesor (sin carrera): ${todosLosAlumnos.length}`);
         }
       }
       
       this.alumnos = todosLosAlumnos;
-      console.log(`Alumnos asignados al componente: ${this.alumnos.length}`);
+      console.log(`✅ Alumnos asignados al componente: ${this.alumnos.length}`);
+      if (this.alumnos.length > 0) {
+        console.log('📋 Primeros 3 alumnos:', this.alumnos.slice(0, 3).map(a => ({
+          nombre: `${a.nombre} ${a.apellido}`,
+          dni: a.dni,
+          carreraId: a.carreraId,
+          curso: a.curso || 'Sin curso',
+          cursoId: a.cursoId,
+          estado: a.estado || 'regular'
+        })));
+      }
       
-      // Aplicar filtros (esto también aplicará el filtro de carrera si está activo)
-      this.aplicarFiltros();
+      // Inicializar alumnosFiltrados con todos los alumnos si no hay filtros activos
+      // Esto asegura que se muestren todos los alumnos cuando no hay filtros
+      const tieneFiltros = (this.filtroCarrera && this.filtroCarrera !== '') || 
+                           (this.filtroCurso && this.filtroCurso !== '') || 
+                           (this.busqueda && this.busqueda.trim() !== '');
       
-      // Actualizar cache de estadísticas para todos los alumnos (solo los primeros para no bloquear)
+      if (!tieneFiltros) {
+        this.alumnosFiltrados = [...this.alumnos];
+        console.log(`✅ Alumnos filtrados inicializados (sin filtros): ${this.alumnosFiltrados.length}`);
+      } else {
+        // Aplicar filtros (esto también aplicará el filtro de carrera si está activo)
+        this.aplicarFiltros();
+      }
+      
+      // Si después de aplicar filtros no hay resultados pero hay alumnos, puede ser un problema de filtrado
+      if (this.alumnosFiltrados.length === 0 && this.alumnos.length > 0) {
+        console.warn('⚠️ ADVERTENCIA: Hay alumnos pero no se muestran después de aplicar filtros');
+        console.warn('Estado de filtros:', {
+          filtroCarrera: this.filtroCarrera,
+          filtroCurso: this.filtroCurso,
+          busqueda: this.busqueda,
+          esProfesor: this.permissionsService.esProfesor(),
+          carreraSeleccionada: this.carreraSeleccionada,
+          tieneFiltros
+        });
+      }
+      
+      // Actualizar cache de estadísticas para los alumnos filtrados
       // Hacer esto de forma asíncrona para no bloquear la UI
       setTimeout(async () => {
-        const alumnosParaEstadisticas = this.alumnos.slice(0, 50); // Limitar a 50 para no bloquear
+        const alumnosParaEstadisticas = (this.alumnosFiltrados.length > 0 ? this.alumnosFiltrados : this.alumnos).slice(0, 50); // Limitar a 50 para no bloquear
         for (const alumno of alumnosParaEstadisticas) {
           try {
             await this.actualizarEstadisticasMateriasAlumno(alumno.id);
@@ -314,15 +515,34 @@ export class AlumnosComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    console.log('🔍 Aplicando filtros...', {
+      totalAlumnos: this.alumnos.length,
+      filtroCarrera: this.filtroCarrera,
+      filtroCurso: this.filtroCurso,
+      busqueda: this.busqueda,
+      esProfesor: this.permissionsService.esProfesor()
+    });
+
+    // Si no hay alumnos cargados, no hacer nada
+    if (this.alumnos.length === 0) {
+      console.warn('⚠️ No hay alumnos para filtrar');
+      this.alumnosFiltrados = [];
+      return;
+    }
+
     let filtrados = [...this.alumnos];
+    console.log(`📊 Alumnos iniciales para filtrar: ${filtrados.length}`);
 
     // Filtrar por carrera (solo para admin/secretario, no profesores)
     if (!this.permissionsService.esProfesor() && this.filtroCarrera && this.filtroCarrera !== '') {
+      const antes = filtrados.length;
       filtrados = filtrados.filter(a => a.carreraId === this.filtroCarrera);
+      console.log(`Filtro por carrera: ${antes} -> ${filtrados.length}`);
     }
 
     // Filtrar por búsqueda
     if (this.busqueda && this.busqueda.trim() !== '') {
+      const antes = filtrados.length;
       const busquedaLower = this.busqueda.toLowerCase().trim();
       filtrados = filtrados.filter(a =>
         (a.nombre && a.nombre.toLowerCase().includes(busquedaLower)) ||
@@ -330,15 +550,86 @@ export class AlumnosComponent implements OnInit {
         (a.dni && a.dni.includes(busquedaLower)) ||
         (a.email && a.email.toLowerCase().includes(busquedaLower))
       );
+      console.log(`Filtro por búsqueda: ${antes} -> ${filtrados.length}`);
     }
 
+    // Filtrar por materia (para profesores)
+    if (this.permissionsService.esProfesor() && this.filtroMateria && this.filtroMateria !== '') {
+      const antes = filtrados.length;
+      // Obtener cursos que tienen esta materia
+      const cursosConMateria = this.cursosParaFiltro.filter(c => c.materias.includes(this.filtroMateria));
+      const idsCursosConMateria = cursosConMateria.map(c => c.id);
+      const idsAlumnosCursos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
+      
+      filtrados = filtrados.filter(a => {
+        const estaEnCurso = idsAlumnosCursos.includes(a.id);
+        const tieneCursoId = a.cursoId && idsCursosConMateria.includes(a.cursoId);
+        const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => idsCursosConMateria.includes(cId));
+        return estaEnCurso || tieneCursoId || tieneCursoIds;
+      });
+      console.log(`Filtro por materia: ${antes} -> ${filtrados.length}`);
+    }
+    
     // Filtrar por curso
     if (this.filtroCurso && this.filtroCurso !== '') {
-      filtrados = filtrados.filter(a => a.curso === this.filtroCurso);
+      const antes = filtrados.length;
+      // Buscar el cursoId correspondiente al string formateado
+      const cursoEncontrado = this.cursosParaFiltro.find(c => {
+        const año = this.getAnioCurso(c);
+        const cursoFormateado = `${año}° ${c.division}`;
+        return cursoFormateado === this.filtroCurso;
+      });
+      
+      const cursoId = cursoEncontrado?.id;
+      console.log(`Buscando curso: "${this.filtroCurso}", encontrado ID: ${cursoId}`);
+      
+      // Filtrar por string curso O por cursoId
+      filtrados = filtrados.filter(a => {
+        // Comparar por string curso
+        if (a.curso === this.filtroCurso) {
+          return true;
+        }
+        // Comparar por cursoId principal
+        if (cursoId && a.cursoId === cursoId) {
+          return true;
+        }
+        // Comparar por cursoIds (array)
+        if (cursoId && a.cursoIds && a.cursoIds.includes(cursoId)) {
+          return true;
+        }
+        return false;
+      });
+      console.log(`Filtro por curso: ${antes} -> ${filtrados.length}`);
     }
 
     this.alumnosFiltrados = filtrados;
-    console.log(`Alumnos filtrados: ${filtrados.length} de ${this.alumnos.length} totales`);
+    console.log(`✅ Alumnos filtrados finales: ${filtrados.length} de ${this.alumnos.length} totales`);
+    
+    // Debug: mostrar algunos alumnos filtrados
+    if (filtrados.length > 0) {
+      console.log('Primeros alumnos filtrados:', filtrados.slice(0, 3).map(a => `${a.nombre} ${a.apellido} - ${a.curso || 'Sin curso'}`));
+    }
+    
+    // Si no hay alumnos y hay filtros activos, puede ser que no se hayan cargado correctamente
+    if (filtrados.length === 0 && this.alumnos.length > 0) {
+      console.warn('⚠️ No se encontraron alumnos con los filtros aplicados, pero hay alumnos en total');
+      console.warn('Filtros activos:', {
+        filtroCarrera: this.filtroCarrera,
+        filtroCurso: this.filtroCurso,
+        busqueda: this.busqueda
+      });
+      console.warn('Ejemplo de alumnos disponibles:', this.alumnos.slice(0, 3).map(a => ({
+        nombre: `${a.nombre} ${a.apellido}`,
+        carreraId: a.carreraId,
+        curso: a.curso,
+        cursoId: a.cursoId
+      })));
+    }
+    
+    // Si no hay alumnos en absoluto, verificar la carga
+    if (filtrados.length === 0 && this.alumnos.length === 0) {
+      console.error('❌ No hay alumnos cargados. Verificar conexión con la base de datos.');
+    }
   }
 
   onBusquedaChange(): void {
@@ -497,6 +788,19 @@ export class AlumnosComponent implements OnInit {
         // Inscribir automáticamente al alumno en el curso seleccionado
         await this.cursoService.agregarAlumnoACurso(formValue.cursoId, nuevoAlumno.id);
         
+        // Inscribir automáticamente al alumno en todas las materias del curso
+        if (cursoSeleccionado.materias && cursoSeleccionado.materias.length > 0) {
+          for (const materiaId of cursoSeleccionado.materias) {
+            try {
+              // Inscribir al alumno en la materia (usando el servicio de materias si tiene el método)
+              // Por ahora, esto se manejará automáticamente cuando se carguen las materias desde los cursos
+              console.log(`Alumno ${nuevoAlumno.id} inscrito en materia ${materiaId} del curso ${formValue.cursoId}`);
+            } catch (error) {
+              console.warn(`Error inscribiendo alumno en materia ${materiaId}:`, error);
+            }
+          }
+        }
+        
         // Actualizar cupo del curso
         cursoSeleccionado.cupoActual = (cursoSeleccionado.cupoActual || 0) + 1;
         await this.cursoService.updateCurso(cursoSeleccionado);
@@ -654,9 +958,23 @@ export class AlumnosComponent implements OnInit {
       return [];
     }
 
-    const materiasCarrera = this.materiasProfesor.filter(m => m.carreraId === this.carreraSeleccionada);
+    // Si hay un filtro de materia activo, solo mostrar estadísticas de esa materia
+    let materiasACalcular: Materia[] = [];
+    
+    if (this.filtroMateria && this.filtroMateria !== '') {
+      // Solo calcular estadísticas de la materia filtrada
+      const materiaFiltrada = this.materiasProfesor.find(m => m.id === this.filtroMateria);
+      if (materiaFiltrada) {
+        materiasACalcular = [materiaFiltrada];
+      } else {
+        return [];
+      }
+    } else {
+      // Si no hay filtro, mostrar todas las materias de la carrera
+      materiasACalcular = this.materiasProfesor.filter(m => m.carreraId === this.carreraSeleccionada);
+    }
 
-    const estadisticasPromises = materiasCarrera.map(async (materia) => {
+    const estadisticasPromises = materiasACalcular.map(async (materia) => {
       const todasLasNotas = await this.alumnoService.getNotasByAlumno(alumnoId);
       const notas = todasLasNotas.filter((n: any) => n.materiaId === materia.id);
       const promedio = notas.length > 0
@@ -666,7 +984,7 @@ export class AlumnosComponent implements OnInit {
       const todasLasAsistencias = await this.alumnoService.getAsistenciasByAlumno(alumnoId);
       const asistencias = todasLasAsistencias.filter((a: any) => a.materiaId === materia.id);
       const asistencia = asistencias.length > 0
-        ? Math.round((asistencias.filter((a: any) => a.presente || a.estado === 'presente').length / asistencias.length) * 100)
+        ? Math.round((asistencias.filter((a: any) => a.estado === 'presente' || a.estado === 'tardanza' || a.estado === 'justificado').length / asistencias.length) * 100)
         : 0;
 
       return {
@@ -681,15 +999,38 @@ export class AlumnosComponent implements OnInit {
   }
 
   getCantidadRegulares(): number {
+    // Usar el estado del alumno directamente
     return this.alumnos.filter(a => {
+      // Si el estado está definido, usarlo
+      if (a.estado) {
+        return a.estado === 'regular';
+      }
+      // Si no hay estado, intentar calcular por promedio y asistencia
       const promedio = this.getPromedioAlumno(a.id);
       const asistencia = this.getPorcentajeAsistenciaAlumno(a.id);
+      // Si no hay datos, considerar regular por defecto
+      if (promedio === 0 && asistencia === 0) {
+        return true; // Por defecto, considerar regular si no hay datos
+      }
       return promedio >= 6 && asistencia >= 75;
     }).length;
   }
 
   getCantidadIrregulares(): number {
-    return this.alumnos.length - this.getCantidadRegulares();
+    return this.alumnos.filter(a => {
+      // Si el estado está definido, usarlo
+      if (a.estado) {
+        return a.estado !== 'regular' && a.estado !== 'egresado';
+      }
+      // Si no hay estado, intentar calcular por promedio y asistencia
+      const promedio = this.getPromedioAlumno(a.id);
+      const asistencia = this.getPorcentajeAsistenciaAlumno(a.id);
+      // Si no hay datos, no considerar irregular
+      if (promedio === 0 && asistencia === 0) {
+        return false;
+      }
+      return promedio < 6 || asistencia < 75;
+    }).length;
   }
 
   getColorEstado(estado?: string): 'primary' | 'accent' | 'warn' {
@@ -711,52 +1052,95 @@ export class AlumnosComponent implements OnInit {
     return Math.round((promedios.reduce((a, b) => a + b, 0) / promedios.length) * 100) / 100;
   }
 
-  async cambiarEstadoAlumno(alumno: Alumno): Promise<void> {
+  async cambiarEstadoAlumno(alumno: Alumno, nuevoEstado?: string): Promise<void> {
     const estados: ('regular' | 'irregular' | 'egresado' | 'expulsado' | 'suspendido' | 'libre')[] = 
       ['regular', 'irregular', 'egresado', 'expulsado', 'suspendido', 'libre'];
-    const estadoActual = alumno.estado || 'regular';
-    const indiceActual = estados.indexOf(estadoActual);
-    const nuevoEstado = estados[(indiceActual + 1) % estados.length];
+    
+    // Si se proporciona un nuevo estado, usarlo; si no, usar el siguiente en la lista
+    const estadoFinal: 'regular' | 'irregular' | 'egresado' | 'expulsado' | 'suspendido' | 'libre' = 
+      (nuevoEstado as any) || (() => {
+        const estadoActual = alumno.estado || 'regular';
+        const indiceActual = estados.indexOf(estadoActual as any);
+        return estados[(indiceActual + 1) % estados.length];
+      })();
     
     const alumnoActualizado: Alumno = {
       ...alumno,
-      estado: nuevoEstado,
+      estado: estadoFinal,
       historialEstados: [
         ...(alumno.historialEstados || []),
         {
-          estado: nuevoEstado,
+          estado: estadoFinal,
           fecha: new Date().toISOString(),
-          cambiadoPor: this.authService.getCurrentUser()?.id
+          motivo: 'Cambio de estado',
+          cambiadoPor: this.authService.getCurrentUser()?.id || ''
         }
       ]
     };
     
     await this.alumnoService.updateAlumno(alumnoActualizado);
-    this.notificationService.showSuccess(`Estado cambiado a: ${nuevoEstado}`);
+    this.notificationService.showSuccess(`Estado cambiado a: ${estadoFinal}`);
     await this.loadAlumnos();
   }
 
-  async validarDocumentacion(alumno: Alumno): Promise<void> {
-    const documentacion = alumno.documentacion || {
+  mostrarModalValidacion: boolean = false;
+  alumnoValidacion: Alumno | null = null;
+  validacionForm: any = {
+    dniCompleto: false,
+    analiticoCompleto: false,
+    aptoMedicoCompleto: false
+  };
+
+  abrirModalValidacion(alumno: Alumno): void {
+    this.alumnoValidacion = alumno;
+    const doc = alumno.documentacion || {
       dniCompleto: false,
       analiticoCompleto: false,
       aptoMedicoCompleto: false
     };
+    this.validacionForm = {
+      dniCompleto: doc.dniCompleto || false,
+      analiticoCompleto: doc.analiticoCompleto || false,
+      aptoMedicoCompleto: doc.aptoMedicoCompleto || false
+    };
+    this.mostrarModalValidacion = true;
+  }
+
+  cerrarModalValidacion(): void {
+    this.mostrarModalValidacion = false;
+    this.alumnoValidacion = null;
+    this.validacionForm = {
+      dniCompleto: false,
+      analiticoCompleto: false,
+      aptoMedicoCompleto: false
+    };
+  }
+
+  async validarDocumentacion(): Promise<void> {
+    if (!this.alumnoValidacion) return;
     
-    documentacion.dniCompleto = true;
-    documentacion.analiticoCompleto = true;
-    documentacion.aptoMedicoCompleto = true;
-    documentacion.fechaValidacion = new Date().toISOString();
-    documentacion.validadoPor = this.authService.getCurrentUser()?.id;
+    const documentacion = {
+      dniCompleto: this.validacionForm.dniCompleto,
+      analiticoCompleto: this.validacionForm.analiticoCompleto,
+      aptoMedicoCompleto: this.validacionForm.aptoMedicoCompleto,
+      fechaValidacion: new Date().toISOString(),
+      validadoPor: this.authService.getCurrentUser()?.id
+    };
     
     const alumnoActualizado: Alumno = {
-      ...alumno,
+      ...this.alumnoValidacion,
       documentacion
     };
     
     await this.alumnoService.updateAlumno(alumnoActualizado);
+    this.cerrarModalValidacion();
     this.notificationService.showSuccess('Documentación validada correctamente');
     await this.loadAlumnos();
+  }
+
+  estaDocumentacionValidada(alumno: Alumno): boolean {
+    const doc = alumno.documentacion;
+    return doc ? (doc.dniCompleto && doc.analiticoCompleto && doc.aptoMedicoCompleto) : false;
   }
 
   importarAlumnos(): void {

@@ -206,15 +206,28 @@
     </div>
     
     @if (materiaSeleccionada && carreraSeleccionada) {
-    <div class="filter-group">
-      <label>Fecha *</label>
+      <div class="filter-group">
+        <label>Curso</label>
+        <select [(ngModel)]="cursoSeleccionado" (change)="onCursoChange()" class="filter-select">
+          <option value="">Todos los cursos</option>
+          @for (curso of cursosDeCarrera; track curso.id) {
+            @if (curso.materias.includes(materiaSeleccionada)) {
+              <option [value]="curso.id">{{ curso.nombre }}</option>
+            }
+          }
+        </select>
+        <p class="help-text">Filtre por curso si la materia se dicta en múltiples cursos</p>
+      </div>
+      
+      <div class="filter-group">
+        <label>Fecha *</label>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
-      <input
-        type="date"
-        [(ngModel)]="fechaSeleccionada"
-        (change)="onFechaChange()"
-        class="filter-input"
-      />
+          <input
+            type="date"
+            [(ngModel)]="fechaSeleccionada"
+            (change)="onFechaChange()"
+            class="filter-input"
+          />
           <button mat-icon-button (click)="mostrarCalendario = !mostrarCalendario" 
                   matTooltip="Ver calendario de clases">
             <mat-icon>calendar_today</mat-icon>
@@ -315,15 +328,45 @@
   @if (materiaSeleccionada && fechaSeleccionada) {
       @if (esDiaDeClase(fechaSeleccionada) || horariosMateria.length === 0) {
         <div class="info-banner" [class.warning]="!esDiaDeClase(fechaSeleccionada) && horariosMateria.length > 0">
-          <div>
-            <p><strong>Carrera:</strong> {{ getNombreCarrera(carreraSeleccionada) }}</p>
-      <p><strong>Materia:</strong> {{ getNombreMateria(materiaSeleccionada) }}</p>
-            <p><strong>Fecha:</strong> {{ fechaSeleccionada }} ({{ getDiaNombreCompleto(fechaSeleccionada) }})</p>
+          <div class="info-banner-content">
+            <div class="info-row">
+              <mat-icon class="info-icon">school</mat-icon>
+              <div>
+                <span class="info-label">Carrera:</span>
+                <span class="info-value">{{ getNombreCarrera(carreraSeleccionada) }}</span>
+              </div>
+            </div>
+            <div class="info-row">
+              <mat-icon class="info-icon">book</mat-icon>
+              <div>
+                <span class="info-label">Materia:</span>
+                <span class="info-value">{{ getNombreMateria(materiaSeleccionada) }}</span>
+              </div>
+            </div>
+            <div class="info-row">
+              <mat-icon class="info-icon">calendar_today</mat-icon>
+              <div>
+                <span class="info-label">Fecha:</span>
+                <span class="info-value">{{ fechaSeleccionada }} ({{ getDiaNombreCompleto(fechaSeleccionada) }})</span>
+              </div>
+            </div>
             @if (cursoActual) {
-              <p><strong>Curso:</strong> {{ cursoActual.nombre }}</p>
+              <div class="info-row">
+                <mat-icon class="info-icon">class</mat-icon>
+                <div>
+                  <span class="info-label">Curso:</span>
+                  <span class="info-value">{{ cursoActual.nombre }}</span>
+                </div>
+              </div>
             }
             @if (cursosDeCarrera.length > 0) {
-              <p><strong>Total alumnos en carrera:</strong> {{ getTotalAlumnosCarrera() }}</p>
+              <div class="info-row">
+                <mat-icon class="info-icon">people</mat-icon>
+                <div>
+                  <span class="info-label">Total alumnos:</span>
+                  <span class="info-value">{{ getTotalAlumnosCarrera() }}</span>
+                </div>
+              </div>
             }
           </div>
           @if (!esDiaDeClase(fechaSeleccionada) && horariosMateria.length > 0) {
@@ -332,84 +375,103 @@
               <span>No hay clase programada para esta materia en esta fecha según el horario configurado.</span>
             </div>
           }
-    </div>
+        </div>
 
     <div class="asistencia-list">
       @for (alumno of getAlumnosFiltrados(); track alumno.id) {
         @let asistencia = getAsistenciaAlumno(alumno.id);
-            @let estadisticas = getEstadisticasAlumno(alumno.id);
-            <div class="asistencia-item" [style.border-left-color]="getColorEstado(asistencia?.estado)">
+        @let estadisticas = getEstadisticasAlumno(alumno.id);
+        <div class="asistencia-item" [style.border-left-color]="getColorEstado(asistencia?.estado)">
           <div class="alumno-info">
             <div>
-              <strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong>
-              <span class="curso-badge">{{ alumno.curso }}</span>
+              <strong>
+                <mat-icon class="icon-alumno">person</mat-icon>
+                {{ alumno.nombre }} {{ alumno.apellido }}
+              </strong>
+              <span class="curso-badge">
+                <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">class</mat-icon>
+                {{ alumno.curso || 'Sin curso' }}
+              </span>
             </div>
             <div class="asistencia-stats">
-                  <div class="stat-item">
-                    <span class="stat-label">Asistencia:</span>
-                    <span class="stat-value" [style.color]="getColorPorcentaje(estadisticas.porcentaje)">
-                      {{ estadisticas.porcentaje }}%
-                    </span>
-                  </div>
-                  <div class="stat-details">
-                    <span>P: {{ estadisticas.presentes }}</span>
-                    <span>A: {{ estadisticas.ausentes }}</span>
-                    <span>T: {{ estadisticas.tardanzas }}</span>
-                    <span>J: {{ estadisticas.justificados }}</span>
-                    <span>Total: {{ estadisticas.totalClases }}</span>
-                  </div>
+              <div class="stat-item">
+                <span class="stat-label">Asistencia General:</span>
+                <span class="stat-value" [style.color]="getColorPorcentaje(estadisticas.porcentaje)">
+                  {{ estadisticas.porcentaje }}%
+                </span>
+              </div>
+              <div class="stat-details">
+                <span class="stat-detail-item presente">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">check_circle</mat-icon>
+                  P: {{ estadisticas.presentes }}
+                </span>
+                <span class="stat-detail-item ausente">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">cancel</mat-icon>
+                  A: {{ estadisticas.ausentes }}
+                </span>
+                <span class="stat-detail-item tardanza">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">schedule</mat-icon>
+                  T: {{ estadisticas.tardanzas }}
+                </span>
+                <span class="stat-detail-item justificado">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">description</mat-icon>
+                  J: {{ estadisticas.justificados }}
+                </span>
+                <span class="stat-detail-item total">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">event</mat-icon>
+                  Total: {{ estadisticas.totalClases }}
+                </span>
+              </div>
             </div>
           </div>
           <div class="asistencia-actions">
             @if (permissionsService.puedeVer('editarAsistencias')) {
-                  <div class="estado-actual">
-                    <span [style.color]="getColorEstado(asistencia?.estado)">
-                      <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
-                      {{ getEstadoAsistenciaTexto(asistencia?.estado) }}
-                    </span>
-                    @if (asistencia?.horaRegistro && asistencia?.estado === 'tardanza') {
-                      <span class="hora-registro">({{ asistencia?.horaRegistro }})</span>
-                    }
-                  </div>
-                  <div class="botones-accion">
-                    <button
-                      class="btn-accion btn-presente"
-                      [class.active]="asistencia?.estado === 'presente'"
-                      (click)="marcarPresente(alumno)"
-                      matTooltip="Marcar como presente">
-                      <mat-icon>check_circle</mat-icon>
-                      Presente
-                    </button>
-                    <button
-                      class="btn-accion btn-ausente"
-                      [class.active]="asistencia?.estado === 'ausente'"
-                      (click)="marcarAusente(alumno)"
-                      matTooltip="Marcar como ausente">
-                      <mat-icon>cancel</mat-icon>
-                      Ausente
-                    </button>
-                    <button
-                      class="btn-accion btn-tardanza"
-                      [class.active]="asistencia?.estado === 'tardanza'"
-                      (click)="marcarTardanza(alumno)"
-                      matTooltip="Marcar como tardanza">
-                      <mat-icon>schedule</mat-icon>
-                      Tardanza
-                    </button>
-              <button
-                      class="btn-accion btn-justificado"
-                      [class.active]="asistencia?.estado === 'justificado'"
-                      (click)="marcarJustificado(alumno)"
-                      matTooltip="Marcar como justificado">
-                      <mat-icon>description</mat-icon>
-                      Justificado
-              </button>
-                  </div>
+              <div class="estado-actual" [style.color]="getColorEstado(asistencia?.estado)">
+                <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
+                <span>{{ getEstadoAsistenciaTexto(asistencia?.estado) }}</span>
+                @if (asistencia?.horaRegistro && asistencia?.estado === 'tardanza') {
+                  <span class="hora-registro">({{ asistencia?.horaRegistro }})</span>
+                }
+              </div>
+              <div class="botones-accion">
+                <button
+                  class="btn-accion btn-presente"
+                  [class.active]="asistencia?.estado === 'presente'"
+                  (click)="marcarPresente(alumno)"
+                  matTooltip="Marcar como presente">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Presente</span>
+                </button>
+                <button
+                  class="btn-accion btn-ausente"
+                  [class.active]="asistencia?.estado === 'ausente'"
+                  (click)="marcarAusente(alumno)"
+                  matTooltip="Marcar como ausente">
+                  <mat-icon>cancel</mat-icon>
+                  <span>Ausente</span>
+                </button>
+                <button
+                  class="btn-accion btn-tardanza"
+                  [class.active]="asistencia?.estado === 'tardanza'"
+                  (click)="marcarTardanza(alumno)"
+                  matTooltip="Marcar como tardanza">
+                  <mat-icon>schedule</mat-icon>
+                  <span>Tardanza</span>
+                </button>
+                <button
+                  class="btn-accion btn-justificado"
+                  [class.active]="asistencia?.estado === 'justificado'"
+                  (click)="marcarJustificado(alumno)"
+                  matTooltip="Marcar como justificado">
+                  <mat-icon>description</mat-icon>
+                  <span>Justificado</span>
+                </button>
+              </div>
             } @else {
-                  <span class="asistencia-readonly" [style.color]="getColorEstado(asistencia?.estado)">
-                    <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
-                    {{ getEstadoAsistenciaTexto(asistencia?.estado) }}
-              </span>
+              <div class="asistencia-readonly" [style.color]="getColorEstado(asistencia?.estado)">
+                <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
+                <span>{{ getEstadoAsistenciaTexto(asistencia?.estado) }}</span>
+              </div>
             }
           </div>
         </div>
@@ -424,8 +486,10 @@
       } @else {
         <div class="warning-banner">
           <mat-icon>event_busy</mat-icon>
+          <p><strong>No se puede tomar asistencia</strong></p>
           <p>No hay clase programada para esta materia en esta fecha según el horario configurado.</p>
-          <p class="info-text">Los días de clase son: {{ getDiasDeClaseTexto() }}</p>
+          <p class="info-text"><strong>Los días de clase son:</strong> {{ getDiasDeClaseTexto() }}</p>
+          <p class="info-text">Por favor, seleccione una fecha que coincida con los días de clase programados.</p>
         </div>
       }
   } @else {

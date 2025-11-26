@@ -170,7 +170,7 @@ export class CalendarioComponent implements OnInit {
       this.notificationService.showSuccess('Evento actualizado correctamente');
     } else {
       const nuevoEvento: Evento = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         ...this.eventoForm.value,
         creadorId: this.authService.getCurrentUser()?.id || '',
         color: tipoSeleccionado?.color || '#246a73',

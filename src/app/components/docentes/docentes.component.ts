@@ -125,7 +125,7 @@ export class DocentesComponent implements OnInit {
     try {
       const formValue = this.docenteForm.value;
       const nuevoDocente: Docente = {
-        id: crypto.randomUUID() || Date.now().toString(),
+        id: crypto.randomUUID(),
         ...formValue,
         rol: 'profesor',
         materiasAsignadas: [], // Se asignarán cuando se creen las materias o se asignen a cursos
@@ -171,7 +171,7 @@ export class DocentesComponent implements OnInit {
         this.notificationService.showSuccess('Docente actualizado correctamente');
       } else {
         const nuevoDocente: Docente = {
-          id: crypto.randomUUID() || Date.now().toString(),
+          id: crypto.randomUUID(),
           ...formValue,
           rol: 'profesor',
           materiasAsignadas: [],

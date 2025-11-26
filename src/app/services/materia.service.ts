@@ -47,17 +47,20 @@ export class MateriaService {
     }
     
     // Filtrar materias por institución
+    // Especificar explícitamente la relación para evitar ambigüedad
+    // Usamos materia_correlatividades_materia_id_fkey porque queremos las correlatividades donde esta materia es la principal
     const { data, error } = await this.supabase.client
       .from('materias')
       .select(`
         *,
-        correlatividades:materia_correlatividades(materia_correlativa_id)
+        correlatividades:materia_correlatividades!materia_correlatividades_materia_id_fkey(materia_correlativa_id)
       `)
       .eq('institucion_id', currentInstitucion.id)
       .order('nombre', { ascending: true });
 
     if (error) {
       console.error('Error obteniendo materias (con correlatividades):', error);
+      console.error('Detalle del error:', JSON.stringify(error, null, 2));
       // Si hay error con correlatividades, intentar sin ellas
       const { data: dataSimple, error: errorSimple } = await this.supabase.client
         .from('materias')

@@ -42,16 +42,16 @@ export class AuditoriaComponent implements OnInit {
     public permissionsService: PermissionsService
   ) {}
 
-  ngOnInit(): void {
-    this.loadAuditoria();
+  async ngOnInit(): Promise<void> {
+    await this.loadAuditoria();
   }
 
-  loadAuditoria(): void {
-    this.auditoria = this.auditoriaService.getAuditoriaReciente(100);
+  async loadAuditoria(): Promise<void> {
+    this.auditoria = await this.auditoriaService.getAuditoriaReciente(100);
   }
 
-  aplicarFiltros(): void {
-    let auditoriaFiltrada = this.auditoriaService.getAuditoriaReciente(100);
+  async aplicarFiltros(): Promise<void> {
+    let auditoriaFiltrada = await this.auditoriaService.getAuditoriaReciente(100);
     
     if (this.filtroEntidad) {
       auditoriaFiltrada = auditoriaFiltrada.filter(a => a.entidad === this.filtroEntidad);
@@ -64,10 +64,10 @@ export class AuditoriaComponent implements OnInit {
     this.auditoria = auditoriaFiltrada;
   }
 
-  limpiarFiltros(): void {
+  async limpiarFiltros(): Promise<void> {
     this.filtroEntidad = '';
     this.filtroAccion = '';
-    this.loadAuditoria();
+    await this.loadAuditoria();
   }
 
   verDetalles(registro: Auditoria): void {

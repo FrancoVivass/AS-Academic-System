@@ -12,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { CarreraService } from '../../services/carrera.service';
 import { CursoService } from '../../services/curso.service';
 import { MateriaService } from '../../services/materia.service';
@@ -47,7 +49,9 @@ import { SupabaseService } from '../../services/supabase.service';
     MatChipsModule,
     MatTabsModule,
     MatStepperModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   templateUrl: './carreras.component.html',
   styleUrl: './carreras.component.css'
@@ -86,6 +90,7 @@ export class CarrerasComponent implements OnInit {
   alumnosDisponibles: Alumno[] = [];
   aulasDisponibles: Aula[] = [];
   docentesDisponibles: Docente[] = [];
+  coordinadoresDisponibles: Docente[] = []; // Docentes que pueden ser coordinadores
   cursoSeleccionado: Curso | null = null;
   mostrarModalCurso: boolean = false;
   mostrarAsignarMaterias: boolean = false;
@@ -118,7 +123,8 @@ export class CarrerasComponent implements OnInit {
       descripcion: [''],
       duracionAnios: [3, [Validators.required, Validators.min(1)]],
       duracionCuatrimestres: [6, [Validators.required, Validators.min(1)]],
-      estado: ['activa', Validators.required]
+      estado: ['activa', Validators.required],
+      coordinadorId: ['']
     });
     
     this.cursoForm = this.fb.group({
@@ -128,10 +134,18 @@ export class CarrerasComponent implements OnInit {
       division: ['', Validators.required],
       turno: ['mañana', Validators.required],
       capacidad: [30, [Validators.required, Validators.min(1)]],
+      cupoMaximo: [30, [Validators.min(1)]],
       tutorId: [''],
       aulaId: [''],
       cuatrimestre: [1, [Validators.required, Validators.min(1), Validators.max(2)]],
-      modalidad: ['presencial', Validators.required]
+      modalidad: ['presencial', Validators.required],
+      estado: ['activo', Validators.required],
+      fechaInicio: [''],
+      fechaFin: [''],
+      permiteAutoinscripcion: [false],
+      permiteEdicionHorariosProfesor: [false],
+      requiereAprobacionInscripcion: [true],
+      activaListaEspera: [true]
     });
     
     this.horarioForm = this.fb.group({
@@ -142,6 +156,11 @@ export class CarrerasComponent implements OnInit {
       docenteId: ['', Validators.required],
       aulaId: ['', Validators.required]
     });
+  }
+
+  getNombreCoordinador(coordinadorId: string): string {
+    const coordinador = this.docentesDisponibles.find(d => d.id === coordinadorId);
+    return coordinador ? `${coordinador.nombre} ${coordinador.apellido}` : 'No asignado';
   }
 
   async ngOnInit(): Promise<void> {
@@ -184,6 +203,7 @@ export class CarrerasComponent implements OnInit {
 
   async loadDocentesDisponibles(): Promise<void> {
     this.docentesDisponibles = await this.docenteService.getDocentes();
+    this.coordinadoresDisponibles = this.docentesDisponibles; // Todos los docentes pueden ser coordinadores
   }
 
   cerrarCursos(): void {
@@ -244,7 +264,17 @@ export class CarrerasComponent implements OnInit {
       const cursoActualizado: Curso = {
         ...this.cursoSeleccionado,
         ...formValue,
-        carreraId: this.carreraSeleccionada.id
+        carreraId: this.carreraSeleccionada.id,
+        cupoMaximo: formValue.cupoMaximo || formValue.capacidad,
+        fechaInicio: formValue.fechaInicio || undefined,
+        fechaFin: formValue.fechaFin || undefined,
+        estado: formValue.estado || 'activo',
+        configuracion: {
+          permiteAutoinscripcion: formValue.permiteAutoinscripcion || false,
+          permiteEdicionHorariosProfesor: formValue.permiteEdicionHorariosProfesor || false,
+          requiereAprobacionInscripcion: formValue.requiereAprobacionInscripcion !== false,
+          activaListaEspera: formValue.activaListaEspera !== false
+        }
       };
       await this.cursoService.updateCurso(cursoActualizado);
       this.notificationService.showSuccess('Curso actualizado correctamente');
@@ -258,14 +288,16 @@ export class CarrerasComponent implements OnInit {
         alumnos: [],
         listaEspera: [],
         estado: 'activo',
-        cupoMaximo: formValue.capacidad,
+        cupoMaximo: formValue.cupoMaximo || formValue.capacidad,
         cupoActual: 0,
+        fechaInicio: formValue.fechaInicio || undefined,
+        fechaFin: formValue.fechaFin || undefined,
         fechaCreacion: new Date().toISOString(),
         configuracion: {
-          permiteAutoinscripcion: false,
-          permiteEdicionHorariosProfesor: false,
-          requiereAprobacionInscripcion: true,
-          activaListaEspera: true
+          permiteAutoinscripcion: formValue.permiteAutoinscripcion || false,
+          permiteEdicionHorariosProfesor: formValue.permiteEdicionHorariosProfesor || false,
+          requiereAprobacionInscripcion: formValue.requiereAprobacionInscripcion !== false,
+          activaListaEspera: formValue.activaListaEspera !== false
         }
       };
       await this.cursoService.addCurso(nuevoCurso);
@@ -730,7 +762,8 @@ export class CarrerasComponent implements OnInit {
     this.carreraForm.reset({
       duracionAnios: 3,
       duracionCuatrimestres: 6,
-      estado: 'activa'
+      estado: 'activa',
+      coordinadorId: ''
     });
     await this.loadAulasDisponibles();
     await this.loadDocentesDisponibles();
@@ -771,6 +804,7 @@ export class CarrerasComponent implements OnInit {
       duracionAnios: formValue.duracionAnios,
       duracionCuatrimestres: formValue.duracionCuatrimestres,
       estado: formValue.estado,
+      coordinadorId: formValue.coordinadorId || null,
       materiasObligatorias: esEdicion ? this.carreraSeleccionada!.materiasObligatorias : [],
       materiasOptativas: esEdicion ? this.carreraSeleccionada!.materiasOptativas : [],
       equivalencias: esEdicion ? this.carreraSeleccionada!.equivalencias : [],
@@ -1138,7 +1172,8 @@ export class CarrerasComponent implements OnInit {
       descripcion: carrera.descripcion,
       duracionAnios: carrera.duracionAnios,
       duracionCuatrimestres: carrera.duracionCuatrimestres,
-      estado: carrera.estado
+      estado: carrera.estado,
+      coordinadorId: carrera.coordinadorId || ''
     });
     
     // Cargar datos existentes en wizardData

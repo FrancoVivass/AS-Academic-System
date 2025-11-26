@@ -381,7 +381,7 @@ export class AuthService {
       // Fallback a localStorage
       const usuarios = this.getUsuariosFromStorage();
       const nuevoUsuario: Usuario = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         username: userData.username,
         password: userData.password,
         nombre: userData.nombre,

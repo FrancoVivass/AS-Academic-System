@@ -17,7 +17,6 @@ import { FooterPrincipal } from '../footer-principal/footer-principal';
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private observer?: IntersectionObserver;
   scrollProgress = 0;
-  isDarkMode = false;
   selectedPlan = 'basic';
 
   plans = [
@@ -63,15 +62,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   ];
 
-  socialLinks = {
-    facebook: 'https://www.facebook.com/academicsystem',
-    twitter: 'https://twitter.com/academicsystem',
-    linkedin: 'https://linkedin.com/company/academicsystem',
-    instagram: 'https://instagram.com/academicsystem'
-  };
-
-  whatsappNumber = '542245421367'; // Reemplazar con tu número
-  whatsappMessage = 'Hola, me interesa conocer más sobre AcademicSystem';
 
 
   // Galería de screenshots
@@ -93,27 +83,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     { step: 6, title: 'Lanzamiento', description: 'Puesta en marcha del sistema', duration: '1 día', completed: false }
   ];
 
-  // Clima
-  weatherData: any = null;
-  weatherLoading = true;
-
   // Scroll to top
   showScrollTop = false;
-
-  // Social widget collapse
-  isSocialCollapsed = false;
 
   ngOnInit(): void {
     // Scroll al inicio cuando se carga la página
     window.scrollTo({ top: 0, behavior: 'instant' });
-    
-    // Cargar preferencia de modo oscuro
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      this.isDarkMode = true;
-      document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-    }
     
     // Verificar cookies
     const cookiesAccepted = localStorage.getItem('cookiesAccepted');
@@ -123,7 +98,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initScrollReveal();
     this.initScrollProgress();
-    this.initWeatherWidget();
     this.initScrollToTop();
   }
 
@@ -150,49 +124,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateScrollProgress();
   }
 
-  toggleDarkMode(): void {
-    this.isDarkMode = !this.isDarkMode;
-    if (this.isDarkMode) {
-      document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark-mode');
-      document.body.classList.remove('dark-mode');
-      localStorage.setItem('theme', 'light');
-    }
-  }
-
-  openWhatsApp(): void {
-    const message = encodeURIComponent(this.whatsappMessage);
-    const url = `https://wa.me/${this.whatsappNumber}?text=${message}`;
-    window.open(url, '_blank');
-  }
-
-  shareOnSocial(platform: string): void {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent('Conoce AcademicSystem - Plataforma de gestión académica');
-    let shareUrl = '';
-
-    switch (platform) {
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-        break;
-      case 'whatsapp':
-        shareUrl = `https://wa.me/?text=${text}%20${url}`;
-        break;
-    }
-
-    if (shareUrl) {
-      window.open(shareUrl, '_blank', 'width=600,height=400');
-    }
-  }
 
   selectPlan(planId: string): void {
     this.selectedPlan = planId;
@@ -267,50 +198,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-  private initWeatherWidget(): void {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          // Usar API de OpenWeatherMap (necesitarás una API key)
-          // Por ahora simulamos datos
-          this.weatherData = {
-            temp: 22,
-            description: 'Parcialmente nublado',
-            location: 'Buenos Aires',
-            icon: 'cloudy-day-1'
-          };
-          this.weatherLoading = false;
-        },
-        () => {
-          // Si falla la geolocalización, usar datos por defecto
-          this.weatherData = {
-            temp: 22,
-            description: 'Parcialmente nublado',
-            location: 'Buenos Aires',
-            icon: 'cloudy-day-1'
-          };
-          this.weatherLoading = false;
-        }
-      );
-    } else {
-      this.weatherData = {
-        temp: 22,
-        description: 'Parcialmente nublado',
-        location: 'Buenos Aires',
-        icon: 'cloudy-day-1'
-      };
-      this.weatherLoading = false;
-    }
-  }
 
 
   private initScrollToTop(): void {
     this.showScrollTop = window.pageYOffset > 300;
-  }
-
-  toggleSocialCollapse(): void {
-    this.isSocialCollapsed = !this.isSocialCollapsed;
   }
 }

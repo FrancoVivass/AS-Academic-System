@@ -122,7 +122,7 @@ export class JustificativoService {
   async crearJustificativo(justificativo: Omit<Justificativo, 'id' | 'fechaSolicitud' | 'estado'>): Promise<Justificativo> {
     const nuevoJustificativo: Justificativo = {
       ...justificativo,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       fechaSolicitud: new Date().toISOString(),
       estado: 'pendiente'
     };

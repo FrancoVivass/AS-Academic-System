@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AlumnoService } from './alumno.service';
 import { MateriaService } from './materia.service';
+import { CursoService } from './curso.service';
 import { Alumno, Nota, Asistencia } from '../models/alumno.model';
 import { Materia } from '../models/materia.model';
 
@@ -27,7 +28,8 @@ export interface ReporteMateria {
 export class ReportService {
   constructor(
     private alumnoService: AlumnoService,
-    private materiaService: MateriaService
+    private materiaService: MateriaService,
+    private cursoService: CursoService
   ) {}
 
   async generarReporteAlumnos(): Promise<ReporteAlumno[]> {
@@ -53,36 +55,74 @@ export class ReportService {
 
   async generarReporteMaterias(): Promise<ReporteMateria[]> {
     const materias = await this.materiaService.getMaterias();
+    const todosLosCursos = await this.cursoService.getCursos();
+    
     const reportes = await Promise.all(materias.map(async materia => {
-      const inscripciones = this.materiaService.getInscripcionesByMateria(materia.id);
+      // Obtener todos los cursos que tienen esta materia
+      const cursosConMateria = todosLosCursos.filter(curso => 
+        curso.materias && curso.materias.includes(materia.id)
+      );
+      
+      // Obtener todos los alumnos únicos de esos cursos
+      const idsAlumnos = new Set<string>();
+      cursosConMateria.forEach(curso => {
+        if (curso.alumnos && Array.isArray(curso.alumnos)) {
+          curso.alumnos.forEach((alumnoId: string) => idsAlumnos.add(alumnoId));
+        }
+      });
+      
+      // También considerar alumnos que tienen cursoId o cursoIds que coinciden con los cursos
+      const todosLosAlumnos = await this.alumnoService.getAlumnos();
+      todosLosAlumnos.forEach(alumno => {
+        // Si el alumno tiene cursoId que coincide con alguno de los cursos
+        if (alumno.cursoId && cursosConMateria.some(c => c.id === alumno.cursoId)) {
+          idsAlumnos.add(alumno.id);
+        }
+        // Si el alumno tiene cursoIds que incluyen alguno de los cursos
+        if (alumno.cursoIds && Array.isArray(alumno.cursoIds)) {
+          alumno.cursoIds.forEach(cursoId => {
+            if (cursosConMateria.some(c => c.id === cursoId)) {
+              idsAlumnos.add(alumno.id);
+            }
+          });
+        }
+      });
+      
+      const cantidadInscritos = idsAlumnos.size;
+      const alumnosIdsArray = Array.from(idsAlumnos);
+      
       const notas = await this.alumnoService.getNotasByMateria(materia.id);
       const asistencias = await this.alumnoService.getAsistenciasByMateria(materia.id);
 
-      const promediosAlumnosPromises = inscripciones.map(async insc => {
-        const notasAlumno = notas.filter(n => n.alumnoId === insc.alumnoId);
+      // Calcular mejores alumnos basado en los alumnos de los cursos
+      const promediosAlumnosPromises = alumnosIdsArray.map(async alumnoId => {
+        const notasAlumno = notas.filter(n => n.alumnoId === alumnoId);
         const promedio = notasAlumno.length > 0
           ? notasAlumno.reduce((sum: number, n) => sum + n.calificacion, 0) / notasAlumno.length
           : 0;
-        const alumno = await this.alumnoService.getAlumnoById(insc.alumnoId);
+        const alumno = await this.alumnoService.getAlumnoById(alumnoId);
         return {
           nombre: alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido',
           promedio: Math.round(promedio * 100) / 100
         };
       });
-      const promediosAlumnos = (await Promise.all(promediosAlumnosPromises)).sort((a, b) => b.promedio - a.promedio).slice(0, 5);
+      const promediosAlumnos = (await Promise.all(promediosAlumnosPromises))
+        .filter(a => a.promedio > 0)
+        .sort((a, b) => b.promedio - a.promedio)
+        .slice(0, 5);
 
       const promedioGeneral = notas.length > 0
         ? notas.reduce((sum: number, n) => sum + n.calificacion, 0) / notas.length
         : 0;
 
-      const presentes = asistencias.filter(a => a.presente).length;
+      const presentes = asistencias.filter(a => a.estado === 'presente' || a.estado === 'tardanza' || a.estado === 'justificado').length;
       const porcentajeAsistencia = asistencias.length > 0
         ? (presentes / asistencias.length) * 100
         : 0;
 
       return {
         materia,
-        cantidadInscritos: inscripciones.length,
+        cantidadInscritos: cantidadInscritos,
         promedioGeneral: Math.round(promedioGeneral * 100) / 100,
         porcentajeAsistencia: Math.round(porcentajeAsistencia * 100) / 100,
         mejoresAlumnos: promediosAlumnos

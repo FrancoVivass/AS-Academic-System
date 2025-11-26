@@ -31,6 +31,70 @@
     </div>
 
     <div class="config-card">
+      <h2>Cambiar Contraseña</h2>
+      <p>Actualiza tu contraseña de acceso al sistema</p>
+      @if (!showPasswordForm) {
+        <button class="btn-secondary" (click)="togglePasswordForm()">
+          <mat-icon>lock</mat-icon>
+          Cambiar Contraseña
+        </button>
+      } @else {
+        <form (ngSubmit)="cambiarContrasena()" class="config-form">
+          <div class="form-group">
+            <label>Contraseña Actual *</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input 
+                [type]="showCurrentPassword ? 'text' : 'password'" 
+                [(ngModel)]="passwordForm.currentPassword" 
+                name="currentPassword" 
+                required 
+                class="form-input"
+                style="flex: 1;" />
+              <button type="button" (click)="showCurrentPassword = !showCurrentPassword" mat-icon-button>
+                <mat-icon>{{ showCurrentPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nueva Contraseña *</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input 
+                [type]="showNewPassword ? 'text' : 'password'" 
+                [(ngModel)]="passwordForm.newPassword" 
+                name="newPassword" 
+                required 
+                class="form-input"
+                style="flex: 1;" />
+              <button type="button" (click)="showNewPassword = !showNewPassword" mat-icon-button>
+                <mat-icon>{{ showNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+            <small>Mínimo 4 caracteres</small>
+          </div>
+          <div class="form-group">
+            <label>Confirmar Nueva Contraseña *</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input 
+                [type]="showConfirmPassword ? 'text' : 'password'" 
+                [(ngModel)]="passwordForm.confirmPassword" 
+                name="confirmPassword" 
+                required 
+                class="form-input"
+                style="flex: 1;" />
+              <button type="button" (click)="showConfirmPassword = !showConfirmPassword" mat-icon-button>
+                <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn-primary">Guardar Contraseña</button>
+            <button type="button" class="btn-secondary" (click)="togglePasswordForm()">Cancelar</button>
+          </div>
+        </form>
+      }
+    </div>
+
+    <div class="config-card">
       <h2>Preferencias</h2>
       <div class="preference-item">
         <div>

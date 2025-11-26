@@ -45,10 +45,19 @@
           <span class="codigo-badge">{{ materia.codigo }}</span>
         </div>
         <div class="materia-info">
-          <p><strong>Profesor:</strong> {{ materia.profesor }}</p>
-          <p><strong>Curso:</strong> <span class="badge">{{ materia.curso }}</span></p>
-          <p><strong>Horario:</strong> {{ materia.horario }}</p>
-          <p><strong>Créditos:</strong> {{ materia.creditos }}</p>
+          <div class="materia-badges">
+            <mat-chip [color]="materia.estado === 'activa' ? 'primary' : 'warn'">
+              {{ materia.estado || 'activa' }}
+            </mat-chip>
+            <mat-chip>{{ materia.tipo || 'obligatoria' }}</mat-chip>
+          </div>
+          <p><strong>Profesor:</strong> {{ materia.profesor || 'Sin asignar' }}</p>
+          <p><strong>Curso:</strong> 
+            <span class="badge">{{ getCursosNombreDeMateria(materia.id) }}</span>
+          </p>
+          <p><strong>Horario:</strong> {{ materia.horario || 'Sin horario' }}</p>
+          <p><strong>Créditos:</strong> {{ materia.creditos || 0 }}</p>
+          <p><strong>Horas Semanales:</strong> {{ materia.horasSemanales || 0 }}</p>
           <p><strong>Inscritos:</strong> {{ getCantidadInscritos(materia.id) }} alumnos</p>
           @if (materia.descripcion) {
             <p class="descripcion">{{ materia.descripcion }}</p>
@@ -142,6 +151,17 @@
                 <mat-option value="obligatoria">Obligatoria</mat-option>
                 <mat-option value="optativa">Optativa</mat-option>
                 <mat-option value="electiva">Electiva</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          
+          <div class="form-row">
+            <mat-form-field>
+              <mat-label>Estado *</mat-label>
+              <mat-select formControlName="estado" required>
+                <mat-option value="activa">Activa</mat-option>
+                <mat-option value="inactiva">Inactiva</mat-option>
+                <mat-option value="suspendida">Suspendida</mat-option>
               </mat-select>
             </mat-form-field>
           </div>

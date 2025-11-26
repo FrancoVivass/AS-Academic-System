@@ -10,7 +10,65 @@
     <mat-tab label="Pendientes">
       <mat-card>
         <mat-card-content>
-          <p>Gestión de solicitudes pendientes de aprobación</p>
+          @if (solicitudesPendientes.length === 0) {
+            <p class="no-data">No hay solicitudes pendientes</p>
+          } @else {
+            <table mat-table [dataSource]="solicitudesPendientes" class="solicitudes-table">
+              <ng-container matColumnDef="tipo">
+                <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip>{{ getTipoLabel(solicitud.tipo) }}</mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="solicitante">
+                <th mat-header-cell *matHeaderCellDef>Solicitante</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ getNombreSolicitante(solicitud.solicitanteId) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="asunto">
+                <th mat-header-cell *matHeaderCellDef>Asunto</th>
+                <td mat-cell *matCellDef="let solicitud">{{ solicitud.asunto }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ formatearFecha(solicitud.fechaSolicitud) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip [color]="getEstadoColor(solicitud.estado)">
+                    {{ solicitud.estado }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  @if (permissionsService.esAdmin() || permissionsService.esSecretario()) {
+                    <button mat-raised-button color="primary" (click)="abrirDialogoAprobar(solicitud)">
+                      <mat-icon>check</mat-icon>
+                      Aprobar
+                    </button>
+                    <button mat-raised-button color="warn" (click)="abrirDialogoRechazar(solicitud)">
+                      <mat-icon>close</mat-icon>
+                      Rechazar
+                    </button>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          }
         </mat-card-content>
       </mat-card>
     </mat-tab>
@@ -18,7 +76,58 @@
     <mat-tab label="Aprobadas">
       <mat-card>
         <mat-card-content>
-          <p>Solicitudes aprobadas</p>
+          @if (solicitudesAprobadas.length === 0) {
+            <p class="no-data">No hay solicitudes aprobadas</p>
+          } @else {
+            <table mat-table [dataSource]="solicitudesAprobadas" class="solicitudes-table">
+              <ng-container matColumnDef="tipo">
+                <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip>{{ getTipoLabel(solicitud.tipo) }}</mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="solicitante">
+                <th mat-header-cell *matHeaderCellDef>Solicitante</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ getNombreSolicitante(solicitud.solicitanteId) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="asunto">
+                <th mat-header-cell *matHeaderCellDef>Asunto</th>
+                <td mat-cell *matCellDef="let solicitud">{{ solicitud.asunto }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ formatearFecha(solicitud.fechaSolicitud) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip [color]="getEstadoColor(solicitud.estado)">
+                    {{ solicitud.estado }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  @if (solicitud.observaciones) {
+                    <span class="observaciones">{{ solicitud.observaciones }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          }
         </mat-card-content>
       </mat-card>
     </mat-tab>
@@ -26,10 +135,85 @@
     <mat-tab label="Rechazadas">
       <mat-card>
         <mat-card-content>
-          <p>Solicitudes rechazadas</p>
+          @if (solicitudesRechazadas.length === 0) {
+            <p class="no-data">No hay solicitudes rechazadas</p>
+          } @else {
+            <table mat-table [dataSource]="solicitudesRechazadas" class="solicitudes-table">
+              <ng-container matColumnDef="tipo">
+                <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip>{{ getTipoLabel(solicitud.tipo) }}</mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="solicitante">
+                <th mat-header-cell *matHeaderCellDef>Solicitante</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ getNombreSolicitante(solicitud.solicitanteId) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="asunto">
+                <th mat-header-cell *matHeaderCellDef>Asunto</th>
+                <td mat-cell *matCellDef="let solicitud">{{ solicitud.asunto }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  {{ formatearFecha(solicitud.fechaSolicitud) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  <mat-chip [color]="getEstadoColor(solicitud.estado)">
+                    {{ solicitud.estado }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let solicitud">
+                  @if (solicitud.observaciones) {
+                    <span class="observaciones">{{ solicitud.observaciones }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          }
         </mat-card-content>
       </mat-card>
     </mat-tab>
   </mat-tab-group>
+
+  <!-- Diálogo para observaciones -->
+  @if (mostrarDialogoObservaciones && solicitudSeleccionada) {
+    <div class="dialog-overlay" (click)="cerrarDialogo()">
+      <div class="dialog-content" (click)="$event.stopPropagation()">
+        <h2>
+          <mat-icon>{{ esAprobacion ? 'check_circle' : 'cancel' }}</mat-icon>
+          {{ esAprobacion ? 'Aprobar' : 'Rechazar' }} Solicitud
+        </h2>
+        <p><strong>Asunto:</strong> {{ solicitudSeleccionada.asunto }}</p>
+        <p><strong>Descripción:</strong> {{ solicitudSeleccionada.descripcion }}</p>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Observaciones (opcional)</mat-label>
+          <textarea matInput [(ngModel)]="observaciones" rows="4"></textarea>
+        </mat-form-field>
+        <div class="dialog-actions">
+          <button mat-button (click)="cerrarDialogo()">Cancelar</button>
+          <button mat-raised-button [color]="esAprobacion ? 'primary' : 'warn'" (click)="confirmarAccion()">
+            {{ esAprobacion ? 'Aprobar' : 'Rechazar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
 

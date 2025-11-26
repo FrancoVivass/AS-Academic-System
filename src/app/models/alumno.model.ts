@@ -5,7 +5,9 @@ export interface Alumno {
   dni: string;
   email: string;
   telefono: string;
-  curso: string;
+  curso: string; // String formateado como "1° A" para display
+  cursoId?: string; // ID del curso principal (el primero si hay múltiples)
+  cursoIds?: string[]; // Array de todos los IDs de cursos donde está inscrito
   carreraId?: string; // Nueva: asociación a carrera
   fechaNacimiento: string;
   direccion: string;

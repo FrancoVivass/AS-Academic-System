@@ -8,6 +8,7 @@ import { AlumnoService } from '../../services/alumno.service';
 import { MateriaService } from '../../services/materia.service';
 import { CursoService } from '../../services/curso.service';
 import { CarreraService } from '../../services/carrera.service';
+import { DocenteService } from '../../services/docente.service';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { NotificationService } from '../../services/notification.service';
@@ -45,6 +46,7 @@ export class AsistenciaComponent implements OnInit {
   estadisticasAlumnoCache: Map<string, { totalClases: number; presentes: number; ausentes: number; tardanzas: number; justificados: number; porcentaje: number }> = new Map();
   
   carreraSeleccionada: string = '';
+  cursoSeleccionado: string = ''; // Nuevo filtro por curso
   materiaSeleccionada: string = '';
   fechaSeleccionada: string = new Date().toISOString().split('T')[0];
   busqueda: string = '';
@@ -58,6 +60,7 @@ export class AsistenciaComponent implements OnInit {
     private materiaService: MateriaService,
     private cursoService: CursoService,
     private carreraService: CarreraService,
+    private docenteService: DocenteService,
     private authService: AuthService,
     public permissionsService: PermissionsService,
     private notificationService: NotificationService
@@ -74,56 +77,97 @@ export class AsistenciaComponent implements OnInit {
   }
 
   async loadData(): Promise<void> {
-    this.cursos = await this.cursoService.getCursos();
-    this.carreras = await this.carreraService.getCarreras();
-    this.alumnos = await this.alumnoService.getAlumnos();
-    
-    // Cargar todas las materias disponibles
-    let todasLasMaterias = await this.materiaService.getMaterias();
-    
-    // Si es profesor, filtrar por sus materias
-    if (this.permissionsService.esProfesor()) {
-      const usuario = this.authService.getCurrentUser();
-      if (usuario) {
-        // Buscar materias donde el profesor es el asignado
-        todasLasMaterias = todasLasMaterias.filter(m => {
-          const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
-          return m.profesor === nombreProfesor || m.profesor?.includes(usuario.nombre);
-        });
-      }
-    }
-    // Si es alumno, solo sus materias
-    else if (this.permissionsService.esAlumno()) {
-      const usuarioId = this.authService.getCurrentUser()?.id;
-      const alumno = await this.alumnoService.getAlumnoById(usuarioId || '');
+    try {
+      this.cursos = await this.cursoService.getCursos();
+      this.carreras = await this.carreraService.getCarreras();
+      let todosLosAlumnos = await this.alumnoService.getAlumnos();
       
-      if (alumno && alumno.carreraId) {
-        // Obtener materias de la carrera del alumno
-        const materiasCarrera = todasLasMaterias.filter(m => m.carreraId === alumno.carreraId);
-        
-        // También obtener materias de cursos donde está inscrito el alumno
-        const cursosAlumno = this.cursos.filter(c => c.alumnos.includes(usuarioId || ''));
-        const materiasCursos = cursosAlumno.flatMap(c => c.materias || []);
-        const materiasDeCursos = todasLasMaterias.filter(m => materiasCursos.includes(m.id));
-        
-        // Combinar ambas listas
-        const todasMateriasAlumno = [...new Set([...materiasCarrera, ...materiasDeCursos].map(m => m.id))];
-        todasLasMaterias = todasLasMaterias.filter(m => todasMateriasAlumno.includes(m.id));
-      } else {
-        // Si no tiene carrera, usar asistencias existentes
-        const asistencias = await this.alumnoService.getAsistenciasByAlumno(usuarioId || '');
-        const idsMaterias = [...new Set(asistencias.map(a => a.materiaId))];
-        todasLasMaterias = todasLasMaterias.filter(m => idsMaterias.includes(m.id));
+      // Cargar todas las materias disponibles
+      let todasLasMaterias = await this.materiaService.getMaterias();
+      
+      // Si es profesor, filtrar por sus materias y alumnos de sus cursos
+      if (this.permissionsService.esProfesor()) {
+        const usuario = this.authService.getCurrentUser();
+        if (usuario) {
+          // Obtener docente y materias asignadas
+          let docente = await this.docenteService.getDocenteById(usuario.id);
+          if (!docente) {
+            const todosLosDocentes = await this.docenteService.getDocentes();
+            docente = todosLosDocentes.find(d => 
+              d.nombre === usuario.nombre && d.apellido === usuario.apellido
+            );
+          }
+
+          const materiasAsignadas = docente?.materiasAsignadas || [];
+          const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+          
+          // Filtrar materias del profesor
+          todasLasMaterias = todasLasMaterias.filter(m => {
+            if (materiasAsignadas.length > 0) {
+              return materiasAsignadas.includes(m.id);
+            }
+            return m.profesor === nombreProfesor || m.profesor?.includes(usuario.nombre);
+          });
+
+          const materiasIdsProfesor = new Set(todasLasMaterias.map(m => m.id));
+          
+          // Filtrar cursos donde el profesor tiene materias
+          const cursosDelProfesor = this.cursos.filter(curso => 
+            curso.materias.some(mId => materiasIdsProfesor.has(mId))
+          );
+          
+          // Obtener IDs de alumnos de esos cursos
+          const idsAlumnosCursos = new Set<string>();
+          cursosDelProfesor.forEach(curso => {
+            curso.alumnos.forEach(alumnoId => idsAlumnosCursos.add(alumnoId));
+          });
+
+          // Filtrar alumnos que están en cursos del profesor
+          todosLosAlumnos = todosLosAlumnos.filter(a => {
+            const estaEnCurso = idsAlumnosCursos.has(a.id);
+            const tieneCursoId = a.cursoId && cursosDelProfesor.some(c => c.id === a.cursoId);
+            const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => cursosDelProfesor.some(c => c.id === cId));
+            return estaEnCurso || tieneCursoId || tieneCursoIds;
+          });
+        }
       }
-    }
-    
-    this.materias = todasLasMaterias;
-    
-    // Para alumnos, las materias filtradas son las mismas que las materias
-    if (this.permissionsService.esAlumno()) {
-      this.materiasFiltradas = todasLasMaterias;
-    } else {
-      this.materiasFiltradas = [];
+      // Si es alumno, solo sus materias
+      else if (this.permissionsService.esAlumno()) {
+        const usuarioId = this.authService.getCurrentUser()?.id;
+        const alumno = await this.alumnoService.getAlumnoById(usuarioId || '');
+        
+        if (alumno && alumno.carreraId) {
+          // Obtener materias de la carrera del alumno
+          const materiasCarrera = todasLasMaterias.filter(m => m.carreraId === alumno.carreraId);
+          
+          // También obtener materias de cursos donde está inscrito el alumno
+          const cursosAlumno = this.cursos.filter(c => c.alumnos.includes(usuarioId || ''));
+          const materiasCursos = cursosAlumno.flatMap(c => c.materias || []);
+          const materiasDeCursos = todasLasMaterias.filter(m => materiasCursos.includes(m.id));
+          
+          // Combinar ambas listas
+          const todasMateriasAlumno = [...new Set([...materiasCarrera, ...materiasDeCursos].map(m => m.id))];
+          todasLasMaterias = todasLasMaterias.filter(m => todasMateriasAlumno.includes(m.id));
+        } else {
+          // Si no tiene carrera, usar asistencias existentes
+          const asistencias = await this.alumnoService.getAsistenciasByAlumno(usuarioId || '');
+          const idsMaterias = [...new Set(asistencias.map(a => a.materiaId))];
+          todasLasMaterias = todasLasMaterias.filter(m => idsMaterias.includes(m.id));
+        }
+      }
+      
+      this.alumnos = todosLosAlumnos;
+      this.materias = todasLasMaterias;
+      
+      // Para alumnos, las materias filtradas son las mismas que las materias
+      if (this.permissionsService.esAlumno()) {
+        this.materiasFiltradas = todasLasMaterias;
+      } else {
+        this.materiasFiltradas = [];
+      }
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      this.notificationService.showError('Error al cargar los datos');
     }
   }
 
@@ -159,10 +203,27 @@ export class AsistenciaComponent implements OnInit {
 
   async onCarreraChange(): Promise<void> {
     this.materiaSeleccionada = ''; // Reset materia al cambiar carrera
+    this.cursoSeleccionado = ''; // Reset curso al cambiar carrera
     this.cursoActual = null;
     this.horariosMateria = [];
     await this.cargarMateriasPorCarrera();
     await this.cargarCursosPorCarrera();
+    await this.cargarAsistencias();
+  }
+
+  async onCursoChange(): Promise<void> {
+    if (this.cursoSeleccionado) {
+      // Buscar el curso seleccionado
+      this.cursoActual = this.cursosDeCarrera.find(c => c.id === this.cursoSeleccionado) || null;
+      
+      // Si hay materia seleccionada, cargar horarios de esa materia en este curso
+      if (this.materiaSeleccionada && this.cursoActual) {
+        await this.cargarHorariosMateria();
+      }
+    } else {
+      this.cursoActual = null;
+      this.horariosMateria = [];
+    }
     await this.cargarAsistencias();
   }
 
@@ -210,8 +271,12 @@ export class AsistenciaComponent implements OnInit {
       this.materiaSeleccionada = '';
       return;
     }
-    this.cargarHorariosMateria();
+    
+    // Si hay curso seleccionado, cargar horarios de la materia en ese curso
+    // Si no, cargar horarios de todos los cursos que tengan esta materia
+    await this.cargarHorariosMateria();
     await this.cargarAsistencias();
+    
     // Actualizar estadísticas para la materia seleccionada
     if (this.materiaSeleccionada) {
       await this.actualizarEstadisticasPorMateria(this.materiaSeleccionada);
@@ -238,25 +303,29 @@ export class AsistenciaComponent implements OnInit {
     this.cargarAsistencias();
   }
 
-  cargarHorariosMateria(): void {
+  async cargarHorariosMateria(): Promise<void> {
     if (!this.materiaSeleccionada || !this.carreraSeleccionada) {
       this.horariosMateria = [];
       this.cursoActual = null;
       return;
     }
 
-    // Buscar todos los cursos de la carrera que tienen esta materia
-    const cursosConMateria = this.cursosDeCarrera.filter(c => 
-      c.materias.includes(this.materiaSeleccionada) && 
-      c.carreraId === this.carreraSeleccionada
-    );
-
-    // Si hay múltiples cursos, usar el primero (o podríamos mostrar todos)
-    // En el futuro se podría permitir seleccionar el curso específico
-    this.cursoActual = cursosConMateria.length > 0 ? cursosConMateria[0] : null;
-
+    // Si hay curso seleccionado, usar ese curso
+    if (this.cursoSeleccionado) {
+      this.cursoActual = this.cursosDeCarrera.find(c => c.id === this.cursoSeleccionado) || null;
+    } else {
+      // Si no hay curso seleccionado, buscar cursos que tienen esta materia
+      const cursosConMateria = this.cursosDeCarrera.filter(c => 
+        c.materias.includes(this.materiaSeleccionada) && 
+        c.carreraId === this.carreraSeleccionada
+      );
+      
+      // Si hay cursos con esta materia, tomar el primero
+      this.cursoActual = cursosConMateria.length > 0 ? cursosConMateria[0] : null;
+    }
+    
     if (this.cursoActual) {
-      // Obtener horarios de esta materia en el curso
+      // Cargar horarios de la materia en este curso
       this.horariosMateria = this.cursoActual.horarios.filter(h => 
         h.materiaId === this.materiaSeleccionada
       );
@@ -270,7 +339,10 @@ export class AsistenciaComponent implements OnInit {
   }
 
   esDiaDeClase(fecha: string | Date): boolean {
-    if (this.horariosMateria.length === 0) return false;
+    // Si no hay horarios configurados, permitir tomar asistencia (solo verificar día)
+    if (this.horariosMateria.length === 0) {
+      return true;
+    }
     
     const fechaObj = typeof fecha === 'string' ? new Date(fecha + 'T00:00:00') : fecha;
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
@@ -281,7 +353,13 @@ export class AsistenciaComponent implements OnInit {
                       diaSemana === 'sabado' ? 'sabado' :
                       diaSemana;
     
-    return this.getDiasDeClase().includes(diaMapeado);
+    // Verificar si hay algún horario para este día (solo verificar el día, no la hora)
+    return this.horariosMateria.some(h => {
+      const horarioDia = h.dia.toLowerCase();
+      return horarioDia === diaMapeado || 
+             horarioDia.includes(diaMapeado) || 
+             diaMapeado.includes(horarioDia);
+    });
   }
 
   generarCalendario(): void {
@@ -360,19 +438,45 @@ export class AsistenciaComponent implements OnInit {
       return;
     }
 
-    // Verificar si es día de clase
-    if (!this.esDiaDeClase(this.fechaSeleccionada)) {
-      this.notificationService.showWarning('No hay clase programada para esta materia en esta fecha según el horario');
+    // Verificar si es día de clase - BLOQUEAR si no es día de clase programado
+    if (this.horariosMateria.length > 0 && !this.esDiaDeClase(this.fechaSeleccionada)) {
+      const diasDeClase = this.getDiasDeClaseTexto();
+      this.notificationService.showError(`No se puede tomar asistencia. Esta materia solo tiene clase los: ${diasDeClase}`);
       return;
     }
     
-    // Si es profesor, verificar que la materia esté asignada
+    // Si es profesor, verificar que esté asignado a esta materia en el horario del día
     if (this.permissionsService.esProfesor()) {
       const usuario = this.authService.getCurrentUser();
-      const materia = this.materias.find(m => m.id === this.materiaSeleccionada);
-      if (materia && materia.profesor !== `${usuario?.nombre} ${usuario?.apellido}`) {
-        this.notificationService.showError('No tiene permisos para modificar asistencia de esta materia');
+      if (!usuario) {
+        this.notificationService.showError('No se pudo verificar su identidad');
         return;
+      }
+      
+      // Verificar que el profesor esté asignado a esta materia
+      const horarioDelDia = this.horariosMateria.find(h => {
+        const fechaObj = new Date(this.fechaSeleccionada + 'T00:00:00');
+        const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        const diaSemana = diasSemana[fechaObj.getDay()];
+        const horarioDia = h.dia.toLowerCase();
+        return horarioDia === diaSemana || horarioDia.includes(diaSemana) || diaSemana.includes(horarioDia);
+      });
+      
+      if (horarioDelDia && horarioDelDia.docenteId !== usuario.id) {
+        this.notificationService.showError('No está asignado como profesor de esta materia en este horario');
+        return;
+      }
+      
+      // También verificar que la materia esté asignada al profesor
+      const materia = this.materias.find(m => m.id === this.materiaSeleccionada);
+      if (materia) {
+        // Verificar si el profesor tiene esta materia asignada
+        const docente = await this.docenteService.getDocenteById(usuario.id);
+        const materiasAsignadas = docente?.materiasAsignadas || [];
+        if (materiasAsignadas.length > 0 && !materiasAsignadas.includes(this.materiaSeleccionada)) {
+          this.notificationService.showError('No tiene permisos para modificar asistencia de esta materia');
+          return;
+        }
       }
     }
 
@@ -396,7 +500,7 @@ export class AsistenciaComponent implements OnInit {
       const horarioId = this.horariosMateria.length > 0 ? this.horariosMateria[0].id : undefined;
       
       const nuevaAsistencia: Asistencia = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         alumnoId: alumno.id,
         materiaId: this.materiaSeleccionada,
         cursoId: this.cursoActual?.id,
@@ -441,18 +545,30 @@ export class AsistenciaComponent implements OnInit {
       c.carreraId === this.carreraSeleccionada
     );
 
-    // Obtener todos los IDs de alumnos de esos cursos
+    // Obtener todos los IDs de cursos que tienen esta materia
+    const idsCursosConMateria = cursosConMateria.map(c => c.id);
+
+    // Obtener todos los IDs de alumnos de esos cursos (desde c.alumnos)
     const idsAlumnosCursos = [...new Set(
       cursosConMateria.flatMap(c => c.alumnos || [])
     )];
 
     // Filtrar alumnos que:
-    // 1. Están en los cursos que tienen esta materia
-    // 2. Pertenecen a la carrera seleccionada (o no tienen carreraId asignado aún)
+    // 1. Están en los cursos que tienen esta materia (usando c.alumnos)
+    // 2. O tienen cursoId/cursoIds que coinciden con los cursos
+    // 3. Y pertenecen a la carrera seleccionada
     alumnosFiltrados = this.alumnos.filter(a => {
+      // Verificar si está en los cursos usando c.alumnos
       const estaEnCurso = idsAlumnosCursos.includes(a.id);
+      
+      // Verificar si tiene cursoId o cursoIds que coinciden
+      const tieneCursoId = a.cursoId && idsCursosConMateria.includes(a.cursoId);
+      const tieneCursoIds = a.cursoIds && a.cursoIds.some(cId => idsCursosConMateria.includes(cId));
+      
+      // Verificar si pertenece a la carrera
       const perteneceACarrera = a.carreraId === this.carreraSeleccionada || !a.carreraId;
-      return estaEnCurso && perteneceACarrera;
+      
+      return (estaEnCurso || tieneCursoId || tieneCursoIds) && perteneceACarrera;
     });
 
     // Si no hay alumnos en cursos, pero hay alumnos de la carrera, mostrarlos
