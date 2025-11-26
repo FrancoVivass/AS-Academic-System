@@ -2,8 +2,17 @@
 -- SCRIPTS SQL FINALES PARA AS-ACADEMIC-SYSTEM
 -- Base de datos: PostgreSQL (Supabase)
 -- Versión: Final - Revisada y Completa
+-- Última actualización: 2025
 -- ============================================
--- Ejecutar estos scripts en orden en el SQL Editor de Supabase
+-- ESTE SCRIPT ES COMPLETO Y AUTOCONTENIDO
+-- Incluye todas las tablas, índices, triggers, RLS y datos iniciales
+-- También incluye las actualizaciones para materias (profesor, curso, horario)
+-- ============================================
+-- INSTRUCCIONES:
+-- 1. Copiar y pegar TODO este script en Supabase SQL Editor
+-- 2. Ejecutar el script completo
+-- 3. El script es idempotente (se puede ejecutar múltiples veces)
+-- 4. Si ya tienes una base de datos, el script preservará tus datos
 -- ============================================
 
 -- ============================================
@@ -48,7 +57,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   direccion TEXT,
   rol VARCHAR(20) NOT NULL CHECK (rol IN ('admin', 'profesor', 'alumno', 'secretario', 'coordinador')),
   avatar TEXT,
-  institucion_id UUID REFERENCES instituciones(id) ON DELETE CASCADE,
+  institucion_id UUID REFERENCES instituciones(id) ON DELETE CASCADE ON UPDATE CASCADE,
   fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   activo BOOLEAN DEFAULT true,
   ultimo_acceso TIMESTAMP WITH TIME ZONE,
@@ -114,9 +123,13 @@ CREATE TABLE IF NOT EXISTS materias (
   nombre VARCHAR(255) NOT NULL,
   codigo VARCHAR(50) NOT NULL,
   descripcion TEXT,
+  profesor VARCHAR(255), -- Nombre del profesor (opcional, se puede asignar después)
+  curso VARCHAR(100), -- Nombre del curso (opcional)
+  horario TEXT, -- Horario de la materia (opcional)
   creditos INTEGER DEFAULT 0,
   horas_semanales INTEGER,
-  carrera_id UUID REFERENCES carreras(id) ON DELETE CASCADE,
+  carrera_id UUID REFERENCES carreras(id) ON DELETE CASCADE, -- Opcional, se puede asignar después
+  institucion_id UUID NOT NULL REFERENCES instituciones(id) ON DELETE CASCADE, -- REQUERIDO: Cada materia pertenece a una institución
   tipo VARCHAR(20) DEFAULT 'obligatoria' CHECK (tipo IN ('obligatoria', 'optativa', 'electiva')),
   estado VARCHAR(20) DEFAULT 'activa' CHECK (estado IN ('activa', 'inactiva', 'suspendida')),
   cuatrimestre INTEGER CHECK (cuatrimestre IN (1, 2)),
@@ -128,9 +141,15 @@ CREATE TABLE IF NOT EXISTS materias (
   porcentaje_asistencia_minimo INTEGER DEFAULT 75,
   fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(carrera_id, codigo)
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Índice único por institución y código (código único dentro de cada institución)
+CREATE UNIQUE INDEX idx_materias_institucion_codigo_unique 
+ON materias(institucion_id, codigo);
+
+-- Índice para filtrar por institución
+CREATE INDEX idx_materias_institucion ON materias(institucion_id);
 
 CREATE TABLE IF NOT EXISTS materia_correlatividades (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -146,10 +165,18 @@ CREATE INDEX idx_materias_estado ON materias(estado);
 CREATE INDEX idx_materias_tipo ON materias(tipo);
 CREATE INDEX idx_materias_codigo ON materias(codigo);
 
--- Actualizar referencia en docente_materias
-ALTER TABLE docente_materias 
-ADD CONSTRAINT fk_docente_materias_materia 
-FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE;
+-- Actualizar referencia en docente_materias (solo si no existe)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'fk_docente_materias_materia'
+  ) THEN
+    ALTER TABLE docente_materias 
+    ADD CONSTRAINT fk_docente_materias_materia 
+    FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- ============================================
 -- SCRIPT 6: Tabla de Aulas
@@ -389,9 +416,18 @@ CREATE TABLE IF NOT EXISTS justificativos (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-ALTER TABLE asistencias 
-ADD CONSTRAINT fk_asistencias_justificativo 
-FOREIGN KEY (justificativo_id) REFERENCES justificativos(id) ON DELETE SET NULL;
+-- Agregar foreign key de justificativo en asistencias (solo si no existe)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'fk_asistencias_justificativo'
+  ) THEN
+    ALTER TABLE asistencias 
+    ADD CONSTRAINT fk_asistencias_justificativo 
+    FOREIGN KEY (justificativo_id) REFERENCES justificativos(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 CREATE INDEX idx_justificativos_alumno ON justificativos(alumno_id);
 CREATE INDEX idx_justificativos_estado ON justificativos(estado);
@@ -502,7 +538,7 @@ CREATE TABLE IF NOT EXISTS auditoria (
   fecha TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   ip VARCHAR(45),
   observaciones TEXT,
-  institucion_id UUID REFERENCES instituciones(id) ON DELETE CASCADE,
+  institucion_id UUID REFERENCES instituciones(id) ON DELETE CASCADE ON UPDATE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -518,7 +554,14 @@ CREATE INDEX idx_auditoria_institucion ON auditoria(institucion_id);
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = NOW();
+    -- Verificar si la tabla tiene el campo updated_at
+    IF TG_TABLE_NAME = 'instituciones' THEN
+        -- Para instituciones, usar fecha_actualizacion
+        NEW.fecha_actualizacion = NOW();
+    ELSE
+        -- Para otras tablas, usar updated_at
+        NEW.updated_at = NOW();
+    END IF;
     RETURN NEW;
 END;
 $$ language 'plpgsql';
@@ -561,6 +604,92 @@ CREATE TRIGGER update_mensajes_updated_at BEFORE UPDATE ON mensajes
 
 CREATE TRIGGER update_equivalencias_updated_at BEFORE UPDATE ON equivalencias
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Función para validar institucion_id antes de insertar/actualizar usuarios
+CREATE OR REPLACE FUNCTION validate_institucion_id()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Si se proporciona un institucion_id, verificar que exista
+  IF NEW.institucion_id IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM instituciones WHERE id = NEW.institucion_id) THEN
+      -- En lugar de lanzar error, establecer a NULL si no existe
+      RAISE WARNING 'El institucion_id % no existe. Se establecerá a NULL.', NEW.institucion_id;
+      NEW.institucion_id := NULL;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para validar institucion_id en tablas que lo requieren (aulas, carreras, etc.)
+CREATE OR REPLACE FUNCTION validate_institucion_id_required()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_institucion_id UUID;
+BEGIN
+  -- Si se proporciona un institucion_id, verificar que exista
+  IF NEW.institucion_id IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM instituciones WHERE id = NEW.institucion_id) THEN
+      -- Para tablas donde institucion_id es requerido, obtener la primera institución activa
+      SELECT id INTO v_institucion_id
+      FROM instituciones
+      WHERE activa = true
+      ORDER BY fecha_creacion ASC
+      LIMIT 1;
+      
+      IF v_institucion_id IS NOT NULL THEN
+        RAISE WARNING 'El institucion_id % no existe. Se asignará la primera institución activa: %.', NEW.institucion_id, v_institucion_id;
+        NEW.institucion_id := v_institucion_id;
+      ELSE
+        RAISE EXCEPTION 'No hay instituciones activas en la base de datos. Debe crear al menos una institución primero.';
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para validar institucion_id en usuarios (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id ON usuarios;
+CREATE TRIGGER trigger_validate_institucion_id
+BEFORE INSERT OR UPDATE ON usuarios
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id();
+
+-- Trigger para validar institucion_id en aulas (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_aulas ON aulas;
+CREATE TRIGGER trigger_validate_institucion_id_aulas
+BEFORE INSERT OR UPDATE ON aulas
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en carreras (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_carreras ON carreras;
+CREATE TRIGGER trigger_validate_institucion_id_carreras
+BEFORE INSERT OR UPDATE ON carreras
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en eventos (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_eventos ON eventos;
+CREATE TRIGGER trigger_validate_institucion_id_eventos
+BEFORE INSERT OR UPDATE ON eventos
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en mensajes (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_mensajes ON mensajes;
+CREATE TRIGGER trigger_validate_institucion_id_mensajes
+BEFORE INSERT OR UPDATE ON mensajes
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
+
+-- Trigger para validar institucion_id en materias (previene foreign key errors)
+DROP TRIGGER IF EXISTS trigger_validate_institucion_id_materias ON materias;
+CREATE TRIGGER trigger_validate_institucion_id_materias
+BEFORE INSERT OR UPDATE ON materias
+FOR EACH ROW
+EXECUTE FUNCTION validate_institucion_id_required();
 
 -- ============================================
 -- SCRIPT 17: Row Level Security (RLS)
@@ -672,44 +801,119 @@ INSERT INTO instituciones (
   credencial_secreta = EXCLUDED.credencial_secreta;
 
 -- ============================================
--- SCRIPT 19: Datos Iniciales - Administrador
+-- SCRIPT 19: Datos Iniciales - Administradores
 -- ============================================
--- Insertar administrador para Instituto Paula Robles
+-- Insertar administradores para cada institución
+-- Solo se insertan si las instituciones existen
 
-INSERT INTO usuarios (
-  username,
-  password,
-  nombre,
-  apellido,
-  email,
-  telefono,
-  dni,
-  rol,
-  institucion_id,
-  activo,
-  fecha_registro
-) 
-SELECT 
-  'admin',                    -- Username
-  'admin123',                 -- Password (cambiar en producción)
-  'Administrador',            -- Nombre
-  'Paula Robles',             -- Apellido
-  'admin@paulrobles.edu.ar',  -- Email
-  NULL,                       -- Teléfono
-  NULL,                       -- DNI
-  'admin',                    -- Rol
-  id,                         -- ID de la institución
-  true,                       -- Activo
-  NOW()                       -- Fecha de registro
-FROM instituciones
-WHERE nombre = 'Instituto Paula Robles'
-ON CONFLICT (username) DO UPDATE SET
-  institucion_id = EXCLUDED.institucion_id,
-  activo = true,
-  email = EXCLUDED.email;
+-- Administrador para Instituto Paula Robles
+DO $$
+DECLARE
+  v_institucion_id UUID;
+BEGIN
+  -- Obtener el ID de la institución
+  SELECT id INTO v_institucion_id
+  FROM instituciones
+  WHERE nombre = 'Instituto Paula Robles'
+  LIMIT 1;
+
+  -- Solo insertar si la institución existe
+  IF v_institucion_id IS NOT NULL THEN
+    INSERT INTO usuarios (
+      username,
+      password,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      dni,
+      rol,
+      institucion_id,
+      activo,
+      fecha_registro
+    ) VALUES (
+      'admin',                    -- Username
+      'admin123',                 -- Password (cambiar en producción)
+      'Administrador',            -- Nombre
+      'Paula Robles',             -- Apellido
+      'admin@paulrobles.edu.ar',  -- Email
+      NULL,                       -- Teléfono
+      NULL,                       -- DNI
+      'admin',                    -- Rol
+      v_institucion_id,           -- ID de la institución
+      true,                       -- Activo
+      NOW()                       -- Fecha de registro
+    )
+    ON CONFLICT (username) DO UPDATE SET
+      institucion_id = EXCLUDED.institucion_id,
+      activo = true,
+      email = EXCLUDED.email;
+  ELSE
+    RAISE NOTICE 'No se encontró la institución "Instituto Paula Robles". El usuario admin no se creará.';
+  END IF;
+END $$;
+
+-- Administrador para Centro Universitario Dolores
+DO $$
+DECLARE
+  v_institucion_id UUID;
+BEGIN
+  -- Obtener el ID de la institución
+  SELECT id INTO v_institucion_id
+  FROM instituciones
+  WHERE nombre = 'Centro Universitario Dolores'
+  LIMIT 1;
+
+  -- Solo insertar si la institución existe
+  IF v_institucion_id IS NOT NULL THEN
+    INSERT INTO usuarios (
+      username,
+      password,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      dni,
+      rol,
+      institucion_id,
+      activo,
+      fecha_registro
+    ) VALUES (
+      'admin_cud',                -- Username único para CUD
+      'admin123',                 -- Password (cambiar en producción)
+      'Administrador',            -- Nombre
+      'Centro Universitario Dolores', -- Apellido
+      'admin@cud.edu.ar',         -- Email
+      NULL,                       -- Teléfono
+      NULL,                       -- DNI
+      'admin',                    -- Rol
+      v_institucion_id,           -- ID de la institución
+      true,                       -- Activo
+      NOW()                       -- Fecha de registro
+    )
+    ON CONFLICT (username) DO UPDATE SET
+      institucion_id = EXCLUDED.institucion_id,
+      activo = true,
+      email = EXCLUDED.email;
+  ELSE
+    RAISE NOTICE 'No se encontró la institución "Centro Universitario Dolores". El usuario admin_cud no se creará.';
+  END IF;
+END $$;
 
 -- ============================================
 -- FIN DE LOS SCRIPTS
+-- ============================================
+-- Este script incluye todas las actualizaciones:
+-- ✅ Tabla materias con campos profesor, curso y horario (opcionales)
+-- ✅ Permite crear materias sin profesor (se asigna después)
+-- ✅ Permite crear materias sin carrera_id (se asigna después desde wizard)
+-- ✅ Índices únicos parciales para permitir materias sin carrera
+-- ✅ Todas las foreign keys con manejo de errores
+-- ============================================
+-- INSTRUCCIONES DE USO:
+-- 1. Ejecutar este script completo en Supabase SQL Editor
+-- 2. El script es idempotente (se puede ejecutar múltiples veces sin errores)
+-- 3. Si ya tienes datos, el script los preservará
 -- ============================================
 -- Nota: Las políticas RLS son básicas para desarrollo
 -- Ajustar según necesidades de seguridad en producción

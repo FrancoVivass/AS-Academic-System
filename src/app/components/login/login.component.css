@@ -15,7 +15,7 @@
 /* Panel Izquierdo - Logo de Institución */
 .login-left-panel {
   flex: 1;
-  background: linear-gradient(135deg, var(--institucion-primary, #800020) 0%, var(--institucion-secondary, #722F37) 100%);
+  background: var(--institucion-primary, #800020);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,7 +180,7 @@
 .forgot-password-link {
   position: absolute;
   right: 0;
-  padding-top: 65px;
+margin-top: 65px;
   top: -0.5rem;
   font-size: 0.875rem;
   color: #666;

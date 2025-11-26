@@ -41,7 +41,7 @@ export class MigracionDatosComponent implements OnInit {
     if (this.migrationService.isMigrated()) {
       this.resultado = {
         success: true,
-        message: '✅ Los datos ya fueron migrados anteriormente'
+        message: 'Los datos ya fueron migrados anteriormente'
       };
     }
   }
@@ -57,11 +57,11 @@ export class MigracionDatosComponent implements OnInit {
       this.resultado = resultado;
 
       if (resultado.success) {
-        this.snackBar.open('✅ Migración completada exitosamente', 'Cerrar', {
+        this.snackBar.open('Migración completada exitosamente', 'Cerrar', {
           duration: 5000
         });
       } else {
-        this.snackBar.open('❌ Error durante la migración', 'Cerrar', {
+        this.snackBar.open('Error durante la migración', 'Cerrar', {
           duration: 5000
         });
       }
@@ -71,7 +71,7 @@ export class MigracionDatosComponent implements OnInit {
         message: 'Error inesperado durante la migración',
         details: { error: error.message }
       };
-      this.snackBar.open('❌ Error inesperado', 'Cerrar', {
+      this.snackBar.open('Error inesperado', 'Cerrar', {
         duration: 5000
       });
     } finally {

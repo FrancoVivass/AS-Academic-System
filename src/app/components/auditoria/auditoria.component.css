@@ -1,26 +1,18 @@
+/* Importar estilos compartidos */
+@import '../shared-gestion-styles.css';
+
+/* Estilos específicos para Auditoría */
 .auditoria-container {
-  padding: 24px;
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
 }
 
-.header {
-  margin-bottom: 24px;
+/* Responsive */
+@media (max-width: 768px) {
+  .auditoria-container {
+    padding: 1rem;
+  }
 }
-
-.header h1 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-}
-
-.filtros {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  align-items: center;
-}
-
-.auditoria-table {
-  width: 100%;
-}
-

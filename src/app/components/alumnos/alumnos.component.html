@@ -105,6 +105,15 @@
         </mat-form-field>
         @if (!permissionsService.esProfesor()) {
           <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filtrar por carrera</mat-label>
+            <mat-select [(ngModel)]="filtroCarrera" (selectionChange)="onCarreraFiltroChange()">
+              <mat-option value="">Todas las carreras</mat-option>
+              @for (carrera of carreras; track carrera.id) {
+                <mat-option [value]="carrera.id">{{ carrera.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
             <mat-label>Filtrar por curso</mat-label>
             <mat-select [(ngModel)]="filtroCurso" (selectionChange)="onFiltroCursoChange()">
               <mat-option value="">Todos los cursos</mat-option>
@@ -328,6 +337,38 @@
                   }
                 </mat-select>
               </mat-form-field>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Curso *</label>
+              <mat-form-field appearance="outline" style="width: 100%;">
+                <mat-label>Seleccione un curso</mat-label>
+                <mat-select formControlName="cursoId" required [disabled]="!alumnoForm.get('carreraId')?.value || cursosDisponibles.length === 0">
+                  @if (!alumnoForm.get('carreraId')?.value) {
+                    <mat-option value="">Primero seleccione una carrera</mat-option>
+                  } @else if (cursosDisponibles.length === 0) {
+                    <mat-option value="">No hay cursos disponibles para esta carrera</mat-option>
+                  } @else {
+                    <mat-option value="">Seleccione un curso</mat-option>
+                    @for (curso of cursosDisponibles; track curso.id) {
+                      <mat-option [value]="curso.id">{{ curso.nombre }} - {{ getAnioCurso(curso) }}° {{ curso.division }} ({{ curso.turno }})</mat-option>
+                    }
+                  }
+                </mat-select>
+                <mat-hint>
+                  @if (!alumnoForm.get('carreraId')?.value) {
+                    Seleccione primero una carrera para ver los cursos disponibles
+                  } @else if (cursosDisponibles.length === 0) {
+                    No hay cursos disponibles para esta carrera
+                  } @else {
+                    {{ cursosDisponibles.length }} curso(s) disponible(s)
+                  }
+                </mat-hint>
+              </mat-form-field>
+            </div>
+            <div class="form-group">
+              <!-- Espacio vacío para mantener el layout -->
             </div>
           </div>
           <div class="form-row">

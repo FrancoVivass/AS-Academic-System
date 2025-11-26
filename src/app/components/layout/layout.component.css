@@ -23,6 +23,15 @@
   min-height: calc(100vh - 70px);
 }
 
+/* Contenedor interno del drawer - Usa color de institución */
+::ng-deep .mat-drawer-inner-container {
+  background: var(--bg-card, white) !important;
+}
+
+::ng-deep .mat-drawer-inner-container .sidenav-header {
+  background: var(--institucion-primary, #2b7bcc) !important;
+}
+
 /* Sidenav flotante */
 .floating-sidenav {
   position: fixed !important;
@@ -186,7 +195,7 @@
 
 .sidenav-header {
   padding: 2.5rem 1.75rem;
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%);
+  background: var(--institucion-primary, #2b7bcc);
   color: white;
   border-bottom: 3px solid rgba(255, 255, 255, 0.2);
   animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -335,7 +344,7 @@
   transform: translateY(-50%) scaleX(0);
   height: 75%;
   width: 6px;
-  background: linear-gradient(135deg, #1976d2, #1565c0);
+  background: var(--institucion-primary, #2b7bcc);
   border-radius: 0 12px 12px 0;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
@@ -359,7 +368,7 @@
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%) !important;
+  background: var(--institucion-primary, #2b7bcc) !important;
   color: white !important;
   box-shadow: 0 8px 24px rgba(25, 118, 210, 0.4), 0 0 0 4px rgba(25, 118, 210, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
   transform: translateX(10px) scale(1.03);
@@ -459,7 +468,7 @@
   bottom: 32px !important;
   left: 32px !important;
   z-index: 1000 !important;
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%) !important;
+  background: var(--institucion-primary, #2b7bcc) !important;
   color: var(--white) !important;
   box-shadow: 0 12px 32px rgba(25, 118, 210, 0.4), 0 0 0 0 rgba(25, 118, 210, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -509,7 +518,7 @@
   transform: scale(1.15) rotate(10deg) !important;
   box-shadow: 0 16px 40px rgba(25, 118, 210, 0.5), 0 0 0 12px rgba(25, 118, 210, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.6);
-  background: linear-gradient(135deg, #1e88e5 0%, #1976d2 50%, #1565c0 100%) !important;
+  background: var(--institucion-primary, #2b7bcc) !important;
 }
 
 .floating-menu-button:hover::before {

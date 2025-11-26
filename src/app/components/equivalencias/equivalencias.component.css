@@ -1,19 +1,18 @@
+/* Importar estilos compartidos */
+@import '../shared-gestion-styles.css';
+
+/* Estilos específicos para Equivalencias */
 .equivalencias-container {
-  padding: 24px;
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
 }
 
-.header {
-  margin-bottom: 24px;
+/* Responsive */
+@media (max-width: 768px) {
+  .equivalencias-container {
+    padding: 1rem;
+  }
 }
-
-.header h1 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-}
-
-.equivalencias-table {
-  width: 100%;
-}
-

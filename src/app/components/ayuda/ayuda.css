@@ -73,7 +73,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
+  background: var(--institucion-primary, #2b7bcc);
   color: white;
   border-radius: 16px 16px 0 0;
 }
@@ -132,7 +132,7 @@
 }
 
 .contacto-card {
-  background: linear-gradient(135deg, var(--institucion-primary), var(--institucion-secondary));
+  background: var(--institucion-primary, #2b7bcc);
   color: white;
   border-radius: 20px !important;
   padding: 3rem;

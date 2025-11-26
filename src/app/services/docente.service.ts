@@ -179,11 +179,23 @@ export class DocenteService {
       docentes.push(docente);
       this.saveDocentesToStorage(docentes);
       
-      // También crear usuario
+      // También crear usuario usando registerUser
       const usuarios = await this.authService.getUsuarios();
       const usuarioExistente = usuarios.find(u => u.id === docente.id || u.username === docente.username);
       if (!usuarioExistente) {
-        await this.authService.updateUser(docente);
+        const result = await this.authService.registerUser({
+          username: docente.username,
+          password: docente.password,
+          nombre: docente.nombre,
+          apellido: docente.apellido,
+          email: docente.email,
+          telefono: docente.telefono,
+          dni: docente.dni,
+          rol: 'profesor'
+        });
+        if (!result.success) {
+          throw new Error(result.error || 'Error al crear el usuario');
+        }
       }
     }
   }

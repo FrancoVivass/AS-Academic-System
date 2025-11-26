@@ -1,0 +1,27 @@
+<div class="welcome-modal">
+  <div class="welcome-header">
+    <mat-icon class="welcome-icon">celebration</mat-icon>
+    <h1>¡Bienvenido al Sistema!</h1>
+  </div>
+  
+  <div class="welcome-content">
+    <p class="welcome-message">{{ getWelcomeMessage() }}</p>
+    
+    <div class="welcome-info">
+      <mat-icon>info</mat-icon>
+      <p>Te recomendamos revisar la guía "Cómo funciona" para aprender a usar todas las funcionalidades del sistema paso a paso.</p>
+    </div>
+  </div>
+  
+  <div class="welcome-actions">
+    <button mat-button (click)="onClose()" class="btn-skip">
+      <mat-icon>close</mat-icon>
+      Omitir
+    </button>
+    <button mat-raised-button color="primary" [routerLink]="getHelpRoute()" (click)="onGoToHelp()" class="btn-help">
+      <mat-icon>help_outline</mat-icon>
+      Ver Cómo Funciona
+    </button>
+  </div>
+</div>
+

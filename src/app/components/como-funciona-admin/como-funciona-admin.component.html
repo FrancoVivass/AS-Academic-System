@@ -1,0 +1,101 @@
+<div class="como-funciona-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>admin_panel_settings</mat-icon>
+        Cómo Funciona - Administrador
+      </h1>
+      <p>Guía completa paso a paso para administrar el sistema académico</p>
+    </div>
+    <button mat-raised-button color="primary" routerLink="/app/dashboard">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <div class="content-section">
+    <mat-card class="intro-card">
+      <mat-card-content>
+        <h2>Bienvenido Administrador</h2>
+        <p>Esta guía te ayudará a entender cómo funciona el sistema y el orden correcto para crear todos los elementos.</p>
+        <p><strong>Importante:</strong> Sigue los pasos en orden para evitar errores. Cada paso depende del anterior.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="steps-section">
+      <h2 class="section-title">
+        <mat-icon>list</mat-icon>
+        Pasos para Configurar el Sistema
+      </h2>
+      
+      @for (step of steps; track step.title; let i = $index) {
+        <mat-card class="step-card">
+          <mat-card-header>
+            <div class="step-number">{{ i + 1 }}</div>
+            <div class="step-header-content">
+              <mat-card-title>
+                <mat-icon>{{ step.icon }}</mat-icon>
+                {{ step.title }}
+              </mat-card-title>
+              <mat-card-subtitle>{{ step.description }}</mat-card-subtitle>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <ul class="step-details">
+              @for (detail of step.details; track detail) {
+                <li>{{ detail }}</li>
+              }
+            </ul>
+            <button mat-button color="primary" [routerLink]="step.route">
+              <mat-icon>arrow_forward</mat-icon>
+              Ir a {{ step.title.split(':')[1]?.trim() || step.title }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <div class="features-section">
+      <h2 class="section-title">
+        <mat-icon>apps</mat-icon>
+        Funcionalidades Disponibles
+      </h2>
+      
+      <div class="features-grid">
+        @for (feature of funcionalidades; track feature.title) {
+          <mat-card class="feature-card">
+            <mat-card-header>
+              <mat-icon class="feature-icon">{{ feature.icon }}</mat-icon>
+              <mat-card-title>{{ feature.title }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>{{ feature.description }}</p>
+              <button mat-button color="primary" [routerLink]="feature.route">
+                <mat-icon>open_in_new</mat-icon>
+                Ir a {{ feature.title }}
+              </button>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <mat-card class="tips-card">
+      <mat-card-header>
+        <mat-icon>lightbulb</mat-icon>
+        <mat-card-title>Consejos Importantes</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="tips-list">
+          <li>Los docentes deben crearse antes que las materias, ya que las materias necesitan un profesor asignado.</li>
+          <li>Las materias deben crearse antes que las carreras, ya que las carreras asignan materias a los cursos.</li>
+          <li>Los alumnos pueden registrarse en cualquier momento, pero deben tener una carrera asignada.</li>
+          <li>Los cursos se crean automáticamente cuando creas una carrera usando el wizard.</li>
+          <li>Puedes importar alumnos desde Excel para agilizar el proceso de registro.</li>
+          <li>Revisa la sección de Auditoría para ver todos los cambios realizados en el sistema.</li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+

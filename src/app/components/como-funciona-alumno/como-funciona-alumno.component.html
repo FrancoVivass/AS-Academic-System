@@ -1,0 +1,98 @@
+<div class="como-funciona-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>person</mat-icon>
+        Cómo Funciona - Alumno
+      </h1>
+      <p>Guía completa para alumnos: qué puedes ver y qué puedes hacer</p>
+    </div>
+    <button mat-raised-button color="primary" routerLink="/app/dashboard">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <div class="content-section">
+    <mat-card class="intro-card">
+      <mat-card-content>
+        <h2>Bienvenido Alumno</h2>
+        <p>Esta guía te ayudará a entender todas las funcionalidades disponibles para alumnos y cómo usarlas.</p>
+        <p><strong>Nota:</strong> Como alumno, principalmente puedes consultar información. Las acciones de edición están limitadas a tu perfil y mensajes.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="features-section">
+      <h2 class="section-title">
+        <mat-icon>apps</mat-icon>
+        Funcionalidades Disponibles
+      </h2>
+      
+      <div class="features-grid">
+        @for (feature of funcionalidades; track feature.titulo) {
+          <mat-card class="feature-card">
+            <mat-card-header>
+              <mat-icon class="feature-icon">{{ feature.icono }}</mat-icon>
+              <mat-card-title>{{ feature.titulo }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p class="feature-description">{{ feature.descripcion }}</p>
+              
+              @if (feature.quePuedesVer && feature.quePuedesVer.length > 0) {
+                <div class="feature-section">
+                  <h4>
+                    <mat-icon>visibility</mat-icon>
+                    Qué puedes ver:
+                  </h4>
+                  <ul class="feature-list">
+                    @for (item of feature.quePuedesVer; track item) {
+                      <li>{{ item }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              
+              @if (feature.quePuedesHacer && feature.quePuedesHacer.length > 0) {
+                <div class="feature-section">
+                  <h4>
+                    <mat-icon>edit</mat-icon>
+                    Qué puedes hacer:
+                  </h4>
+                  <ul class="feature-list">
+                    @for (item of feature.quePuedesHacer; track item) {
+                      <li>{{ item }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              
+              <button mat-button color="primary" [routerLink]="feature.ruta" class="feature-button">
+                <mat-icon>open_in_new</mat-icon>
+                Ir a {{ feature.titulo }}
+              </button>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <mat-card class="tips-card">
+      <mat-card-header>
+        <mat-icon>lightbulb</mat-icon>
+        <mat-card-title>Consejos Importantes</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="tips-list">
+          <li>Revisa regularmente tu Dashboard para estar al tanto de tu rendimiento académico.</li>
+          <li>Mantén un porcentaje de asistencia superior al 75% para evitar problemas académicos.</li>
+          <li>Consulta tus notas regularmente para conocer tu promedio y estado en cada materia.</li>
+          <li>Revisa el calendario académico para no perderte eventos importantes o exámenes.</li>
+          <li>Utiliza la biblioteca para acceder a materiales de estudio compartidos por tus profesores.</li>
+          <li>Comunícate con tus profesores a través de mensajes si tienes dudas o consultas.</li>
+          <li>Si ves alertas en tu Dashboard, presta atención y toma las acciones necesarias.</li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+

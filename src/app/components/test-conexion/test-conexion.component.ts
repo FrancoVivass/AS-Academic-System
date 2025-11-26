@@ -64,7 +64,7 @@ export class TestConexionComponent implements OnInit {
           if (error.code === '42P01' || error.message.includes('does not exist')) {
             this.resultado = {
               conexion: true,
-              mensaje: '✅ Conexión exitosa, pero las tablas aún no están creadas',
+              mensaje: 'Conexión exitosa, pero las tablas aún no están creadas',
               detalles: {
                 tipo: 'warning',
                 mensaje: 'La conexión funciona correctamente. Necesitas ejecutar los scripts SQL para crear las tablas.',
@@ -82,14 +82,14 @@ export class TestConexionComponent implements OnInit {
         // Si llegamos aquí, la conexión funciona y las tablas existen
         this.resultado = {
           conexion: true,
-          mensaje: '✅ Conexión exitosa con Supabase',
+          mensaje: 'Conexión exitosa con Supabase',
           detalles: {
             tipo: 'success',
             mensaje: 'La conexión funciona correctamente y las tablas están creadas.',
             registros: data
           }
         };
-        this.snackBar.open('✅ Conexión exitosa!', 'Cerrar', {
+        this.snackBar.open('Conexión exitosa!', 'Cerrar', {
           duration: 3000
         });
 
@@ -98,7 +98,7 @@ export class TestConexionComponent implements OnInit {
         if (tableError.code === '42P01' || tableError.message?.includes('does not exist')) {
           this.resultado = {
             conexion: true,
-            mensaje: '✅ Conexión exitosa, pero las tablas aún no están creadas',
+            mensaje: 'Conexión exitosa, pero las tablas aún no están creadas',
             detalles: {
               tipo: 'warning',
               mensaje: 'La conexión funciona correctamente. Necesitas ejecutar los scripts SQL para crear las tablas.',
@@ -114,13 +114,13 @@ export class TestConexionComponent implements OnInit {
       console.error('Error de conexión:', error);
       this.resultado = {
         conexion: false,
-        mensaje: '❌ Error de conexión con Supabase',
+        mensaje: 'Error de conexión con Supabase',
         error: {
           mensaje: error.message || 'Error desconocido',
           detalles: error
         }
       };
-      this.snackBar.open('❌ Error de conexión', 'Cerrar', {
+      this.snackBar.open('Error de conexión', 'Cerrar', {
         duration: 5000
       });
     } finally {
@@ -137,7 +137,7 @@ export class TestConexionComponent implements OnInit {
       
       this.resultado = {
         conexion: true,
-        mensaje: `✅ Consulta exitosa: ${instituciones.length} instituciones encontradas`,
+        mensaje: `Consulta exitosa: ${instituciones.length} instituciones encontradas`,
         detalles: {
           tipo: 'success',
           cantidad: instituciones.length,
@@ -145,19 +145,19 @@ export class TestConexionComponent implements OnInit {
         }
       };
       
-      this.snackBar.open(`✅ ${instituciones.length} instituciones encontradas`, 'Cerrar', {
+      this.snackBar.open(`${instituciones.length} instituciones encontradas`, 'Cerrar', {
         duration: 3000
       });
     } catch (error: any) {
       this.resultado = {
         conexion: false,
-        mensaje: '❌ Error al consultar datos',
+        mensaje: 'Error al consultar datos',
         error: {
           mensaje: error.message || 'Error desconocido',
           detalles: error
         }
       };
-      this.snackBar.open('❌ Error al consultar', 'Cerrar', {
+      this.snackBar.open('Error al consultar', 'Cerrar', {
         duration: 5000
       });
     } finally {

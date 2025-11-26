@@ -135,6 +135,18 @@ export const routes: Routes = [
         loadComponent: () => import('./components/contacto/contacto').then(m => m.ContactoComponent)
       },
       {
+        path: 'como-funciona/admin',
+        loadComponent: () => import('./components/como-funciona-admin/como-funciona-admin.component').then(m => m.ComoFuncionaAdminComponent)
+      },
+      {
+        path: 'como-funciona/profesor',
+        loadComponent: () => import('./components/como-funciona-profesor/como-funciona-profesor.component').then(m => m.ComoFuncionaProfesorComponent)
+      },
+      {
+        path: 'como-funciona/alumno',
+        loadComponent: () => import('./components/como-funciona-alumno/como-funciona-alumno.component').then(m => m.ComoFuncionaAlumnoComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

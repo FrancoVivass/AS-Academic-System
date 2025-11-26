@@ -63,7 +63,10 @@ export class AlumnosComponent implements OnInit {
   mostrarUsuarios: boolean = false;
   mostrarModalImportar: boolean = false;
   carreras: Carrera[] = [];
-  carreraSeleccionada: string = ''; // Para profesores
+  carreraSeleccionada: string = ''; // Para profesores y filtro
+  filtroCarrera: string = ''; // Filtro de carrera para admin/secretario
+  cursosDisponibles: any[] = []; // Cursos disponibles para el formulario
+  cursosParaFiltro: any[] = []; // Cursos disponibles para el filtro (según carrera seleccionada)
   materiasProfesor: Materia[] = []; // Materias del profesor
 
   constructor(
@@ -85,8 +88,22 @@ export class AlumnosComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       telefono: [''],
       carreraId: ['', Validators.required],
+      cursoId: ['', Validators.required],
       fechaNacimiento: [''],
       direccion: ['']
+    });
+    
+    // Cargar cursos cuando cambia la carrera seleccionada en el formulario
+    this.alumnoForm.get('carreraId')?.valueChanges.subscribe(async (carreraId) => {
+      console.log('Carrera seleccionada en formulario:', carreraId);
+      if (carreraId) {
+        await this.cargarCursosPorCarrera(carreraId);
+        // Limpiar el curso seleccionado cuando cambia la carrera
+        this.alumnoForm.get('cursoId')?.setValue('');
+      } else {
+        this.cursosDisponibles = [];
+        this.alumnoForm.get('cursoId')?.setValue('');
+      }
     });
   }
 
@@ -96,6 +113,37 @@ export class AlumnosComponent implements OnInit {
     if (!this.permissionsService.esProfesor() || this.carreraSeleccionada) {
       await this.loadAlumnos();
     }
+    
+    // Suscribirse a cambios en alumnos desde el servicio para actualizar automáticamente
+    this.alumnoService.alumnos$.subscribe(async (alumnos) => {
+      // Actualizar cuando hay cambios
+      if (alumnos.length !== this.alumnos.length) {
+        console.log(`Cambio detectado: ${alumnos.length} alumnos en servicio vs ${this.alumnos.length} en componente`);
+        await this.loadAlumnos();
+      }
+    });
+  }
+
+  async cargarCursosPorCarrera(carreraId: string): Promise<void> {
+    try {
+      console.log('Cargando cursos para carrera:', carreraId);
+      this.cursosDisponibles = await this.cursoService.getCursosByCarrera(carreraId);
+      console.log(`Cursos cargados para carrera ${carreraId}:`, this.cursosDisponibles.length);
+      console.log('Cursos disponibles:', this.cursosDisponibles);
+      
+      // Si no hay cursos, mostrar un mensaje
+      if (this.cursosDisponibles.length === 0) {
+        console.warn('No se encontraron cursos para la carrera seleccionada');
+      }
+    } catch (error) {
+      console.error('Error cargando cursos:', error);
+      this.cursosDisponibles = [];
+      this.notificationService.showWarning('Error al cargar los cursos de la carrera seleccionada');
+    }
+  }
+
+  getAnioCurso(curso: any): number {
+    return curso.año || (curso as any)['año'] || 0;
   }
 
   async loadCarreras(): Promise<void> {
@@ -164,63 +212,142 @@ export class AlumnosComponent implements OnInit {
     } else {
       // Para admin/secretario: todas las carreras
       this.carreras = await this.carreraService.getCarreras();
+      
+      // Cargar todos los cursos para el filtro inicial
+      try {
+        const todosLosCursos = await this.cursoService.getCursos();
+        this.cursosParaFiltro = todosLosCursos;
+        console.log('Todos los cursos cargados para filtro inicial:', this.cursosParaFiltro.length);
+        console.log('Cursos cargados:', this.cursosParaFiltro);
+      } catch (error) {
+        console.error('Error cargando todos los cursos:', error);
+        this.cursosParaFiltro = [];
+      }
     }
   }
 
   async onCarreraChange(): Promise<void> {
+    console.log('Carrera cambiada a:', this.carreraSeleccionada);
+    // Limpiar filtro de curso cuando cambia la carrera
+    this.filtroCurso = '';
+    await this.loadAlumnos();
+  }
+
+  async onCarreraFiltroChange(): Promise<void> {
+    console.log('Filtro de carrera cambiado a:', this.filtroCarrera);
+    // Limpiar filtro de curso cuando cambia el filtro de carrera
+    this.filtroCurso = '';
+    
+    // Cargar cursos de la carrera seleccionada para el filtro
+    if (this.filtroCarrera && this.filtroCarrera !== '') {
+      try {
+        const cursosCarrera = await this.cursoService.getCursosByCarrera(this.filtroCarrera);
+        this.cursosParaFiltro = cursosCarrera;
+        console.log(`Cursos cargados para filtro de carrera ${this.filtroCarrera}:`, this.cursosParaFiltro.length);
+        console.log('Cursos cargados:', this.cursosParaFiltro);
+      } catch (error) {
+        console.error('Error cargando cursos para filtro:', error);
+        this.cursosParaFiltro = [];
+      }
+    } else {
+      // Si no hay carrera seleccionada, cargar todos los cursos
+      try {
+        const todosLosCursos = await this.cursoService.getCursos();
+        this.cursosParaFiltro = todosLosCursos;
+        console.log('Todos los cursos cargados para filtro:', this.cursosParaFiltro.length);
+        console.log('Todos los cursos:', this.cursosParaFiltro);
+      } catch (error) {
+        console.error('Error cargando todos los cursos:', error);
+        this.cursosParaFiltro = [];
+      }
+    }
+    
     await this.loadAlumnos();
   }
 
   async loadAlumnos(): Promise<void> {
-    let todosLosAlumnos = await this.alumnoService.getAlumnos();
-    
-    // Si es profesor, filtrar solo alumnos de la carrera seleccionada
-    if (this.permissionsService.esProfesor()) {
-      if (this.carreraSeleccionada) {
-        todosLosAlumnos = todosLosAlumnos.filter(a => 
-          a.carreraId === this.carreraSeleccionada
-        );
-      } else {
-        // Si no hay carrera seleccionada, no mostrar alumnos
-        todosLosAlumnos = [];
+    try {
+      console.log('Cargando alumnos...');
+      let todosLosAlumnos = await this.alumnoService.getAlumnos();
+      console.log(`Alumnos obtenidos del servicio: ${todosLosAlumnos.length}`);
+      
+      // Si es profesor, filtrar solo alumnos de la carrera seleccionada
+      if (this.permissionsService.esProfesor()) {
+        if (this.carreraSeleccionada) {
+          todosLosAlumnos = todosLosAlumnos.filter(a => 
+            a.carreraId === this.carreraSeleccionada
+          );
+          console.log(`Alumnos filtrados por carrera (${this.carreraSeleccionada}): ${todosLosAlumnos.length}`);
+        } else {
+          // Si no hay carrera seleccionada, no mostrar alumnos
+          todosLosAlumnos = [];
+          console.log('No hay carrera seleccionada para profesor');
+        }
       }
-    }
-    
-    this.alumnos = todosLosAlumnos;
-    this.aplicarFiltros();
-    
-    // Actualizar cache de estadísticas para todos los alumnos
-    for (const alumno of this.alumnos) {
-      await this.actualizarEstadisticasMateriasAlumno(alumno.id);
-      await this.actualizarPromedioAlumno(alumno.id);
-      await this.actualizarPorcentajeAsistenciaAlumno(alumno.id);
+      
+      this.alumnos = todosLosAlumnos;
+      console.log(`Alumnos asignados al componente: ${this.alumnos.length}`);
+      
+      // Aplicar filtros (esto también aplicará el filtro de carrera si está activo)
+      this.aplicarFiltros();
+      
+      // Actualizar cache de estadísticas para todos los alumnos (solo los primeros para no bloquear)
+      // Hacer esto de forma asíncrona para no bloquear la UI
+      setTimeout(async () => {
+        const alumnosParaEstadisticas = this.alumnos.slice(0, 50); // Limitar a 50 para no bloquear
+        for (const alumno of alumnosParaEstadisticas) {
+          try {
+            await this.actualizarEstadisticasMateriasAlumno(alumno.id);
+            await this.actualizarPromedioAlumno(alumno.id);
+            await this.actualizarPorcentajeAsistenciaAlumno(alumno.id);
+          } catch (error) {
+            console.error(`Error actualizando estadísticas para alumno ${alumno.id}:`, error);
+          }
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error cargando alumnos:', error);
+      this.notificationService.showError('Error al cargar los alumnos. Por favor, recargue la página.');
+      this.alumnos = [];
+      this.alumnosFiltrados = [];
     }
   }
 
   aplicarFiltros(): void {
     let filtrados = [...this.alumnos];
 
-    if (this.busqueda) {
-      const busquedaLower = this.busqueda.toLowerCase();
+    // Filtrar por carrera (solo para admin/secretario, no profesores)
+    if (!this.permissionsService.esProfesor() && this.filtroCarrera && this.filtroCarrera !== '') {
+      filtrados = filtrados.filter(a => a.carreraId === this.filtroCarrera);
+    }
+
+    // Filtrar por búsqueda
+    if (this.busqueda && this.busqueda.trim() !== '') {
+      const busquedaLower = this.busqueda.toLowerCase().trim();
       filtrados = filtrados.filter(a =>
-        a.nombre.toLowerCase().includes(busquedaLower) ||
-        a.apellido.toLowerCase().includes(busquedaLower) ||
-        a.dni.includes(busquedaLower)
+        (a.nombre && a.nombre.toLowerCase().includes(busquedaLower)) ||
+        (a.apellido && a.apellido.toLowerCase().includes(busquedaLower)) ||
+        (a.dni && a.dni.includes(busquedaLower)) ||
+        (a.email && a.email.toLowerCase().includes(busquedaLower))
       );
     }
 
-    if (this.filtroCurso) {
+    // Filtrar por curso
+    if (this.filtroCurso && this.filtroCurso !== '') {
       filtrados = filtrados.filter(a => a.curso === this.filtroCurso);
     }
 
     this.alumnosFiltrados = filtrados;
+    console.log(`Alumnos filtrados: ${filtrados.length} de ${this.alumnos.length} totales`);
   }
 
   onBusquedaChange(): void {
+    console.log('Búsqueda cambiada:', this.busqueda);
     this.aplicarFiltros();
   }
 
   onFiltroCursoChange(): void {
+    console.log('Filtro de curso cambiado:', this.filtroCurso);
     this.aplicarFiltros();
   }
 
@@ -233,6 +360,7 @@ export class AlumnosComponent implements OnInit {
     this.alumnoSeleccionado = null;
     this.mostrarUsuarios = false; // Mostrar formulario, no usuarios
     this.alumnoForm.reset();
+    this.cursosDisponibles = [];
     this.mostrarModal = true;
     this.scrollLockService.lockScroll();
   }
@@ -278,7 +406,7 @@ export class AlumnosComponent implements OnInit {
     this.cerrarModal();
   }
 
-  abrirModalEditar(alumno: Alumno): void {
+  async abrirModalEditar(alumno: Alumno): Promise<void> {
     if (!this.permissionsService.puedeVer('editarAlumnos')) {
       this.notificationService.showError('No tiene permisos para editar alumnos');
       return;
@@ -287,6 +415,12 @@ export class AlumnosComponent implements OnInit {
     this.alumnoSeleccionado = alumno;
     this.mostrarUsuarios = false;
     this.alumnoForm.patchValue(alumno);
+    
+    // Cargar cursos si tiene carrera asignada
+    if (alumno.carreraId) {
+      await this.cargarCursosPorCarrera(alumno.carreraId);
+    }
+    
     this.mostrarModal = true;
   }
 
@@ -295,6 +429,7 @@ export class AlumnosComponent implements OnInit {
     this.alumnoSeleccionado = null;
     this.modoEdicion = false;
     this.alumnoForm.reset();
+    this.cursosDisponibles = [];
     this.scrollLockService.unlockScroll();
   }
 
@@ -307,56 +442,89 @@ export class AlumnosComponent implements OnInit {
     const formValue = this.alumnoForm.value;
     
     if (this.modoEdicion && this.alumnoSeleccionado) {
-      const alumnoActualizado: Alumno = {
-        ...this.alumnoSeleccionado,
-        ...formValue
-      };
-      await this.alumnoService.updateAlumno(alumnoActualizado);
-      this.notificationService.showSuccess('Alumno actualizado correctamente');
+      try {
+        const alumnoActualizado: Alumno = {
+          ...this.alumnoSeleccionado,
+          ...formValue
+        };
+        await this.alumnoService.updateAlumno(alumnoActualizado);
+        this.notificationService.showSuccess('Alumno actualizado correctamente');
+      } catch (error: any) {
+        console.error('Error al actualizar alumno:', error);
+        const errorMessage = error?.message || 'Error desconocido al actualizar el alumno. Por favor, intente nuevamente.';
+        this.notificationService.showError(`Error: ${errorMessage}`);
+        return;
+      }
     } else {
-      const nuevoAlumno: Alumno = {
-        id: Date.now().toString(),
-        ...formValue,
-        curso: '', // Se asignará después cuando se inscriba a un curso
-        estado: 'regular',
-        fechaRegistro: new Date().toISOString(),
-        documentacion: {
-          dniCompleto: false,
-          analiticoCompleto: false,
-          aptoMedicoCompleto: false
-        },
-        historialEstados: [{
+      try {
+        // Validar que se haya seleccionado un curso
+        if (!formValue.cursoId) {
+          this.notificationService.showError('Debe seleccionar un curso para el alumno');
+          return;
+        }
+
+        // Obtener el curso seleccionado para obtener el nombre del curso
+        const cursoSeleccionado = await this.cursoService.getCursoById(formValue.cursoId);
+        if (!cursoSeleccionado) {
+          this.notificationService.showError('El curso seleccionado no existe');
+          return;
+        }
+
+        // Obtener año del curso
+        const año = cursoSeleccionado.año;
+
+        const nuevoAlumno: Alumno = {
+          id: crypto.randomUUID(),
+          ...formValue,
+          curso: `${año}° ${cursoSeleccionado.division}`, // Asignar curso inmediatamente
           estado: 'regular',
-          fecha: new Date().toISOString()
-        }]
-      };
-      await this.alumnoService.addAlumno(nuevoAlumno);
-      
-      // Crear usuario para que pueda iniciar sesión
-      const nuevoUsuario: Usuario = {
-        id: nuevoAlumno.id,
-        username: formValue.email.split('@')[0] || `alumno_${nuevoAlumno.id}`,
-        password: formValue.dni || '1234', // Password temporal basado en DNI
-        nombre: formValue.nombre,
-        apellido: formValue.apellido,
-        email: formValue.email,
-        telefono: formValue.telefono,
-        dni: formValue.dni,
-        fechaNacimiento: formValue.fechaNacimiento,
-        direccion: formValue.direccion,
-        rol: 'alumno',
-        fechaRegistro: new Date().toISOString(),
-        activo: true
-      };
-      
-      const usuarios = await this.authService.getUsuarios();
-      usuarios.push(nuevoUsuario);
-      localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
-      
-      this.notificationService.showSuccess(`Alumno creado correctamente. Usuario: ${nuevoUsuario.username}, Password: ${nuevoUsuario.password}`);
+          fechaRegistro: new Date().toISOString(),
+          activo: true,
+          documentacion: {
+            dniCompleto: false,
+            analiticoCompleto: false,
+            aptoMedicoCompleto: false
+          },
+          historialEstados: [{
+            estado: 'regular',
+            fecha: new Date().toISOString()
+          }]
+        };
+        
+        // Crear el alumno
+        await this.alumnoService.addAlumno(nuevoAlumno);
+        
+        // Inscribir automáticamente al alumno en el curso seleccionado
+        await this.cursoService.agregarAlumnoACurso(formValue.cursoId, nuevoAlumno.id);
+        
+        // Actualizar cupo del curso
+        cursoSeleccionado.cupoActual = (cursoSeleccionado.cupoActual || 0) + 1;
+        await this.cursoService.updateCurso(cursoSeleccionado);
+        
+        // El servicio ya crea el usuario, no necesitamos crearlo de nuevo
+        const username = `alumno_${formValue.dni}`;
+        this.notificationService.showSuccess(`Alumno creado e inscrito correctamente en el curso. Usuario: ${username}, Contraseña: temp123 (debe cambiarse)`);
+        
+        // Cerrar modal y recargar alumnos
+        this.cerrarModal();
+        await this.loadAlumnos();
+      } catch (error: any) {
+        console.error('Error al guardar alumno:', error);
+        const errorMessage = error?.message || 'Error desconocido al crear el alumno. Por favor, intente nuevamente.';
+        this.notificationService.showError(`Error: ${errorMessage}`);
+        return;
+      }
     }
 
+    // Esperar un momento para que Supabase procese la inserción
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Recargar carreras primero para actualizar los filtros (por si el alumno tiene una carrera nueva)
+    await this.loadCarreras();
+    
+    // Luego recargar alumnos para mostrar el nuevo alumno
     await this.loadAlumnos();
+    
     this.cerrarModal();
   }
 
@@ -374,8 +542,32 @@ export class AlumnosComponent implements OnInit {
 
 
   getCursosUnicos(): string[] {
-    const cursos = this.alumnos.map(a => a.curso).filter((c, i, arr) => arr.indexOf(c) === i);
-    return cursos.sort();
+    console.log('getCursosUnicos() llamado. filtroCarrera:', this.filtroCarrera);
+    console.log('cursosParaFiltro:', this.cursosParaFiltro.length);
+    
+    // Si hay filtro de carrera, usar los cursos de esa carrera
+    if (this.filtroCarrera && this.filtroCarrera !== '') {
+      console.log('Filtrando por carrera:', this.filtroCarrera);
+      // Obtener cursos de la carrera seleccionada y formatearlos
+      const cursosFormateados = this.cursosParaFiltro
+        .filter(curso => curso.carreraId === this.filtroCarrera)
+        .map(curso => {
+          const año = this.getAnioCurso(curso);
+          return `${año}° ${curso.division}`;
+        });
+      console.log('Cursos formateados para carrera:', cursosFormateados);
+      const cursosUnicos = cursosFormateados.filter((c, i, arr) => arr.indexOf(c) === i).sort();
+      console.log('Cursos únicos:', cursosUnicos);
+      return cursosUnicos;
+    }
+    
+    // Si no hay filtro de carrera, obtener cursos únicos de los alumnos
+    const cursos = this.alumnos
+      .map(a => a.curso)
+      .filter(c => c && c.trim() !== '') // Filtrar cursos vacíos
+      .filter((c, i, arr) => arr.indexOf(c) === i); // Eliminar duplicados
+    console.log('Cursos de alumnos (sin filtro):', cursos);
+    return Array.from(cursos).sort();
   }
 
   getPromedioAlumno(id: string): number {
@@ -652,7 +844,7 @@ export class AlumnosComponent implements OnInit {
         }
         
         const nuevoAlumno: Alumno = {
-          id: Date.now().toString() + i,
+          id: crypto.randomUUID(),
           nombre: alumnoData.nombre || '',
           apellido: alumnoData.apellido || '',
           dni: alumnoData.dni || '',
@@ -693,10 +885,6 @@ export class AlumnosComponent implements OnInit {
         };
         
         await this.alumnoService.addAlumno(nuevoAlumno);
-        const usuarios = await this.authService.getUsuarios();
-        usuarios.push(nuevoUsuario);
-        localStorage.setItem('gestion_academica_usuarios', JSON.stringify(usuarios));
-        
         importados++;
       } catch (error) {
         errores++;

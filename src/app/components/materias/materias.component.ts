@@ -180,42 +180,52 @@ export class MateriasComponent implements OnInit {
   }
 
   async loadMaterias(): Promise<void> {
-    let todasLasMaterias = await this.materiaService.getMaterias();
-    
-    // Si es alumno, solo mostrar materias en las que está inscrito
-    if (this.permissionsService.esAlumno()) {
-      const usuarioId = this.authService.getCurrentUser()?.id;
-      if (usuarioId) {
-        const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId);
-        todasLasMaterias = todasLasMaterias.filter(m => 
-          inscripciones.some(i => i.materiaId === m.id)
-        );
-      }
-    }
-    // Si es profesor, mostrar sus materias asignadas
-    else if (this.permissionsService.esProfesor()) {
-      const usuario = this.authService.getCurrentUser();
-      if (usuario) {
-        // Intentar obtener el docente completo desde DocenteService
-        const docente = await this.docenteService.getDocenteById(usuario.id);
-        
-        if (docente && docente.materiasAsignadas && docente.materiasAsignadas.length > 0) {
-          // Filtrar por materias asignadas del docente
+    try {
+      let todasLasMaterias = await this.materiaService.getMaterias();
+      console.log('Materias obtenidas del servicio:', todasLasMaterias.length, todasLasMaterias);
+      
+      // Si es alumno, solo mostrar materias en las que está inscrito
+      if (this.permissionsService.esAlumno()) {
+        const usuarioId = this.authService.getCurrentUser()?.id;
+        if (usuarioId) {
+          const inscripciones = this.materiaService.getInscripcionesByAlumno(usuarioId);
           todasLasMaterias = todasLasMaterias.filter(m => 
-            docente.materiasAsignadas!.includes(m.id)
-          );
-        } else {
-          // Si no tiene materiasAsignadas en el docente, buscar por nombre del profesor
-          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
-          todasLasMaterias = todasLasMaterias.filter(m => 
-            m.profesor === nombreCompleto || m.profesor?.includes(usuario.nombre)
+            inscripciones.some(i => i.materiaId === m.id)
           );
         }
       }
+      // Si es profesor, mostrar sus materias asignadas
+      else if (this.permissionsService.esProfesor()) {
+        const usuario = this.authService.getCurrentUser();
+        if (usuario) {
+          // Intentar obtener el docente completo desde DocenteService
+          const docente = await this.docenteService.getDocenteById(usuario.id);
+          
+          if (docente && docente.materiasAsignadas && docente.materiasAsignadas.length > 0) {
+            // Filtrar por materias asignadas del docente
+            todasLasMaterias = todasLasMaterias.filter(m => 
+              docente.materiasAsignadas!.includes(m.id)
+            );
+          } else {
+            // Si no tiene materiasAsignadas en el docente, buscar por nombre del profesor
+            const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+            todasLasMaterias = todasLasMaterias.filter(m => 
+              m.profesor === nombreCompleto || m.profesor?.includes(usuario.nombre)
+            );
+          }
+        }
+      }
+      // Si es admin o secretario, mostrar TODAS las materias sin filtrar
+      
+      console.log('Materias después de filtros de rol:', todasLasMaterias.length);
+      this.materias = todasLasMaterias;
+      this.aplicarFiltros();
+      console.log('Materias filtradas finales:', this.materiasFiltradas.length);
+    } catch (error) {
+      console.error('Error cargando materias:', error);
+      this.materias = [];
+      this.materiasFiltradas = [];
     }
-    
-    this.materias = todasLasMaterias;
-    this.aplicarFiltros();
   }
 
   aplicarFiltros(): void {
@@ -226,7 +236,7 @@ export class MateriasComponent implements OnInit {
       filtradas = filtradas.filter(m =>
         m.nombre.toLowerCase().includes(busquedaLower) ||
         m.codigo.toLowerCase().includes(busquedaLower) ||
-        m.profesor.toLowerCase().includes(busquedaLower)
+        (m.profesor && m.profesor.toLowerCase().includes(busquedaLower))
       );
     }
 
@@ -352,11 +362,12 @@ export class MateriasComponent implements OnInit {
   }
   
   completarPaso2(): void {
-    if (!this.wizardData.profesorSeleccionado) {
-      this.notificationService.showWarning('Debe seleccionar un profesor');
-      return;
+    // El profesor es opcional, no es necesario validarlo
+    if (this.wizardData.profesorSeleccionado) {
+      this.notificationService.showSuccess('Profesor asignado. Continúe con la configuración final.');
+    } else {
+      this.notificationService.showInfo('Puede continuar sin asignar profesor. Se puede asignar después.');
     }
-    this.notificationService.showSuccess('Profesor asignado. Continúe con la configuración final.');
   }
   
   toggleCorrelatividad(materiaId: string): void {
@@ -395,11 +406,7 @@ export class MateriasComponent implements OnInit {
       return;
     }
     
-    if (!this.wizardData.profesorSeleccionado) {
-      this.notificationService.showWarning('Debe seleccionar un profesor');
-      return;
-    }
-    
+    // El profesor es opcional - se puede asignar después
     console.log('Validaciones pasadas, creando materia...');
     
     // Si hay carrera seleccionada, usarla; si no, dejar carreraId vacío (se asignará después)
@@ -409,7 +416,9 @@ export class MateriasComponent implements OnInit {
     }
     
     const formValue = this.materiaForm.value;
-    const nombreProfesor = `${this.wizardData.profesorSeleccionado.nombre} ${this.wizardData.profesorSeleccionado.apellido}`;
+    const nombreProfesor = this.wizardData.profesorSeleccionado 
+      ? `${this.wizardData.profesorSeleccionado.nombre} ${this.wizardData.profesorSeleccionado.apellido}`
+      : '';
     
     const configuracion: ConfiguracionMateria = {
       tieneNota: formValue.tieneNota ?? true,
@@ -458,13 +467,15 @@ export class MateriasComponent implements OnInit {
           }
         }
         
-        // Agregar al nuevo docente
-        if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
-          this.wizardData.profesorSeleccionado.materiasAsignadas = [];
-        }
-        if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(materiaActualizada.id)) {
-          this.wizardData.profesorSeleccionado.materiasAsignadas.push(materiaActualizada.id);
-          await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
+        // Agregar al nuevo docente si hay profesor seleccionado
+        if (this.wizardData.profesorSeleccionado) {
+          if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
+            this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+          }
+          if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(materiaActualizada.id)) {
+            this.wizardData.profesorSeleccionado.materiasAsignadas.push(materiaActualizada.id);
+            await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
+          }
         }
         
         this.notificationService.showSuccess(`Materia "${materiaActualizada.nombre}" actualizada exitosamente`);
@@ -494,21 +505,32 @@ export class MateriasComponent implements OnInit {
         await this.materiaService.addMateria(nuevaMateria);
         console.log('Materia guardada en servicio');
         
-        // Asignar materia al docente
-        if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
-          this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+        // Asignar materia al docente si hay profesor seleccionado
+        if (this.wizardData.profesorSeleccionado) {
+          if (!this.wizardData.profesorSeleccionado.materiasAsignadas) {
+            this.wizardData.profesorSeleccionado.materiasAsignadas = [];
+          }
+          if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(nuevaMateria.id)) {
+            this.wizardData.profesorSeleccionado.materiasAsignadas.push(nuevaMateria.id);
+            await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
+            console.log('Materia asignada al docente');
+          }
+          this.notificationService.showSuccess(`Materia "${nuevaMateria.nombre}" creada exitosamente y asignada al profesor ${nombreProfesor}`);
+        } else {
+          this.notificationService.showSuccess(`Materia "${nuevaMateria.nombre}" creada exitosamente. Puede asignar un profesor después.`);
         }
-        if (!this.wizardData.profesorSeleccionado.materiasAsignadas.includes(nuevaMateria.id)) {
-          this.wizardData.profesorSeleccionado.materiasAsignadas.push(nuevaMateria.id);
-          await this.docenteService.updateDocente(this.wizardData.profesorSeleccionado);
-          console.log('Materia asignada al docente');
-        }
-        
-        this.notificationService.showSuccess(`Materia "${nuevaMateria.nombre}" creada exitosamente y asignada al profesor ${nombreProfesor}`);
       }
       
+      // Esperar un momento para que Supabase procese la inserción
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Recargar materias para mostrar la nueva materia
       await this.loadMaterias();
       this.loadMateriasDisponibles();
+      
+      // Aplicar filtros nuevamente para asegurar que se muestre
+      this.aplicarFiltros();
+      
       this.cerrarWizard();
     } catch (error: any) {
       console.error('Error en finalizarWizardMateria:', error);
@@ -585,19 +607,16 @@ export class MateriasComponent implements OnInit {
       return;
     }
     
-    // Validar que tenga profesor asignado
-    if (!formValue.profesor) {
-      this.notificationService.showError('Debe asignar un profesor a la materia');
-      return;
+    // El profesor es opcional
+    let nombreProfesor = '';
+    let docente = null;
+    if (formValue.profesor) {
+      const profesorId = formValue.profesor;
+      docente = this.docentes.find(d => d.id === profesorId);
+      if (docente) {
+        nombreProfesor = `${docente.nombre} ${docente.apellido}`;
+      }
     }
-    
-    const profesorId = formValue.profesor;
-    const docente = this.docentes.find(d => d.id === profesorId);
-    if (!docente) {
-      this.notificationService.showError('El profesor seleccionado no existe');
-      return;
-    }
-    const nombreProfesor = `${docente.nombre} ${docente.apellido}`;
     
     const configuracion: ConfiguracionMateria = {
       tieneNota: formValue.tieneNota,
@@ -619,26 +638,28 @@ export class MateriasComponent implements OnInit {
       };
       await this.materiaService.updateMateria(materiaActualizada);
       
-      // Actualizar materias asignadas del docente
-      if (!docente.materiasAsignadas) {
-        docente.materiasAsignadas = [];
-      }
-      // Remover de materias anteriores si cambió el profesor
-      if (this.materiaSeleccionada.profesor !== nombreProfesor) {
-        const docentesAnteriores = this.docentes.filter(d => 
-          d.materiasAsignadas?.includes(materiaActualizada.id)
-        );
-        for (const d of docentesAnteriores) {
-          if (d.materiasAsignadas) {
-            d.materiasAsignadas = d.materiasAsignadas.filter(id => id !== materiaActualizada.id);
-            await this.docenteService.updateDocente(d);
+      // Actualizar materias asignadas del docente si hay docente
+      if (docente) {
+        if (!docente.materiasAsignadas) {
+          docente.materiasAsignadas = [];
+        }
+        // Remover de materias anteriores si cambió el profesor
+        if (this.materiaSeleccionada.profesor !== nombreProfesor) {
+          const docentesAnteriores = this.docentes.filter(d => 
+            d.materiasAsignadas?.includes(materiaActualizada.id)
+          );
+          for (const d of docentesAnteriores) {
+            if (d.materiasAsignadas) {
+              d.materiasAsignadas = d.materiasAsignadas.filter(id => id !== materiaActualizada.id);
+              await this.docenteService.updateDocente(d);
+            }
           }
         }
+        if (!docente.materiasAsignadas.includes(materiaActualizada.id)) {
+          docente.materiasAsignadas.push(materiaActualizada.id);
+        }
+        await this.docenteService.updateDocente(docente);
       }
-      if (!docente.materiasAsignadas.includes(materiaActualizada.id)) {
-        docente.materiasAsignadas.push(materiaActualizada.id);
-      }
-      await this.docenteService.updateDocente(docente);
       
       this.notificationService.showSuccess('Materia actualizada correctamente');
     } else {
@@ -653,14 +674,16 @@ export class MateriasComponent implements OnInit {
       };
       await this.materiaService.addMateria(nuevaMateria);
       
-      // Asignar materia al docente
-      if (!docente.materiasAsignadas) {
-        docente.materiasAsignadas = [];
+      // Asignar materia al docente si hay docente
+      if (docente) {
+        if (!docente.materiasAsignadas) {
+          docente.materiasAsignadas = [];
+        }
+        if (!docente.materiasAsignadas.includes(nuevaMateria.id)) {
+          docente.materiasAsignadas.push(nuevaMateria.id);
+        }
+        await this.docenteService.updateDocente(docente);
       }
-      if (!docente.materiasAsignadas.includes(nuevaMateria.id)) {
-        docente.materiasAsignadas.push(nuevaMateria.id);
-      }
-      await this.docenteService.updateDocente(docente);
       
         this.notificationService.showSuccess('Materia creada correctamente. Ahora puede asignarla a cursos desde la sección de Carreras.');
         

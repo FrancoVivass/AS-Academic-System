@@ -37,40 +37,83 @@ export class MateriaService {
   }
 
   private async getMateriasFromSupabase(): Promise<Materia[]> {
+    console.log('getMateriasFromSupabase - Iniciando consulta...');
+    
     // Obtener la institución actual para filtrar
     const currentInstitucion = this.institucionService.getCurrentInstitucion();
     if (!currentInstitucion) {
+      console.log('getMateriasFromSupabase - No hay institución seleccionada');
       return [];
     }
-
-    // Filtrar materias por institución a través de carreras
+    
+    // Filtrar materias por institución
     const { data, error } = await this.supabase.client
       .from('materias')
       .select(`
         *,
-        correlatividades:materia_correlatividades(materia_correlativa_id),
-        carrera:carreras!inner(institucion_id)
+        correlatividades:materia_correlatividades(materia_correlativa_id)
       `)
-      .eq('carrera.institucion_id', currentInstitucion.id)
+      .eq('institucion_id', currentInstitucion.id)
       .order('nombre', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error obteniendo materias (con correlatividades):', error);
+      // Si hay error con correlatividades, intentar sin ellas
+      const { data: dataSimple, error: errorSimple } = await this.supabase.client
+        .from('materias')
+        .select('*')
+        .eq('institucion_id', currentInstitucion.id)
+        .order('nombre', { ascending: true });
+      
+      if (errorSimple) {
+        console.error('Error obteniendo materias (sin correlatividades):', errorSimple);
+        return [];
+      }
+      
+      console.log('getMateriasFromSupabase - Materias obtenidas (sin correlatividades):', dataSimple?.length || 0);
+      return (dataSimple || []).map((db: any) => this.mapMateriaFromDb(db));
+    }
+    
+    const dataFinal = data || [];
+    console.log('getMateriasFromSupabase - Materias obtenidas:', dataFinal.length);
 
-    return (data || []).map((db: any) => ({
+    return dataFinal.map((db: any) => this.mapMateriaFromDb(db));
+  }
+
+  private mapMateriaFromDb(db: any): Materia {
+    // Manejar correlatividades de diferentes formas
+    let correlatividades: string[] = [];
+    if (db.correlatividades) {
+      if (Array.isArray(db.correlatividades)) {
+        // Si es un array de objetos con materia_correlativa_id
+        correlatividades = db.correlatividades
+          .map((c: any) => c.materia_correlativa_id || c)
+          .filter((id: any) => id); // Filtrar valores nulos/undefined
+      } else if (typeof db.correlatividades === 'string') {
+        // Si es un string (array serializado)
+        try {
+          correlatividades = JSON.parse(db.correlatividades);
+        } catch {
+          correlatividades = [];
+        }
+      }
+    }
+    
+    return {
       id: db.id,
-      nombre: db.nombre,
-      codigo: db.codigo,
-      descripcion: db.descripcion,
-      profesor: '', // Se obtiene de docente_materias
-      curso: '', // Se obtiene de curso_materias
-      horario: '', // Se obtiene de curso_horarios
+      nombre: db.nombre || '',
+      codigo: db.codigo || '',
+      descripcion: db.descripcion || '',
+      profesor: db.profesor || '', // Nombre del profesor (puede estar vacío)
+      curso: db.curso || '', // Nombre del curso (puede estar vacío)
+      horario: db.horario || '', // Horario (puede estar vacío)
       creditos: db.creditos || 0,
-      horasSemanales: db.horas_semanales,
-      carreraId: db.carrera_id,
-      correlatividades: (db.correlatividades || []).map((c: any) => c.materia_correlativa_id),
+      horasSemanales: db.horas_semanales || 0,
+      carreraId: db.carrera_id || '', // Puede estar vacío inicialmente
+      correlatividades: correlatividades,
       tipo: db.tipo || 'obligatoria',
       estado: db.estado || 'activa',
-      fechaCreacion: db.fecha_creacion,
+      fechaCreacion: db.fecha_creacion || new Date().toISOString(),
       cuatrimestre: db.cuatrimestre,
       año: db.año,
       configuracion: {
@@ -80,7 +123,7 @@ export class MateriaService {
         notaMinimaAprobacion: db.nota_minima_aprobacion || 6,
         porcentajeAsistenciaMinimo: db.porcentaje_asistencia_minimo || 75
       }
-    }));
+    };
   }
 
   private getMateriasFromStorage(): Materia[] {
@@ -91,12 +134,19 @@ export class MateriaService {
   async getMaterias(): Promise<Materia[]> {
     if (this.useSupabase) {
       try {
-        return await this.getMateriasFromSupabase();
+        const materias = await this.getMateriasFromSupabase();
+        console.log('getMaterias - Materias obtenidas de Supabase:', materias.length);
+        return materias;
       } catch (error) {
-        return this.getMateriasFromStorage();
+        console.error('Error obteniendo materias de Supabase:', error);
+        const materiasStorage = this.getMateriasFromStorage();
+        console.log('getMaterias - Usando materias de localStorage:', materiasStorage.length);
+        return materiasStorage;
       }
     }
-    return this.getMateriasFromStorage();
+    const materiasStorage = this.getMateriasFromStorage();
+    console.log('getMaterias - Usando localStorage (useSupabase=false):', materiasStorage.length);
+    return materiasStorage;
   }
 
   async getMateriaById(id: string): Promise<Materia | undefined> {
@@ -118,12 +168,12 @@ export class MateriaService {
           nombre: data.nombre,
           codigo: data.codigo,
           descripcion: data.descripcion,
-          profesor: '',
-          curso: '',
-          horario: '',
+          profesor: data.profesor || '',
+          curso: data.curso || '',
+          horario: data.horario || '',
           creditos: data.creditos || 0,
           horasSemanales: data.horas_semanales,
-          carreraId: data.carrera_id,
+          carreraId: data.carrera_id || '',
           correlatividades: (data.correlatividades || []).map((c: any) => c.materia_correlativa_id),
           tipo: data.tipo || 'obligatoria',
           estado: data.estado || 'activa',
@@ -148,18 +198,28 @@ export class MateriaService {
   async addMateria(materia: Materia): Promise<void> {
     if (this.useSupabase) {
       try {
+        // Obtener la institución actual
+        const currentInstitucion = this.institucionService.getCurrentInstitucion();
+        if (!currentInstitucion) {
+          throw new Error('Debe seleccionar una institución primero');
+        }
+
         await this.supabase.create('materias', {
           id: materia.id,
           nombre: materia.nombre,
           codigo: materia.codigo,
-          descripcion: materia.descripcion,
+          descripcion: materia.descripcion || null,
+          profesor: materia.profesor || null, // Nombre del profesor (opcional)
+          curso: materia.curso || null, // Nombre del curso (opcional)
+          horario: materia.horario || null, // Horario (opcional)
           creditos: materia.creditos || 0,
-          horas_semanales: materia.horasSemanales,
-          carrera_id: materia.carreraId,
+          horas_semanales: materia.horasSemanales || null,
+          carrera_id: materia.carreraId || null, // Opcional, se puede asignar después
+          institucion_id: currentInstitucion.id, // REQUERIDO: Asignar institución actual
           tipo: materia.tipo || 'obligatoria',
           estado: materia.estado || 'activa',
-          cuatrimestre: materia.cuatrimestre,
-          año: materia.año,
+          cuatrimestre: materia.cuatrimestre || null,
+          año: materia.año || null,
           tiene_nota: materia.configuracion?.tieneNota !== false,
           tiene_asistencia: materia.configuracion?.tieneAsistencia !== false,
           requiere_aprobacion: materia.configuracion?.requiereAprobacion || false,
@@ -182,7 +242,7 @@ export class MateriaService {
           }
         }
 
-        await this.loadMaterias();
+        await this.loadMaterias(); // Recargar materias después de agregar
       } catch (error) {
         console.error('Error agregando materia:', error);
         throw error;
@@ -198,22 +258,32 @@ export class MateriaService {
   async updateMateria(materia: Materia): Promise<void> {
     if (this.useSupabase) {
       try {
+        // Obtener la institución actual
+        const currentInstitucion = this.institucionService.getCurrentInstitucion();
+        if (!currentInstitucion) {
+          throw new Error('Debe seleccionar una institución primero');
+        }
+
         await this.supabase.update('materias', materia.id, {
           nombre: materia.nombre,
           codigo: materia.codigo,
-          descripcion: materia.descripcion,
-          creditos: materia.creditos,
-          horas_semanales: materia.horasSemanales,
-          carrera_id: materia.carreraId,
-          tipo: materia.tipo,
-          estado: materia.estado,
-          cuatrimestre: materia.cuatrimestre,
-          año: materia.año,
-          tiene_nota: materia.configuracion?.tieneNota,
-          tiene_asistencia: materia.configuracion?.tieneAsistencia,
-          requiere_aprobacion: materia.configuracion?.requiereAprobacion,
-          nota_minima_aprobacion: materia.configuracion?.notaMinimaAprobacion,
-          porcentaje_asistencia_minimo: materia.configuracion?.porcentajeAsistenciaMinimo
+          descripcion: materia.descripcion || null,
+          profesor: materia.profesor || null, // Nombre del profesor (opcional)
+          curso: materia.curso || null, // Nombre del curso (opcional)
+          horario: materia.horario || null, // Horario (opcional)
+          creditos: materia.creditos || 0,
+          horas_semanales: materia.horasSemanales || null,
+          carrera_id: materia.carreraId || null, // Opcional
+          institucion_id: currentInstitucion.id, // Mantener institución actual
+          tipo: materia.tipo || 'obligatoria',
+          estado: materia.estado || 'activa',
+          cuatrimestre: materia.cuatrimestre || null,
+          año: materia.año || null,
+          tiene_nota: materia.configuracion?.tieneNota !== false,
+          tiene_asistencia: materia.configuracion?.tieneAsistencia !== false,
+          requiere_aprobacion: materia.configuracion?.requiereAprobacion || false,
+          nota_minima_aprobacion: materia.configuracion?.notaMinimaAprobacion || 6,
+          porcentaje_asistencia_minimo: materia.configuracion?.porcentajeAsistenciaMinimo || 75
         });
 
         // Actualizar correlatividades

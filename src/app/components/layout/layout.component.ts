@@ -12,13 +12,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { NotificationService } from '../../services/notification.service';
+import { WelcomeService } from '../../services/welcome.service';
 import { EncabezadoComponent } from '../encabezado/encabezado.component';
 import { FooterComponent } from '../footer/footer.component';
+import { MatDialog } from '@angular/material/dialog';
+import { WelcomeModalComponent } from '../welcome-modal/welcome-modal.component';
 
 interface NavItem {
   label: string;
@@ -43,6 +47,7 @@ interface NavItem {
     MatBadgeModule,
     MatDividerModule,
     MatTooltipModule,
+    MatDialogModule,
     EncabezadoComponent,
     FooterComponent
   ],
@@ -62,7 +67,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
     public permissionsService: PermissionsService,
     private router: Router,
     private breakpointObserver: BreakpointObserver,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private welcomeService: WelcomeService,
+    private dialog: MatDialog
   ) {
     this.breakpointObserver.observe([Breakpoints.Handset])
       .subscribe(result => {
@@ -83,6 +90,27 @@ export class LayoutComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+
+    // Mostrar modal de bienvenida si es la primera vez
+    this.checkAndShowWelcome();
+  }
+
+  checkAndShowWelcome(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser && this.welcomeService.shouldShowWelcome(currentUser)) {
+      const dialogRef = this.dialog.open(WelcomeModalComponent, {
+        width: '500px',
+        maxWidth: '90vw',
+        disableClose: true,
+        data: { user: currentUser }
+      });
+      
+      dialogRef.afterClosed().subscribe(() => {
+        if (currentUser) {
+          this.welcomeService.markWelcomeAsSeen(currentUser.id);
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {

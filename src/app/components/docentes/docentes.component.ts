@@ -122,20 +122,25 @@ export class DocentesComponent implements OnInit {
       return;
     }
     
-    const formValue = this.docenteForm.value;
-    const nuevoDocente: Docente = {
-      id: Date.now().toString(),
-      ...formValue,
-      rol: 'profesor',
-      materiasAsignadas: [], // Se asignarán cuando se creen las materias o se asignen a cursos
-      fechaRegistro: new Date().toISOString(),
-      activo: true
-    };
-    
-    await this.docenteService.addDocente(nuevoDocente);
-    this.notificationService.showSuccess(`Docente creado exitosamente. Las materias se asignarán cuando se creen materias o se configuren los cursos. Usuario: ${nuevoDocente.username}`);
-    await this.loadDocentes();
-    this.cerrarWizard();
+    try {
+      const formValue = this.docenteForm.value;
+      const nuevoDocente: Docente = {
+        id: crypto.randomUUID() || Date.now().toString(),
+        ...formValue,
+        rol: 'profesor',
+        materiasAsignadas: [], // Se asignarán cuando se creen las materias o se asignen a cursos
+        fechaRegistro: new Date().toISOString(),
+        activo: true
+      };
+      
+      await this.docenteService.addDocente(nuevoDocente);
+      this.notificationService.showSuccess(`Docente creado exitosamente. Usuario: ${nuevoDocente.username}, Contraseña: ${nuevoDocente.password}`);
+      await this.loadDocentes();
+      this.cerrarWizard();
+    } catch (error: any) {
+      console.error('Error al crear docente:', error);
+      this.notificationService.showError(error.message || 'Error al crear el docente. Por favor, intente nuevamente.');
+    }
   }
 
   abrirModalEditar(docente: Docente): void {
@@ -153,33 +158,38 @@ export class DocentesComponent implements OnInit {
       return;
     }
 
-    const formValue = this.docenteForm.value;
-    
-    if (this.modoEdicion && this.docenteSeleccionado) {
-      const docenteActualizado: Docente = {
-        ...this.docenteSeleccionado,
-        ...formValue,
-        rol: 'profesor'
-      };
-      await this.docenteService.updateDocente(docenteActualizado);
-      this.notificationService.showSuccess('Docente actualizado correctamente');
-    } else {
-      const nuevoDocente: Docente = {
-        id: Date.now().toString(),
-        ...formValue,
-        rol: 'profesor',
-        materiasAsignadas: [],
-        fechaRegistro: new Date().toISOString(),
-        activo: true
-      };
-      await this.docenteService.addDocente(nuevoDocente);
+    try {
+      const formValue = this.docenteForm.value;
       
-      // El servicio ya crea el usuario, pero mostramos las credenciales
-      this.notificationService.showSuccess(`Docente agregado correctamente. Usuario: ${nuevoDocente.username}, Password: ${nuevoDocente.password}`);
-    }
+      if (this.modoEdicion && this.docenteSeleccionado) {
+        const docenteActualizado: Docente = {
+          ...this.docenteSeleccionado,
+          ...formValue,
+          rol: 'profesor'
+        };
+        await this.docenteService.updateDocente(docenteActualizado);
+        this.notificationService.showSuccess('Docente actualizado correctamente');
+      } else {
+        const nuevoDocente: Docente = {
+          id: crypto.randomUUID() || Date.now().toString(),
+          ...formValue,
+          rol: 'profesor',
+          materiasAsignadas: [],
+          fechaRegistro: new Date().toISOString(),
+          activo: true
+        };
+        await this.docenteService.addDocente(nuevoDocente);
+        
+        // El servicio ya crea el usuario, pero mostramos las credenciales
+        this.notificationService.showSuccess(`Docente agregado correctamente. Usuario: ${nuevoDocente.username}, Contraseña: ${nuevoDocente.password}`);
+      }
 
-    await this.loadDocentes();
-    this.cerrarModal();
+      await this.loadDocentes();
+      this.cerrarModal();
+    } catch (error: any) {
+      console.error('Error al guardar docente:', error);
+      this.notificationService.showError(error.message || 'Error al guardar el docente. Por favor, intente nuevamente.');
+    }
   }
 
   async eliminarDocente(id: string): Promise<void> {

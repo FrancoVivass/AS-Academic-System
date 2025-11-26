@@ -38,7 +38,8 @@
           <p>Cambiar entre modo claro y oscuro</p>
         </div>
         <button class="btn-toggle-theme" (click)="themeService.toggleTheme()">
-          {{ themeService.getTheme() === 'light' ? '🌙 Modo Oscuro' : '☀️ Modo Claro' }}
+          <mat-icon>{{ themeService.getTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+          {{ themeService.getTheme() === 'light' ? 'Modo Oscuro' : 'Modo Claro' }}
         </button>
       </div>
     </div>
@@ -46,13 +47,19 @@
     <div class="config-card">
       <h2>Exportar Datos</h2>
       <p>Descarga todos los datos del sistema en formato CSV</p>
-      <button class="btn-secondary" (click)="exportarDatos()">📥 Exportar a CSV</button>
+      <button class="btn-secondary" (click)="exportarDatos()">
+        <mat-icon>download</mat-icon>
+        Exportar a CSV
+      </button>
     </div>
 
     <div class="config-card danger-zone">
       <h2>Zona de Peligro</h2>
       <p>Elimina todos los datos almacenados en el sistema. Esta acción no se puede deshacer.</p>
-      <button class="btn-danger" (click)="limpiarDatos()">🗑️ Limpiar Todos los Datos</button>
+      <button class="btn-danger" (click)="limpiarDatos()">
+        <mat-icon>delete_forever</mat-icon>
+        Limpiar Todos los Datos
+      </button>
     </div>
   </div>
 </div>

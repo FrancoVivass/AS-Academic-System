@@ -28,6 +28,7 @@ import { Alumno } from '../../models/alumno.model';
 import { Aula, HorarioAula } from '../../models/aula.model';
 import { Docente } from '../../models/usuario.model';
 import { Router } from '@angular/router';
+import { SupabaseService } from '../../services/supabase.service';
 
 @Component({
   selector: 'app-carreras',
@@ -81,6 +82,7 @@ export class CarrerasComponent implements OnInit {
   mostrarCursos: boolean = false;
   cursosDeCarrera: Curso[] = [];
   materiasDisponibles: Materia[] = [];
+  materiasDisponiblesParaCurso: Materia[] = [];
   alumnosDisponibles: Alumno[] = [];
   aulasDisponibles: Aula[] = [];
   docentesDisponibles: Docente[] = [];
@@ -89,6 +91,9 @@ export class CarrerasComponent implements OnInit {
   mostrarAsignarMaterias: boolean = false;
   mostrarInscribirAlumnos: boolean = false;
   mostrarGestionarHorarios: boolean = false;
+  mostrarAlumnosInscritos: boolean = false;
+  alumnosInscritos: Alumno[] = [];
+  mostrarMateriasAsignadas: boolean = false;
   horariosTemporales: HorarioCurso[] = [];
   cursoForm: FormGroup;
   horarioForm: FormGroup;
@@ -104,7 +109,8 @@ export class CarrerasComponent implements OnInit {
     private notificationService: NotificationService,
     public permissionsService: PermissionsService,
     private router: Router,
-    private scrollLockService: ScrollLockService
+    private scrollLockService: ScrollLockService,
+    private supabaseService: SupabaseService
   ) {
     this.carreraForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -141,6 +147,14 @@ export class CarrerasComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.loadCarreras();
     await this.actualizarCaches();
+    
+    // Verificar si se creó una materia desde el wizard de carreras
+    const crearMateriaDesdeCarrera = sessionStorage.getItem('crearMateriaDesdeCarrera');
+    if (crearMateriaDesdeCarrera) {
+      // Actualizar cache de materias cuando se regresa
+      await this.actualizarCaches();
+      sessionStorage.removeItem('crearMateriaDesdeCarrera');
+    }
   }
 
   async loadCarreras(): Promise<void> {
@@ -236,7 +250,7 @@ export class CarrerasComponent implements OnInit {
       this.notificationService.showSuccess('Curso actualizado correctamente');
     } else {
       const nuevoCurso: Curso = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         carreraId: this.carreraSeleccionada.id,
         ...formValue,
         horarios: [],
@@ -343,45 +357,85 @@ export class CarrerasComponent implements OnInit {
   async inscribirAlumnoACurso(alumnoId: string): Promise<void> {
     if (!this.cursoSeleccionado) return;
     
-    if (this.cursoSeleccionado.alumnos.includes(alumnoId)) {
-      this.notificationService.showWarning('El alumno ya está inscrito en este curso');
-      return;
-    }
-    
-    const alumno = await this.alumnoService.getAlumnoById(alumnoId);
-    if (!alumno) {
-      this.notificationService.showError('Alumno no encontrado');
-      return;
-    }
-    
-    // Si el alumno pertenece a otra carrera, actualizar su carreraId al inscribirlo
-    if (alumno.carreraId !== this.cursoSeleccionado.carreraId) {
-      alumno.carreraId = this.cursoSeleccionado.carreraId;
-      await this.alumnoService.updateAlumno(alumno);
-      this.notificationService.showInfo(`El alumno ha sido asignado a la carrera "${this.carreraSeleccionada?.nombre || ''}"`);
-    }
-    
-    if (this.cursoSeleccionado.cupoActual && this.cursoSeleccionado.cupoActual >= (this.cursoSeleccionado.cupoMaximo || this.cursoSeleccionado.capacidad)) {
-      this.notificationService.showWarning('El curso está completo. El alumno será agregado a la lista de espera');
-      if (!this.cursoSeleccionado.listaEspera) {
-        this.cursoSeleccionado.listaEspera = [];
+    try {
+      if (this.cursoSeleccionado.alumnos.includes(alumnoId)) {
+        this.notificationService.showWarning('El alumno ya está inscrito en este curso');
+        return;
       }
-      this.cursoSeleccionado.listaEspera.push(alumnoId);
-    } else {
-      this.cursoSeleccionado.alumnos.push(alumnoId);
-      this.cursoSeleccionado.cupoActual = (this.cursoSeleccionado.cupoActual || 0) + 1;
       
-      // Actualizar curso del alumno
-      alumno.curso = `${this.cursoSeleccionado['año']}° ${this.cursoSeleccionado.division}`;
-      await this.alumnoService.updateAlumno(alumno);
+      const alumno = await this.alumnoService.getAlumnoById(alumnoId);
+      if (!alumno) {
+        this.notificationService.showError('Alumno no encontrado');
+        return;
+      }
       
-      // Inscribir automáticamente al alumno en todas las materias del curso
-      this.inscribirAlumnoEnMateriasDelCurso(alumnoId, this.cursoSeleccionado);
+      // Si el alumno pertenece a otra carrera, actualizar su carreraId al inscribirlo
+      if (alumno.carreraId !== this.cursoSeleccionado.carreraId) {
+        alumno.carreraId = this.cursoSeleccionado.carreraId;
+        await this.alumnoService.updateAlumno(alumno);
+        this.notificationService.showInfo(`El alumno ha sido asignado a la carrera "${this.carreraSeleccionada?.nombre || ''}"`);
+      }
+      
+      // Verificar cupo
+      const cupoMaximo = this.cursoSeleccionado.cupoMaximo || this.cursoSeleccionado.capacidad || 30;
+      const cupoActual = this.cursoSeleccionado.cupoActual || 0;
+      
+      if (cupoActual >= cupoMaximo) {
+        this.notificationService.showWarning('El curso está completo. El alumno será agregado a la lista de espera');
+        // Agregar a lista de espera usando el servicio
+        await this.cursoService.agregarAlumnoACurso(this.cursoSeleccionado.id, alumnoId);
+        // Actualizar estado a lista de espera
+        const { data: alumnoCurso } = await this.cursoService['supabase'].client
+          .from('alumno_cursos')
+          .select('id')
+          .eq('alumno_id', alumnoId)
+          .eq('curso_id', this.cursoSeleccionado.id)
+          .single();
+        
+        if (alumnoCurso) {
+          await this.cursoService['supabase'].update('alumno_cursos', alumnoCurso.id, {
+            estado: 'en_lista_espera'
+          });
+        }
+      } else {
+        // Usar el método del servicio para inscribir al alumno
+        await this.cursoService.agregarAlumnoACurso(this.cursoSeleccionado.id, alumnoId);
+        
+        // Actualizar cupo actual del curso
+        const cursoActualizado = await this.cursoService.getCursoById(this.cursoSeleccionado.id);
+        if (cursoActualizado) {
+          cursoActualizado.cupoActual = (cursoActualizado.cupoActual || 0) + 1;
+          await this.cursoService.updateCurso(cursoActualizado);
+          this.cursoSeleccionado = cursoActualizado;
+        }
+        
+        // Actualizar curso del alumno
+        alumno.curso = `${this.cursoSeleccionado['año']}° ${this.cursoSeleccionado.division}`;
+        await this.alumnoService.updateAlumno(alumno);
+        
+        // Inscribir automáticamente al alumno en todas las materias del curso
+        await this.inscribirAlumnoEnMateriasDelCurso(alumnoId, this.cursoSeleccionado);
+      }
+      
+      this.notificationService.showSuccess('Alumno inscrito correctamente');
+      
+      // Recargar los cursos para actualizar la vista
+      if (this.carreraSeleccionada) {
+        this.cursosDeCarrera = await this.cursoService.getCursosByCarrera(this.carreraSeleccionada.id);
+        // Actualizar el curso seleccionado
+        const cursoActualizado = this.cursosDeCarrera.find(c => c.id === this.cursoSeleccionado?.id);
+        if (cursoActualizado) {
+          this.cursoSeleccionado = cursoActualizado;
+        }
+      }
+      
+      // Recargar la lista de alumnos disponibles
+      await this.inscribirAlumnos(this.cursoSeleccionado);
+    } catch (error: any) {
+      console.error('Error inscribiendo alumno:', error);
+      const errorMessage = error?.message || 'Error desconocido al inscribir el alumno. Por favor, intente nuevamente.';
+      this.notificationService.showError(`Error: ${errorMessage}`);
     }
-    
-    await this.cursoService.updateCurso(this.cursoSeleccionado);
-    this.notificationService.showSuccess('Alumno inscrito correctamente');
-    await this.inscribirAlumnos(this.cursoSeleccionado);
   }
 
   inscribirAlumnoEnMateriasDelCurso(alumnoId: string, curso: Curso): void {
@@ -393,7 +447,7 @@ export class CarrerasComponent implements OnInit {
         
         if (!inscripcionExistente) {
           const inscripcion = {
-            id: Date.now().toString() + materiaId,
+            id: crypto.randomUUID(),
             alumnoId: alumnoId,
             materiaId: materiaId,
             fechaInscripcion: new Date().toISOString()
@@ -473,7 +527,7 @@ export class CarrerasComponent implements OnInit {
     }
     
     const nuevoHorario: HorarioCurso = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       ...formValue,
       aula: formValue.aulaId ? this.aulasDisponibles.find(a => a.id === formValue.aulaId)?.nombre : undefined
     };
@@ -483,7 +537,7 @@ export class CarrerasComponent implements OnInit {
     // Guardar en horarios de aula
     if (formValue.aulaId) {
       const horarioAula: HorarioAula = {
-        id: Date.now().toString() + '_aula',
+        id: crypto.randomUUID(),
         aulaId: formValue.aulaId,
         dia: formValue.dia,
         horaInicio: formValue.horaInicio,
@@ -513,13 +567,25 @@ export class CarrerasComponent implements OnInit {
     this.cerrarModales();
   }
 
+  verMateriasAsignadas(curso: Curso): void {
+    this.cursoSeleccionado = curso;
+    this.mostrarMateriasAsignadas = true;
+  }
+
+  getAnioMateria(materia: Materia): number | null {
+    return (materia as any).año || (materia as any)['año'] || null;
+  }
+
   cerrarModales(): void {
     this.mostrarAsignarMaterias = false;
     this.mostrarInscribirAlumnos = false;
     this.mostrarGestionarHorarios = false;
+    this.mostrarAlumnosInscritos = false;
+    this.mostrarMateriasAsignadas = false;
     this.cursoSeleccionado = null;
     this.horariosTemporales = [];
     this.horarioForm.reset();
+    this.alumnosInscritos = [];
   }
 
   tieneMateria(materiaId: string): boolean {
@@ -588,6 +654,47 @@ export class CarrerasComponent implements OnInit {
     return aulasUnicas.size;
   }
 
+  async verAlumnosInscritos(curso: Curso): Promise<void> {
+    this.cursoSeleccionado = curso;
+    
+    // Cargar los alumnos inscritos desde la base de datos
+    try {
+      // Primero obtener los IDs de alumnos inscritos
+      const { data: alumnoCursosData, error: alumnoCursosError } = await this.supabaseService.client
+        .from('alumno_cursos')
+        .select('alumno_id')
+        .eq('curso_id', curso.id)
+        .eq('estado', 'inscrito');
+
+      if (alumnoCursosError) {
+        console.error('Error cargando alumno_cursos:', alumnoCursosError);
+        this.notificationService.showError('Error al cargar los alumnos inscritos');
+        return;
+      }
+
+      if (!alumnoCursosData || alumnoCursosData.length === 0) {
+        this.alumnosInscritos = [];
+        this.mostrarAlumnosInscritos = true;
+        return;
+      }
+
+      // Obtener los datos completos de los alumnos
+      const alumnoIds = alumnoCursosData.map((ac: any) => ac.alumno_id);
+      const alumnosCompletos = await this.alumnoService.getAlumnos();
+      
+      // Filtrar solo los alumnos inscritos en este curso
+      this.alumnosInscritos = alumnosCompletos.filter(alumno => 
+        alumnoIds.includes(alumno.id)
+      );
+
+      console.log(`Alumnos inscritos cargados: ${this.alumnosInscritos.length}`);
+      this.mostrarAlumnosInscritos = true;
+    } catch (error) {
+      console.error('Error cargando alumnos inscritos:', error);
+      this.notificationService.showError('Error al cargar los alumnos inscritos');
+    }
+  }
+
   getAlumnoById(alumnoId: string): Alumno | undefined {
     return this.alumnosCache.get(alumnoId);
   }
@@ -605,7 +712,7 @@ export class CarrerasComponent implements OnInit {
     return this.aulasCache.get(aulaId);
   }
 
-  abrirModalNuevo(): void {
+  async abrirModalNuevo(): Promise<void> {
     // Iniciar wizard
     this.mostrarWizard = true;
     this.modalAbierto = false;
@@ -625,8 +732,11 @@ export class CarrerasComponent implements OnInit {
       duracionCuatrimestres: 6,
       estado: 'activa'
     });
-    this.loadAulasDisponibles();
-    this.loadDocentesDisponibles();
+    await this.loadAulasDisponibles();
+    await this.loadDocentesDisponibles();
+    // Actualizar cache de materias por si se creó una materia desde el wizard
+    await this.actualizarCaches();
+    await this.actualizarMateriasDisponibles();
   }
   
   cerrarWizard(): void {
@@ -654,7 +764,7 @@ export class CarrerasComponent implements OnInit {
     const esEdicion = this.modoEdicion && this.carreraSeleccionada;
     
     this.wizardData.carrera = {
-      id: esEdicion ? this.carreraSeleccionada!.id : Date.now().toString(),
+      id: esEdicion ? this.carreraSeleccionada!.id : crypto.randomUUID(),
       nombre: formValue.nombre,
       codigo: formValue.codigo,
       descripcion: formValue.descripcion,
@@ -700,7 +810,7 @@ export class CarrerasComponent implements OnInit {
   // Paso 3: Crear Cursos
   agregarCursoWizard(): void {
     const nuevoCurso: Partial<Curso> = {
-      id: Date.now().toString() + Math.random(),
+      id: crypto.randomUUID(),
       nombre: '',
       codigo: '',
       año: 1,
@@ -716,6 +826,7 @@ export class CarrerasComponent implements OnInit {
       estado: 'activo'
     };
     this.wizardData.cursos.push(nuevoCurso);
+    this.notificationService.showInfo('Curso agregado. Complete los datos del curso.');
   }
   
   eliminarCursoWizard(index: number): void {
@@ -748,13 +859,40 @@ export class CarrerasComponent implements OnInit {
   }
   
   // Paso 4: Asignar Materias (Seleccionar materias directamente, el profesor ya viene con la materia)
-  getMateriasDisponiblesParaCurso(curso: Partial<Curso>): Materia[] {
+  async actualizarMateriasDisponibles(): Promise<void> {
+    // Actualizar cache antes de obtener las materias
+    await this.actualizarCaches();
     // Obtener TODAS las materias disponibles (con o sin carreraId asignado)
     // El profesor ya viene asignado a cada materia
-    return Array.from(this.materiasCache.values());
+    this.materiasDisponiblesParaCurso = Array.from(this.materiasCache.values());
+  }
+  
+  getMateriasDisponiblesParaCurso(curso: Partial<Curso>): Materia[] {
+    // Retornar todas las materias disponibles, pero filtrar por año y cuatrimestre si están definidos
+    // Si el curso tiene año y cuatrimestre, mostrar materias que coincidan O que no tengan año/cuatrimestre definidos
+    if (!curso['año'] && !curso.cuatrimestre) {
+      // Si el curso no tiene año ni cuatrimestre, mostrar todas las materias
+      return this.materiasDisponiblesParaCurso;
+    }
+    
+    return this.materiasDisponiblesParaCurso.filter(materia => {
+      // Mostrar materia si:
+      // 1. No tiene año definido O coincide con el año del curso
+      // 2. Y no tiene cuatrimestre definido O coincide con el cuatrimestre del curso
+      const añoCoincide = !materia['año'] || materia['año'] === curso['año'];
+      const cuatrimestreCoincide = !materia.cuatrimestre || materia.cuatrimestre === curso.cuatrimestre;
+      return añoCoincide && cuatrimestreCoincide;
+    });
   }
   
   async toggleMateriaEnCurso(materiaId: string, cursoId: string, profesorId: string, nombreMateria: string): Promise<void> {
+    // Validar que el cursoId sea válido
+    if (!cursoId) {
+      console.error('Error: cursoId no está definido');
+      this.notificationService.showError('Error: El curso no tiene un ID válido');
+      return;
+    }
+    
     // Obtener el profesor de la materia si no viene
     const materia = this.materiasCache.get(materiaId);
     const profesorMateria = materia?.profesor || profesorId;
@@ -777,6 +915,7 @@ export class CarrerasComponent implements OnInit {
       if (indexSeleccionadas > -1) {
         this.wizardData.materiasSeleccionadas.splice(indexSeleccionadas, 1);
       }
+      this.notificationService.showInfo(`Materia "${nombreMateria}" removida del curso`);
     } else {
       // Agregar materia
       cursoData.materias.push(materiaId);
@@ -794,6 +933,7 @@ export class CarrerasComponent implements OnInit {
         profesorId: profesorIdFinal,
         nombreMateria
       });
+      this.notificationService.showSuccess(`Materia "${nombreMateria}" asignada al curso`);
     }
   }
   
@@ -827,6 +967,10 @@ export class CarrerasComponent implements OnInit {
   completarPaso4(): void {
     // Validar que cada curso tenga al menos una materia
     for (let curso of this.wizardData.cursos) {
+      if (!curso.id) {
+        this.notificationService.showError(`El curso "${curso.nombre}" no tiene un ID válido. Por favor, recree el curso.`);
+        return;
+      }
       const cursoData = this.wizardData.materiasPorCurso.find(m => m.cursoId === curso.id);
       if (!cursoData || !cursoData.materias || cursoData.materias.length === 0) {
         this.notificationService.showError(`El curso "${curso.nombre}" debe tener al menos una materia asignada`);
@@ -834,17 +978,21 @@ export class CarrerasComponent implements OnInit {
       }
     }
     
-    this.notificationService.showSuccess('Materias asignadas. Finalizando...');
+    this.notificationService.showInfo('Materias asignadas. Finalizando...');
   }
   
   // Finalizar Wizard
   async finalizarWizard(): Promise<void> {
-    if (!this.wizardData.carrera) {
-      this.notificationService.showError('Error: No se pudo procesar la carrera');
-      return;
-    }
-    
-    const esEdicion = this.modoEdicion && this.carreraSeleccionada;
+    try {
+      if (!this.wizardData.carrera) {
+        this.notificationService.showError('Error: No se pudo procesar la carrera');
+        return;
+      }
+      
+      // Mostrar indicador de carga
+      this.notificationService.showInfo('Procesando carrera... Por favor espere.');
+      
+      const esEdicion = this.modoEdicion && this.carreraSeleccionada;
     
     // 1. Guardar/Actualizar carrera
     const carrera: Carrera = {
@@ -924,7 +1072,7 @@ export class CarrerasComponent implements OnInit {
       } else {
         // Crear nuevo curso
         const curso: Curso = {
-          id: cursoData.id || Date.now().toString() + Math.random(),
+          id: cursoData.id || crypto.randomUUID(),
           carreraId: carrera.id,
           nombre: cursoData.nombre!,
           codigo: cursoData.codigo!,
@@ -968,6 +1116,11 @@ export class CarrerasComponent implements OnInit {
     this.notificationService.showSuccess(mensaje);
     await this.loadCarreras();
     this.cerrarWizard();
+    } catch (error: any) {
+      console.error('Error al finalizar wizard:', error);
+      const errorMessage = error?.message || 'Error desconocido al crear la carrera. Por favor, intente nuevamente.';
+      this.notificationService.showError(`Error: ${errorMessage}`);
+    }
   }
 
   async abrirModalEditar(carrera: Carrera): Promise<void> {
@@ -1072,7 +1225,7 @@ export class CarrerasComponent implements OnInit {
       this.notificationService.showSuccess('Carrera actualizada correctamente');
     } else {
       const nuevaCarrera: Carrera = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         ...this.carreraForm.value,
         materiasObligatorias: [],
         materiasOptativas: [],

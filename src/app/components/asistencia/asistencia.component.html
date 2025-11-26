@@ -140,6 +140,7 @@
                           </div>
                           <div class="estado-info">
                             <span class="estado-badge" [style.background-color]="getColorEstado(asistencia.estado)">
+                              <mat-icon>{{ getIconoEstadoAsistencia(asistencia.estado) }}</mat-icon>
                               {{ getEstadoAsistenciaTexto(asistencia.estado) }}
                             </span>
                             @if (asistencia.horaRegistro && asistencia.estado === 'tardanza') {
@@ -363,6 +364,7 @@
             @if (permissionsService.puedeVer('editarAsistencias')) {
                   <div class="estado-actual">
                     <span [style.color]="getColorEstado(asistencia?.estado)">
+                      <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
                       {{ getEstadoAsistenciaTexto(asistencia?.estado) }}
                     </span>
                     @if (asistencia?.horaRegistro && asistencia?.estado === 'tardanza') {
@@ -405,6 +407,7 @@
                   </div>
             } @else {
                   <span class="asistencia-readonly" [style.color]="getColorEstado(asistencia?.estado)">
+                    <mat-icon>{{ getIconoEstadoAsistencia(asistencia?.estado) }}</mat-icon>
                     {{ getEstadoAsistenciaTexto(asistencia?.estado) }}
               </span>
             }

@@ -217,7 +217,7 @@
           </mat-step>
 
           <!-- Paso 4: Asignar Materias -->
-          <mat-step label="4. Asignar Materias">
+          <mat-step label="4. Asignar Materias" (interacted)="actualizarMateriasDisponibles()">
             <div class="wizard-form">
               <h3>Seleccione las materias para cada curso</h3>
               <p class="info-text">Seleccione las materias que se dictarán en cada curso. El profesor ya está asignado a cada materia.</p>
@@ -235,33 +235,42 @@
                       @if (materiasDisponibles.length > 0) {
                         <div class="materias-grid">
                           @for (materia of materiasDisponibles; track materia.id) {
-                            <!-- Mostrar todas las materias, filtrando por año y cuatrimestre si están definidos -->
-                            @if ((!materia['año'] || materia['año'] === curso['año']) && (!materia.cuatrimestre || materia.cuatrimestre === curso.cuatrimestre)) {
-                              <mat-card 
-                                [class.selected]="tieneMateriaEnCurso(materia.id, curso.id!)" 
-                                (click)="toggleMateriaEnCurso(materia.id, curso.id!, materia.profesor || '', materia.nombre)"
-                                class="materia-card-selectable">
-                                <mat-card-content>
-                                  <div class="materia-header">
-                                    <h4>{{ materia.nombre }}</h4>
-                                    <mat-checkbox 
-                                      [checked]="tieneMateriaEnCurso(materia.id, curso.id!)" 
-                                      (click)="toggleMateriaEnCurso(materia.id, curso.id!, materia.profesor || '', materia.nombre); $event.stopPropagation()">
-                                    </mat-checkbox>
-                                  </div>
-                                  <p><strong>Código:</strong> {{ materia.codigo }}</p>
-                                  <p><strong>Profesor:</strong> {{ materia.profesor || 'Sin asignar' }}</p>
-                                  <p><strong>Tipo:</strong> {{ materia.tipo || 'No especificado' }}</p>
-                                  <p><strong>Horas semanales:</strong> {{ materia.horasSemanales || 0 }}</p>
-                                  @if (!materia.carreraId || materia.carreraId === '') {
-                                    <p class="info-text" style="margin-top: 0.5rem; font-size: 0.85rem; color: #ff9800;">
-                                      <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle;">info</mat-icon>
-                                      Se asignará a esta carrera
-                                    </p>
-                                  }
-                                </mat-card-content>
-                              </mat-card>
-                            }
+                            <mat-card 
+                              [class.selected]="tieneMateriaEnCurso(materia.id, curso.id || '')" 
+                              (click)="toggleMateriaEnCurso(materia.id, curso.id || '', materia.profesor || '', materia.nombre)"
+                              class="materia-card-selectable">
+                              <mat-card-content>
+                                <div class="materia-header">
+                                  <h4>{{ materia.nombre }}</h4>
+                                  <mat-checkbox 
+                                    [checked]="tieneMateriaEnCurso(materia.id, curso.id || '')" 
+                                    (click)="toggleMateriaEnCurso(materia.id, curso.id || '', materia.profesor || '', materia.nombre); $event.stopPropagation()">
+                                  </mat-checkbox>
+                                </div>
+                                <p><strong>Código:</strong> {{ materia.codigo }}</p>
+                                <p><strong>Profesor:</strong> {{ materia.profesor || 'Sin asignar' }}</p>
+                                <p><strong>Tipo:</strong> {{ materia.tipo || 'No especificado' }}</p>
+                                <p><strong>Horas semanales:</strong> {{ materia.horasSemanales || 0 }}</p>
+                                @if (materia['año']) {
+                                  <p><strong>Año:</strong> {{ materia['año'] }}°</p>
+                                }
+                                @if (materia.cuatrimestre) {
+                                  <p><strong>Cuatrimestre:</strong> {{ materia.cuatrimestre }}</p>
+                                }
+                                @if ((materia['año'] && materia['año'] !== curso['año']) || (materia.cuatrimestre && materia.cuatrimestre !== curso.cuatrimestre)) {
+                                  <p class="warning-text" style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem; background: #fff3cd; border-left: 3px solid #ffc107;">
+                                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle;">warning</mat-icon>
+                                    Año/Cuatrimestre diferente al curso
+                                  </p>
+                                }
+                                @if (!materia.carreraId || materia.carreraId === '') {
+                                  <p class="info-text" style="margin-top: 0.5rem; font-size: 0.85rem; color: #ff9800;">
+                                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle;">info</mat-icon>
+                                    Se asignará a esta carrera
+                                  </p>
+                                }
+                              </mat-card-content>
+                            </mat-card>
                           }
                         </div>
                         <p class="info-text" style="margin-top: 1rem;">
@@ -330,7 +339,7 @@
         <ng-container matColumnDef="acciones">
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let carrera">
-            <button mat-button color="primary" (click)="verDetalleCarrera(carrera)">
+            <button mat-raised-button color="primary" class="btn-detalle-completo" (click)="verDetalleCarrera(carrera)">
               <mat-icon>info</mat-icon>
               Ver Detalle Completo
             </button>
@@ -404,23 +413,51 @@
   <!-- Vista de Detalle Completo de la Carrera -->
   @if (mostrarCursos && carreraSeleccionada) {
     <div class="cursos-view">
-      <div class="cursos-header">
-        <div>
-          <button mat-icon-button (click)="cerrarCursos()">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
-          <div>
-            <h2>{{ carreraSeleccionada.nombre }}</h2>
-            <p style="color: #718096; margin-top: 0.5rem;">
-              <strong>Código:</strong> {{ carreraSeleccionada.codigo }} | 
-              <strong>Duración:</strong> {{ carreraSeleccionada.duracionAnios }} años | 
-              <strong>Estado:</strong> {{ carreraSeleccionada.estado }}
-            </p>
-            @if (carreraSeleccionada.descripcion) {
-              <p style="color: #4a5568; margin-top: 0.5rem;">{{ carreraSeleccionada.descripcion }}</p>
-            }
+      <div class="carrera-detalle-container">
+        <div class="carrera-detalle-header">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button mat-icon-button (click)="cerrarCursos()" style="color: #4a5568;">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+            <h2>
+              <mat-icon>school</mat-icon>
+              {{ carreraSeleccionada.nombre }}
+            </h2>
           </div>
         </div>
+        
+        <div class="carrera-info-detalle" style="margin-bottom: 2rem; padding: 1.5rem; background: #f7fafc; border-radius: 10px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div>
+              <p style="color: #4a5568; margin: 0.5rem 0; font-size: 0.9375rem;">
+                <strong style="color: #2d3748;">Código:</strong> {{ carreraSeleccionada.codigo }}
+              </p>
+            </div>
+            <div>
+              <p style="color: #4a5568; margin: 0.5rem 0; font-size: 0.9375rem;">
+                <strong style="color: #2d3748;">Duración:</strong> {{ carreraSeleccionada.duracionAnios }} año(s) / {{ carreraSeleccionada.duracionCuatrimestres }} cuatrimestre(s)
+              </p>
+            </div>
+            <div>
+              <p style="color: #4a5568; margin: 0.5rem 0; font-size: 0.9375rem;">
+                <strong style="color: #2d3748;">Estado:</strong> 
+                <mat-chip [color]="carreraSeleccionada.estado === 'activa' ? 'primary' : 'warn'" style="margin-left: 0.5rem;">
+                  {{ carreraSeleccionada.estado }}
+                </mat-chip>
+              </p>
+            </div>
+          </div>
+          @if (carreraSeleccionada.descripcion) {
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+              <p style="color: #4a5568; margin: 0; font-size: 0.9375rem; line-height: 1.6;">
+                <strong style="color: #2d3748;">Descripción:</strong> {{ carreraSeleccionada.descripcion }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+      
+      <div class="cursos-header" style="margin-bottom: 1.5rem; display: flex; justify-content: flex-end;">
         @if (permissionsService.puedeVer('crearCursos')) {
           <button mat-raised-button color="primary" (click)="abrirModalNuevoCurso()">
             <mat-icon>add</mat-icon>
@@ -493,66 +530,94 @@
               </mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
-              <div class="curso-info">
-                <p><strong>Aula:</strong> {{ getAulaNombre(curso.aulaId) || 'Sin asignar' }}</p>
-                <p><strong>Alumnos:</strong> {{ curso.alumnos.length }} / {{ curso.capacidad }}</p>
-                <p><strong>Materias:</strong> {{ curso.materias.length }}</p>
-                <p><strong>Cuatrimestre:</strong> {{ curso.cuatrimestre || 1 }}</p>
-                <p><strong>Modalidad:</strong> {{ curso.modalidad || 'No especificada' }}</p>
-              </div>
-              @if (curso.materias && curso.materias.length > 0) {
-                <div class="materias-list" style="margin-top: 1rem;">
-                  <p><strong>Materias asignadas:</strong></p>
-                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-                    @for (materiaId of curso.materias; track materiaId) {
-                      @let materia = getMateriaById(materiaId);
-                      @if (materia) {
-                        <mat-chip>
-                          {{ materia.nombre }} 
-                          @if (materia.profesor) {
-                            <span style="font-size: 0.85em; opacity: 0.8;"> - {{ materia.profesor }}</span>
-                          }
-                        </mat-chip>
-                      }
-                    }
+              <div class="curso-info-grid">
+                <div class="curso-info-item">
+                  <mat-icon>meeting_room</mat-icon>
+                  <div>
+                    <span class="info-label">Aula</span>
+                    <span class="info-value">{{ getAulaNombre(curso.aulaId) || 'Sin asignar' }}</span>
                   </div>
                 </div>
-              }
+                <div class="curso-info-item">
+                  <mat-icon>people</mat-icon>
+                  <div>
+                    <span class="info-label">Alumnos</span>
+                    <span class="info-value">{{ curso.alumnos.length }} / {{ curso.capacidad }}</span>
+                  </div>
+                </div>
+                <div class="curso-info-item">
+                  <mat-icon>menu_book</mat-icon>
+                  <div>
+                    <span class="info-label">Materias</span>
+                    <span class="info-value">{{ curso.materias.length }}</span>
+                  </div>
+                </div>
+                <div class="curso-info-item">
+                  <mat-icon>calendar_today</mat-icon>
+                  <div>
+                    <span class="info-label">Cuatrimestre</span>
+                    <span class="info-value">{{ curso.cuatrimestre || 1 }}</span>
+                  </div>
+                </div>
+                <div class="curso-info-item">
+                  <mat-icon>school</mat-icon>
+                  <div>
+                    <span class="info-label">Modalidad</span>
+                    <span class="info-value">{{ curso.modalidad || 'No especificada' }}</span>
+                  </div>
+                </div>
+              </div>
             </mat-card-content>
             <mat-card-actions class="curso-actions">
-              <div class="curso-actions-grid">
-                @if (permissionsService.puedeVer('editarCursos')) {
-                  <button mat-button color="primary" class="action-btn" (click)="abrirModalEditarCurso(curso)">
-                    <mat-icon>edit</mat-icon>
-                    <span>Editar</span>
+              <div class="curso-actions-container">
+                <div class="curso-actions-row">
+                  @if (permissionsService.puedeVer('editarCursos')) {
+                    <button mat-raised-button color="primary" class="action-btn-large" (click)="abrirModalEditarCurso(curso)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                  }
+                  <button mat-raised-button color="accent" class="action-btn-large" (click)="verMateriasAsignadas(curso)">
+                    <mat-icon>menu_book</mat-icon>
+                    <div class="action-btn-text">
+                      <span>Ver Materias</span>
+                      <span class="action-badge">{{ curso.materias.length }}</span>
+                    </div>
                   </button>
-                }
-                <button mat-button color="accent" class="action-btn" (click)="asignarMaterias(curso)">
-                  <mat-icon>menu_book</mat-icon>
-                  <div class="action-btn-content">
-                    <span>Asignar Materias</span>
-                    <span class="action-count">{{ curso.materias.length }}</span>
-                  </div>
-                </button>
-                <button mat-button color="primary" class="action-btn" (click)="gestionarHorarios(curso)">
-                  <mat-icon>schedule</mat-icon>
-                  <div class="action-btn-content">
-                    <span>Horarios</span>
-                    <span class="action-count">{{ curso.horarios.length }}</span>
-                  </div>
-                </button>
-                <button mat-button color="primary" class="action-btn" (click)="inscribirAlumnos(curso)">
-                  <mat-icon>people</mat-icon>
-                  <div class="action-btn-content">
-                    <span>Inscribir Alumnos</span>
-                    <span class="action-count">{{ curso.alumnos.length }}/{{ curso.capacidad }}</span>
-                  </div>
-                </button>
+                </div>
+                <div class="curso-actions-row">
+                  <button mat-raised-button color="primary" class="action-btn-large" (click)="asignarMaterias(curso)">
+                    <mat-icon>add_circle</mat-icon>
+                    <span>Asignar</span>
+                  </button>
+                  <button mat-raised-button color="primary" class="action-btn-large" (click)="gestionarHorarios(curso)">
+                    <mat-icon>schedule</mat-icon>
+                    <div class="action-btn-text">
+                      <span>Horarios</span>
+                      <span class="action-badge">{{ curso.horarios.length }}</span>
+                    </div>
+                  </button>
+                </div>
+                <div class="curso-actions-row">
+                  <button mat-raised-button color="accent" class="action-btn-large" (click)="verAlumnosInscritos(curso)">
+                    <mat-icon>people</mat-icon>
+                    <div class="action-btn-text">
+                      <span>Ver Alumnos</span>
+                      <span class="action-badge">{{ curso.alumnos.length }}/{{ curso.capacidad }}</span>
+                    </div>
+                  </button>
+                  <button mat-raised-button color="primary" class="action-btn-large" (click)="inscribirAlumnos(curso)">
+                    <mat-icon>person_add</mat-icon>
+                    <span>Inscribir</span>
+                  </button>
+                </div>
                 @if (permissionsService.puedeVer('eliminarCursos')) {
-                  <button mat-button color="warn" class="action-btn" (click)="eliminarCurso(curso.id)">
-                    <mat-icon>delete</mat-icon>
-                    <span>Eliminar</span>
-                  </button>
+                  <div class="curso-actions-row">
+                    <button mat-raised-button color="warn" class="action-btn-large action-btn-delete" (click)="eliminarCurso(curso.id)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
                 }
               </div>
             </mat-card-actions>
@@ -903,6 +968,163 @@
           <div class="modal-actions">
             <button mat-button (click)="cerrarModales()">Cancelar</button>
             <button mat-raised-button color="primary" (click)="guardarHorarios()">Guardar Horarios</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Ver Alumnos Inscritos -->
+  @if (mostrarAlumnosInscritos && cursoSeleccionado) {
+    <div class="modal-overlay" (click)="cerrarModales()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>people</mat-icon>
+            Alumnos Inscriptos - {{ cursoSeleccionado.nombre }}
+          </h2>
+          <button mat-icon-button (click)="cerrarModales()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="modal-body">
+          @if (alumnosInscritos.length === 0) {
+            <div class="empty-state">
+              <mat-icon style="font-size: 64px; width: 64px; height: 64px; color: #cbd5e0; margin-bottom: 1rem;">people_outline</mat-icon>
+              <p style="color: #718096; font-size: 1.125rem;">No hay alumnos inscritos en este curso</p>
+            </div>
+          } @else {
+            <div class="alumnos-inscritos-header">
+              <p style="color: #4a5568; font-size: 1rem; margin: 0;">
+                <strong>Total de alumnos inscritos: {{ alumnosInscritos.length }} / {{ cursoSeleccionado.capacidad }}</strong>
+              </p>
+            </div>
+            <div class="alumnos-inscritos-list">
+              @for (alumno of alumnosInscritos; track alumno.id) {
+                <mat-card class="alumno-inscrito-card">
+                  <mat-card-content>
+                    <div class="alumno-inscrito-content">
+                      <div class="alumno-info">
+                        <h3 style="margin: 0 0 0.5rem 0; color: #2d3748; font-size: 1.125rem;">
+                          {{ alumno.nombre }} {{ alumno.apellido }}
+                        </h3>
+                        <div class="alumno-details">
+                          <p style="margin: 0.25rem 0; color: #718096;">
+                            <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">badge</mat-icon>
+                            DNI: {{ alumno.dni }}
+                          </p>
+                          @if (alumno.email) {
+                            <p style="margin: 0.25rem 0; color: #718096;">
+                              <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">email</mat-icon>
+                              {{ alumno.email }}
+                            </p>
+                          }
+                          @if (alumno.telefono) {
+                            <p style="margin: 0.25rem 0; color: #718096;">
+                              <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">phone</mat-icon>
+                              {{ alumno.telefono }}
+                            </p>
+                          }
+                        </div>
+                      </div>
+                      <div class="alumno-actions">
+                        <button mat-icon-button color="warn" (click)="desinscribirAlumnoACurso(alumno.id)" 
+                                matTooltip="Desinscribir alumno">
+                          <mat-icon>person_remove</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+          <div class="modal-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e2e8f0;">
+            <button mat-raised-button color="primary" (click)="inscribirAlumnos(cursoSeleccionado)">
+              <mat-icon>person_add</mat-icon>
+              Inscribir Más Alumnos
+            </button>
+            <button mat-button (click)="cerrarModales()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Ver Materias Asignadas -->
+  @if (mostrarMateriasAsignadas && cursoSeleccionado) {
+    <div class="modal-overlay" (click)="cerrarModales()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>menu_book</mat-icon>
+            Materias Asignadas - {{ cursoSeleccionado.nombre }}
+          </h2>
+          <button mat-icon-button (click)="cerrarModales()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="modal-body">
+          @if (!cursoSeleccionado.materias || cursoSeleccionado.materias.length === 0) {
+            <div class="empty-state">
+              <mat-icon style="font-size: 64px; width: 64px; height: 64px; color: #cbd5e0; margin-bottom: 1rem;">menu_book</mat-icon>
+              <p style="color: #718096; font-size: 1.125rem;">No hay materias asignadas a este curso</p>
+            </div>
+          } @else {
+            <div class="materias-asignadas-header">
+              <p style="color: #4a5568; font-size: 1rem; margin: 0;">
+                <strong>Total de materias asignadas: {{ cursoSeleccionado.materias.length }}</strong>
+              </p>
+            </div>
+            <div class="materias-asignadas-list">
+              @for (materiaId of cursoSeleccionado.materias; track materiaId) {
+                @let materia = getMateriaById(materiaId);
+                @if (materia) {
+                  <mat-card class="materia-asignada-card">
+                    <mat-card-content>
+                      <div class="materia-asignada-content">
+                        <div class="materia-info">
+                          <h3 style="margin: 0 0 0.5rem 0; color: #2d3748; font-size: 1.125rem;">
+                            {{ materia.nombre }}
+                          </h3>
+                          <div class="materia-details">
+                            <p style="margin: 0.25rem 0; color: #718096;">
+                              <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">code</mat-icon>
+                              Código: {{ materia.codigo }}
+                            </p>
+                            @if (materia.profesor) {
+                              <p style="margin: 0.25rem 0; color: #718096;">
+                                <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">person</mat-icon>
+                                Profesor: {{ materia.profesor }}
+                              </p>
+                            }
+                            @if (getAnioMateria(materia)) {
+                              <p style="margin: 0.25rem 0; color: #718096;">
+                                <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">calendar_today</mat-icon>
+                                Año: {{ getAnioMateria(materia) }}°
+                              </p>
+                            }
+                            @if (materia.cuatrimestre) {
+                              <p style="margin: 0.25rem 0; color: #718096;">
+                                <mat-icon style="font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 0.5rem;">event</mat-icon>
+                                Cuatrimestre: {{ materia.cuatrimestre }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                }
+              }
+            </div>
+          }
+          <div class="modal-actions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e2e8f0;">
+            <button mat-raised-button color="primary" (click)="asignarMaterias(cursoSeleccionado)">
+              <mat-icon>add</mat-icon>
+              Asignar Más Materias
+            </button>
+            <button mat-button (click)="cerrarModales()">Cerrar</button>
           </div>
         </div>
       </div>

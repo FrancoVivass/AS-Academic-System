@@ -1,209 +1,41 @@
+/* Importar estilos compartidos */
+@import '../shared-gestion-styles.css';
+
+/* Estilos específicos para Biblioteca */
 .biblioteca-container {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.header-section h1 {
-  color: var(--text-primary);
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-section p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-.filters-card {
-  margin-bottom: 1.5rem;
-  border-radius: 16px !important;
-}
-
-.filters-section {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1rem;
-}
-
-.search-field, .filter-field {
-  width: 100%;
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
 }
 
 .recursos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
 }
 
 .recurso-card {
-  border-radius: 16px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.recurso-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.tipo-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--primary-blue);
-  background: rgba(36, 106, 115, 0.1);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
 }
 
-.recurso-info {
-  flex: 1;
+.recurso-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
 }
 
-.recurso-descripcion {
-  color: var(--text-secondary);
-  margin: 1rem 0;
-  font-size: 0.9rem;
-}
-
-.recurso-meta {
-  display: flex;
-  gap: 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  margin: 1rem 0;
-}
-
-.recurso-meta span {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.recurso-meta mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-}
-
-.recurso-etiquetas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.empty-card {
-  border-radius: 16px !important;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--text-secondary);
-}
-
-.empty-state mat-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: var(--primary-blue);
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(22, 15, 41, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-  background: var(--white);
-  border-radius: 20px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-xl);
-  animation: scaleIn 0.3s ease;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2rem;
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-  color: white;
-  border-radius: 20px 20px 0 0;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-.modal-form {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(36, 106, 115, 0.1);
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-  .filters-section {
-    grid-template-columns: 1fr;
+  .biblioteca-container {
+    padding: 1rem;
   }
 
   .recursos-grid {
     grid-template-columns: 1fr;
   }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
 }
-

@@ -1,0 +1,100 @@
+<div class="como-funciona-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>school</mat-icon>
+        Cómo Funciona - Profesor
+      </h1>
+      <p>Guía completa para profesores: qué puedes hacer y cómo hacerlo</p>
+    </div>
+    <button mat-raised-button color="primary" routerLink="/app/dashboard">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <div class="content-section">
+    <mat-card class="intro-card">
+      <mat-card-content>
+        <h2>Bienvenido Profesor</h2>
+        <p>Esta guía te ayudará a entender todas las funcionalidades disponibles para profesores y cómo usarlas paso a paso.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="steps-section">
+      <h2 class="section-title">
+        <mat-icon>list</mat-icon>
+        Pasos para Usar el Sistema
+      </h2>
+      
+      @for (paso of pasos; track paso.titulo; let i = $index) {
+        <mat-card class="step-card">
+          <mat-card-header>
+            <div class="step-number">{{ i + 1 }}</div>
+            <div class="step-header-content">
+              <mat-card-title>
+                <mat-icon>{{ paso.icono }}</mat-icon>
+                {{ paso.titulo }}
+              </mat-card-title>
+              <mat-card-subtitle>{{ paso.descripcion }}</mat-card-subtitle>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <ul class="step-details">
+              @for (detalle of paso.detalles; track detalle) {
+                <li>{{ detalle }}</li>
+              }
+            </ul>
+            <button mat-button color="primary" [routerLink]="paso.ruta">
+              <mat-icon>arrow_forward</mat-icon>
+              Ir a {{ paso.titulo }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <div class="features-section">
+      <h2 class="section-title">
+        <mat-icon>apps</mat-icon>
+        Funcionalidades Disponibles
+      </h2>
+      
+      <div class="features-grid">
+        @for (feature of funcionalidades; track feature.titulo) {
+          <mat-card class="feature-card">
+            <mat-card-header>
+              <mat-icon class="feature-icon">{{ feature.icono }}</mat-icon>
+              <mat-card-title>{{ feature.titulo }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>{{ feature.descripcion }}</p>
+              <button mat-button color="primary" [routerLink]="feature.ruta">
+                <mat-icon>open_in_new</mat-icon>
+                Ir a {{ feature.titulo }}
+              </button>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <mat-card class="tips-card">
+      <mat-card-header>
+        <mat-icon>lightbulb</mat-icon>
+        <mat-card-title>Consejos Importantes</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="tips-list">
+          <li>Las materias te son asignadas por el administrador. Si no ves tus materias, contacta al administrador.</li>
+          <li>La asistencia se calcula automáticamente. Solo necesitas marcarla cada clase.</li>
+          <li>Las notas se promedian automáticamente. El sistema calcula el promedio general de cada alumno.</li>
+          <li>Puedes ver estadísticas detalladas de cada alumno en la sección "Mis Alumnos".</li>
+          <li>Los mensajes son una forma rápida de comunicarte con tus alumnos.</li>
+          <li>Revisa regularmente tu bandeja de entrada de mensajes.</li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+

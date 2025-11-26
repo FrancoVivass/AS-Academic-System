@@ -5,10 +5,11 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, Event } from '@angular/router';
 import { LoadingService } from './services/loading.service';
 import { LoadingNeonComponent } from './components/loading-neon/loading-neon.component';
+import { GlobalWidgetsComponent } from './components/global-widgets/global-widgets.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, MatSnackBarModule, LoadingNeonComponent],
+  imports: [RouterOutlet, CommonModule, MatSnackBarModule, LoadingNeonComponent, GlobalWidgetsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

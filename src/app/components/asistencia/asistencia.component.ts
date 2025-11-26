@@ -564,12 +564,22 @@ export class AsistenciaComponent implements OnInit {
 
   getEstadoAsistenciaTexto(estado?: string): string {
     const estados: { [key: string]: string } = {
-      'presente': '✅ Presente',
-      'ausente': '❌ Ausente',
-      'tardanza': '⏰ Tardanza',
-      'justificado': '📝 Justificado'
+      'presente': 'Presente',
+      'ausente': 'Ausente',
+      'tardanza': 'Tardanza',
+      'justificado': 'Justificado'
     };
     return estados[estado || ''] || 'Sin registrar';
+  }
+
+  getIconoEstadoAsistencia(estado?: string): string {
+    const iconos: { [key: string]: string } = {
+      'presente': 'check_circle',
+      'ausente': 'cancel',
+      'tardanza': 'schedule',
+      'justificado': 'description'
+    };
+    return iconos[estado || ''] || 'help';
   }
 
   getColorEstado(estado?: string): string {

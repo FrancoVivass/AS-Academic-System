@@ -1,155 +1,72 @@
+/* Importar estilos compartidos */
+@import '../shared-gestion-styles.css';
+
+/* Estilos específicos para Mensajes */
 .mensajes-container {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.header-section h1 {
-  color: var(--text-primary);
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-section p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin: 0;
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
 }
 
 .badge-chip {
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark)) !important;
-  color: white !important;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem !important;
+  background: var(--institucion-primary, #2b7bcc);
+  color: white;
+  font-weight: 500;
 }
 
 .mensajes-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 1.5rem;
 }
 
-.mensajes-list-card, .nuevo-mensaje-card {
-  border-radius: 16px !important;
+.mensajes-list-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .mensaje-item {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
   border-radius: 8px;
   margin: 0.5rem 0;
 }
 
 .mensaje-item:hover {
-  background: rgba(36, 106, 115, 0.05);
+  background: #f9fafb;
 }
 
 .mensaje-item.no-leido {
-  background: rgba(36, 106, 115, 0.1);
-  border-left: 4px solid var(--primary-blue);
+  background: rgba(43, 123, 204, 0.05);
+  border-left: 3px solid var(--institucion-primary, #2b7bcc);
 }
 
 .mensaje-item.importante {
-  border-left: 4px solid #ff9800;
+  border-left: 3px solid #f59e0b;
 }
 
 .mensaje-icon {
-  color: var(--primary-blue);
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-}
-
-.mensaje-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0.5rem;
-}
-
-.mensaje-header strong {
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  color: var(--institucion-primary, #2b7bcc);
 }
 
 .nuevo-chip {
-  background: var(--primary-blue) !important;
-  color: white !important;
-  font-size: 0.7rem !important;
-}
-
-.mensaje-fecha {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.mensaje-asunto {
+  background: var(--institucion-primary, #2b7bcc);
+  color: white;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
 }
 
-.mensaje-contenido {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* Responsive */
+@media (max-width: 768px) {
+  .mensajes-container {
+    padding: 1rem;
+  }
 
-.mensaje-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.send-button {
-  width: 100%;
-  height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--text-secondary);
-}
-
-.empty-state mat-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: var(--primary-blue);
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 1024px) {
   .mensajes-content {
     grid-template-columns: 1fr;
   }
 }
-

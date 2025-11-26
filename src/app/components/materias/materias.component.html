@@ -60,11 +60,20 @@
             <span class="readonly-badge">Solo lectura</span>
           } @else {
             @if (permissionsService.esSecretario() || permissionsService.esAdmin()) {
-              <button class="btn-secondary" (click)="abrirInscripciones(materia)">👥 Inscripciones</button>
+              <button class="btn-secondary" (click)="abrirInscripciones(materia)">
+                <mat-icon>people</mat-icon>
+                Inscripciones
+              </button>
             }
             @if (permissionsService.puedeVer('editarMaterias')) {
-              <button class="btn-edit" (click)="abrirModalEditar(materia)">✏️ Editar</button>
-              <button class="btn-delete" (click)="eliminarMateria(materia.id)">🗑️ Eliminar</button>
+              <button class="btn-edit" (click)="abrirModalEditar(materia)">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+              <button class="btn-delete" (click)="eliminarMateria(materia.id)">
+                <mat-icon>delete</mat-icon>
+                Eliminar
+              </button>
             }
           }
         </div>
@@ -335,10 +344,13 @@
               <div class="wizard-actions">
                 <button mat-button (click)="stepper.previous()">Anterior</button>
                 <button mat-button (click)="cerrarWizard()">Cancelar</button>
-                <button mat-raised-button color="primary" (click)="completarPaso2(); stepper.next()" [disabled]="!wizardData.profesorSeleccionado">
+                <button mat-raised-button color="primary" (click)="completarPaso2(); stepper.next()">
                   Siguiente: Configuración Final
                 </button>
               </div>
+              <p class="info-text" style="margin-top: 16px; font-size: 0.875rem; color: var(--text-gray);">
+                Nota: El profesor es opcional. Puede asignarlo después desde la edición de la materia.
+              </p>
             </div>
           </mat-step>
 
