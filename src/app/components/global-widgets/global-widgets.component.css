@@ -362,4 +362,189 @@ body.dark-mode .weather-icon mat-icon {
   }
 }
 
+/* ==================== RESPONSIVE PARA MÓVILES ==================== */
+@media (max-width: 768px) {
+  .social-widget {
+    left: 10px;
+    padding: 12px 8px;
+  }
+
+  .social-widget.collapsed {
+    padding: 12px 6px;
+  }
+
+  .social-toggle-expand {
+    width: 32px;
+    height: 32px;
+    left: -32px;
+  }
+
+  .social-toggle-expand mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .social-widget-header {
+    font-size: 0.6rem;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .social-toggle {
+    width: 28px;
+    height: 28px;
+  }
+
+  .social-toggle mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .social-buttons {
+    gap: 8px;
+  }
+
+  .social-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .social-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .theme-toggle {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .theme-toggle mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .whatsapp-float {
+    bottom: 20px;
+    right: 75px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .whatsapp-float svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .scroll-to-top {
+    bottom: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .scroll-to-top mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .social-widget {
+    left: 5px;
+    padding: 10px 6px;
+  }
+
+  .social-widget.collapsed {
+    padding: 10px 4px;
+  }
+
+  .social-toggle-expand {
+    width: 28px;
+    height: 28px;
+    left: -28px;
+  }
+
+  .social-toggle-expand mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .social-widget-header {
+    font-size: 0.55rem;
+    margin-bottom: 10px;
+    gap: 6px;
+  }
+
+  .social-toggle {
+    width: 24px;
+    height: 24px;
+  }
+
+  .social-toggle mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .social-buttons {
+    gap: 6px;
+  }
+
+  .social-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .social-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .theme-toggle {
+    bottom: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .theme-toggle mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .whatsapp-float {
+    bottom: 15px;
+    right: 65px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .whatsapp-float svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .scroll-to-top {
+    bottom: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .scroll-to-top mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 

@@ -122,273 +122,6 @@ body.dark-mode {
   transition: width 0.1s ease;
 }
 
-/* ==================== TOGGLE MODO OSCURO ==================== */
-.theme-toggle {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 52px;
-  height: 52px;
-  border-radius: 0;
-  background: var(--bg-white);
-  color: var(--icon-color);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-soft);
-  z-index: 998;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.theme-toggle mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-}
-
-html.dark-mode .theme-toggle,
-body.dark-mode .theme-toggle {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: transparent;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-}
-
-.theme-toggle:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-html.dark-mode .theme-toggle:hover,
-body.dark-mode .theme-toggle:hover {
-  background: #f5f7fa;
-  color: #0f172a;
-  border-color: transparent;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-/* ==================== BOTÓN WHATSAPP FLOTANTE ==================== */
-.whatsapp-float {
-  position: fixed;
-  bottom: 40px;
-  right: 100px;
-  width: 52px;
-  height: 52px;
-  background: #25D366;
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: var(--shadow-soft);
-  z-index: 998;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.whatsapp-float:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
-}
-
-.whatsapp-float svg {
-  width: 32px;
-  height: 32px;
-}
-
-@keyframes pulse-whatsapp {
-  0% {
-    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-  }
-  50% {
-    box-shadow: 0 4px 25px rgba(37, 211, 102, 0.8);
-  }
-  100% {
-    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-  }
-}
-
-/* ==================== WIDGET REDES SOCIALES ==================== */
-.social-widget {
-  position: fixed;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 997;
-  background: var(--timeline-colorr);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  box-shadow: var(--shadow-soft);
-  padding: 16px 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible;
-  width: auto;
-}
-
-.social-widget.collapsed {
-  padding: 16px 8px;
-  border-right: none;
-}
-
-.social-toggle-expand {
-  position: absolute;
-  left: -40px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  background: var(--bg-white);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--icon-color);
-  box-shadow: var(--shadow-soft);
-}
-
-.social-toggle-expand:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-}
-
-.social-toggle-expand mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
-
-.social-widget:hover {
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
-}
-
-.social-widget-header {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--text-gray);
-  margin-bottom: 16px;
-  text-align: center;
-  letter-spacing: 1.5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.social-text {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: translateX(0);
-}
-
-.social-widget.collapsed .social-text {
-  opacity: 0;
-  transform: translateX(-20px);
-  width: 0;
-  overflow: hidden;
-}
-
-.social-toggle {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-gray);
-  cursor: pointer;
-  padding: 0;
-  border-radius: 0;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-}
-
-.social-toggle:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-}
-
-.social-toggle mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s ease;
-}
-
-.social-widget.collapsed .social-toggle {
-  margin: 0 auto;
-}
-
-.social-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: translateX(0);
-}
-
-.social-widget.collapsed .social-buttons {
-  opacity: 0;
-  transform: translateX(-20px);
-  width: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.social-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--icon-color);
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  background: var(--bg-white);
-}
-
-.social-btn:hover {
-  transform: translateX(4px);
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  box-shadow: var(--shadow-subtle);
-}
-
-.social-btn svg {
-  fill: currentColor;
-}
-
-.social-btn.facebook:hover,
-.social-btn.twitter:hover,
-.social-btn.linkedin:hover,
-.social-btn.instagram:hover,
-.social-btn.whatsapp-share:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-}
-
-
 /* ==================== HERO SECTION ==================== */
 .hero-section {
   background: var(--primary-blue);
@@ -1194,39 +927,6 @@ color: #ffffff;
     padding: 0 24px;
   }
 
-  .social-widget {
-    left: 0;
-  }
-
-  .social-widget.collapsed {
-    left: -60px;
-  }
-
-  .social-toggle-expand {
-    left: -40px;
-  }
-
-  .scroll-to-top {
-    bottom: 24px;
-    left: 24px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .theme-toggle {
-    bottom: 24px;
-    right: 24px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .whatsapp-float {
-    bottom: 24px;
-    right: 80px;
-    width: 48px;
-    height: 48px;
-  }
-
   .about-section,
   .features-section,
   .contact-section,
@@ -1304,22 +1004,197 @@ color: #ffffff;
   .pricing-card.popular {
     transform: scale(1);
   }
+}
 
-  .social-widget {
-    display: none;
+/* ==================== RESPONSIVE PARA RESOLUCIONES MENORES A 748px ==================== */
+@media (max-width: 748px) {
+  .main-container {
+    padding: 0 20px;
+    padding-top: 100px;
   }
 
-  .theme-toggle {
-    bottom: 90px;
-    width: 45px;
-    height: 45px;
+  .hero-section {
+    padding: 80px 15px;
+    margin-bottom: 60px;
   }
 
-  .whatsapp-float {
-    width: 55px;
-    height: 55px;
-    bottom: 15px;
-    right: 15px;
+  .hero-content {
+    padding: 0 15px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-description {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .cta-button {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .hero-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .stat-item {
+    width: 100%;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+
+  .about-section,
+  .features-section,
+  .contact-section,
+  .pricing-section,
+  .team-section {
+    padding: 40px 15px;
+    margin-bottom: 60px;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+  }
+
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  .feature-title {
+    font-size: 1.1rem;
+  }
+
+  .feature-description {
+    font-size: 0.85rem;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .team-image-wrapper {
+    width: 150px;
+    height: 150px;
+  }
+
+  .team-name {
+    font-size: 1.1rem;
+  }
+
+  .team-role {
+    font-size: 0.85rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pricing-card {
+    padding: 1.5rem;
+  }
+
+  .pricing-price {
+    font-size: 2rem;
+  }
+
+  .contact-form {
+    padding: 20px 15px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .timeline-section {
+    padding: 40px 15px;
+    margin-bottom: 60px;
+  }
+
+  .timeline-container {
+    margin-top: 30px;
+  }
+
+  .timeline-line {
+    left: 15px;
+  }
+
+  .timeline-marker {
+    width: 32px;
+    height: 32px;
+  }
+
+  .timeline-content {
+    padding: 15px;
+    margin-left: 50px;
+  }
+
+  .timeline-title {
+    font-size: 1.1rem;
+  }
+
+  .timeline-description {
+    font-size: 0.85rem;
+  }
+
+  .screenshots-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
@@ -1631,42 +1506,6 @@ color: #ffffff;
   display: block;
 }
 
-/* ==================== BOTÓN VOLVER ARRIBA ==================== */
-.scroll-to-top {
-  position: fixed;
-  bottom: 40px;
-  left: 40px;
-  width: 52px;
-  height: 52px;
-  background: var(--bg-white);
-  color: var(--icon-color);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-soft);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 999;
-  animation: fadeInUp 0.4s ease;
-}
-
-.scroll-to-top:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-.scroll-to-top mat-icon {
-  font-size: 28px;
-  width: 28px;
-  height: 28px;
-}
-
-
 /* ==================== WIDGET DE CLIMA ==================== */
 .weather-widget {
   position: fixed;
@@ -1947,10 +1786,4 @@ body.dark-mode .weather-icon mat-icon {
     justify-content: center;
   }
 
-  .scroll-to-top {
-    bottom: 80px;
-    right: 15px;
-    width: 45px;
-    height: 45px;
-  }
 }
