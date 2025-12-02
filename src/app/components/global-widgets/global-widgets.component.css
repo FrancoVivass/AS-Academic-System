@@ -86,7 +86,7 @@ body.dark-mode .theme-toggle:hover {
   top: 50%;
   transform: translateY(-50%);
   z-index: 997;
-  background: var(--timeline-colorr);
+  background: #2b7bcc;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: var(--shadow-soft);
@@ -94,6 +94,14 @@ body.dark-mode .theme-toggle:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: visible;
   width: auto;
+}
+
+/* Modo oscuro para widget de redes sociales */
+:root.dark-mode .social-widget,
+html.dark-mode .social-widget,
+body.dark-theme .social-widget,
+[data-theme="dark"] .social-widget {
+  background: #1565c0;
 }
 
 .social-widget.collapsed {

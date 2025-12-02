@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,6 +35,7 @@ import { Materia } from '../../models/materia.model';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,
@@ -95,7 +97,8 @@ export class AlumnosComponent implements OnInit {
       carreraId: ['', Validators.required],
       cursoId: ['', Validators.required],
       fechaNacimiento: [''],
-      direccion: ['']
+      direccion: [''],
+      localidad: ['']
     });
     
     // Cargar cursos cuando cambia la carrera seleccionada en el formulario
@@ -540,17 +543,11 @@ export class AlumnosComponent implements OnInit {
       console.log(`Filtro por carrera: ${antes} -> ${filtrados.length}`);
     }
 
-    // Filtrar por búsqueda
-    if (this.busqueda && this.busqueda.trim() !== '') {
+    // Para profesores, filtrar por carrera seleccionada primero
+    if (this.permissionsService.esProfesor() && this.carreraSeleccionada && this.carreraSeleccionada !== '') {
       const antes = filtrados.length;
-      const busquedaLower = this.busqueda.toLowerCase().trim();
-      filtrados = filtrados.filter(a =>
-        (a.nombre && a.nombre.toLowerCase().includes(busquedaLower)) ||
-        (a.apellido && a.apellido.toLowerCase().includes(busquedaLower)) ||
-        (a.dni && a.dni.includes(busquedaLower)) ||
-        (a.email && a.email.toLowerCase().includes(busquedaLower))
-      );
-      console.log(`Filtro por búsqueda: ${antes} -> ${filtrados.length}`);
+      filtrados = filtrados.filter(a => a.carreraId === this.carreraSeleccionada);
+      console.log(`Filtro por carrera seleccionada (profesor): ${antes} -> ${filtrados.length}`);
     }
 
     // Filtrar por materia (para profesores)
@@ -600,6 +597,19 @@ export class AlumnosComponent implements OnInit {
         return false;
       });
       console.log(`Filtro por curso: ${antes} -> ${filtrados.length}`);
+    }
+
+    // Filtrar por búsqueda (al final para que funcione con todos los filtros)
+    if (this.busqueda && this.busqueda.trim() !== '') {
+      const antes = filtrados.length;
+      const busquedaLower = this.busqueda.toLowerCase().trim();
+      filtrados = filtrados.filter(a =>
+        (a.nombre && a.nombre.toLowerCase().includes(busquedaLower)) ||
+        (a.apellido && a.apellido.toLowerCase().includes(busquedaLower)) ||
+        (a.dni && a.dni.toString().includes(busquedaLower)) ||
+        (a.email && a.email.toLowerCase().includes(busquedaLower))
+      );
+      console.log(`Filtro por búsqueda: ${antes} -> ${filtrados.length}`);
     }
 
     this.alumnosFiltrados = filtrados;

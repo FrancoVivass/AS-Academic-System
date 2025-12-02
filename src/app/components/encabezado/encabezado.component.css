@@ -541,6 +541,39 @@
   color: var(--white) !important;
 }
 
+.notifications-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  cursor: pointer;
+  outline: none;
+  padding: 0.7rem 1.35rem !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  position: relative;
+}
+
+.notifications-button:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.notifications-button mat-icon {
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: var(--white) !important;
+}
+
 .user-button {
   display: inline-flex !important;
   align-items: center;
@@ -556,6 +589,15 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   letter-spacing: 0.3px;
+  overflow: visible !important;
+}
+
+.user-button mat-icon {
+  overflow: visible !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .user-button:hover {
@@ -570,6 +612,11 @@
   width: 20px !important;
   height: 20px !important;
   color: var(--white) !important;
+  overflow: visible !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .dropdown-icon {
@@ -578,6 +625,11 @@
   height: 18px !important;
   color: var(--white) !important;
   margin-left: 0.25rem;
+  overflow: visible !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Ajustes para roles específicos en el botón de usuario */
@@ -616,20 +668,20 @@
   margin: 0;
 }
 
-.menu-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
 .menu-button > div {
   width: 18px;
   height: 2px;
   background-color: white;
-  margin: 0;
+  margin: 0 auto;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.menu-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .menu-button:hover > div {
@@ -779,7 +831,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   box-shadow: -8px 0px 24px rgba(0, 0, 0, 0.25), -2px 0px 8px rgba(0, 0, 0, 0.15);
   width: 80%;
   max-width: 320px;
@@ -806,20 +858,30 @@
   }
 }
 
-.mobile-menu a {
+.mobile-menu-content a {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   color: var(--text-primary);
   text-decoration: none;
-  display: block;
   width: 100%;
   padding: 1rem 1.5rem;
-  border-radius: 16px;
+  border-radius: 12px;
   transition: all 0.3s ease;
   font-weight: 500;
   position: relative;
   overflow: hidden;
+  margin: 0.25rem 0;
 }
 
-.mobile-menu a::before {
+.mobile-menu-content a mat-icon {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  color: var(--institucion-primary, #2b7bcc);
+}
+
+.mobile-menu-content a::before {
   content: '';
   position: absolute;
   left: 0;
@@ -832,73 +894,154 @@
   transition: transform 0.3s ease;
 }
 
-.mobile-menu a:hover {
-  background: linear-gradient(90deg, rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.12), rgba(var(--institucion-primary-rgb, 25, 118, 210), 0.05));
-  transform: translateX(8px);
-  color: var(--institucion-primary);
+.mobile-menu-content a:hover {
+  background: linear-gradient(90deg, rgba(43, 123, 204, 0.1), rgba(43, 123, 204, 0.05));
+  transform: translateX(4px);
+  color: var(--institucion-primary, #2b7bcc);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.mobile-menu a:hover::before {
+.mobile-menu-content a:hover::before {
   transform: translateY(-50%) translateX(0);
 }
 
-.mobile-menu ul {
-  width: 100%;
-  height: 100%;
-  list-style: none;
-  display: flex;
-  flex-flow: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  padding: 1.5rem 1rem;
-  margin: 0;
-  overflow-y: auto;
-  gap: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: var(--institucion-primary) var(--gray-light);
+.logout-button-mobile {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
 }
 
-.mobile-menu ul::-webkit-scrollbar {
+.logout-button-mobile:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateX(4px) scale(1.02);
+}
+
+.logout-button-mobile mat-icon {
+  color: white !important;
+}
+
+.mobile-menu-header {
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, var(--institucion-secondary, #1e5a9e) 100%);
+  padding: 1.5rem;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-button {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.close-button p {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.close-button p:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.user-info-mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-icon-mobile-header {
+  font-size: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  color: white !important;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+.user-details-mobile-header {
+  flex: 1;
+}
+
+.user-name-mobile-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.user-role-mobile-header {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.mobile-menu-content {
+  overflow-y: auto;
+  padding: 1rem 0;
+}
+
+.mobile-menu-content ul::-webkit-scrollbar {
   width: 6px;
 }
 
-.mobile-menu ul::-webkit-scrollbar-track {
-  background: var(--gray-light);
+.mobile-menu-content ul::-webkit-scrollbar-track {
+  background: #f3f4f6;
   border-radius: 10px;
   margin: 1rem 0;
 }
 
-.mobile-menu ul::-webkit-scrollbar-thumb {
+.mobile-menu-content ul::-webkit-scrollbar-thumb {
   background: var(--institucion-primary, #2b7bcc);
   border-radius: 10px;
 }
 
-.mobile-menu ul::-webkit-scrollbar-thumb:hover {
-  background: var(--institucion-secondary, #1565c0);
+.mobile-menu-content ul::-webkit-scrollbar-thumb:hover {
+  background: var(--institucion-secondary, #1e5a9e);
 }
 
-.mobile-menu li {
+.mobile-menu-content li {
   width: 100%;
   margin: 0;
   padding: 0;
 }
 
-.mobile-menu li:last-child {
-  margin-top: auto;
+.mobile-menu-content li.logout-item {
+  margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 2px solid var(--gray-light);
+  border-top: 1px solid #e5e7eb;
+}
+
+.mobile-menu-header {
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, var(--institucion-secondary, #1e5a9e) 100%);
+  padding: 1.5rem;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .close-button {
-  color: var(--text-primary);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  background: var(--institucion-primary, #2b7bcc);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 .close-button p {
@@ -927,6 +1070,27 @@
 .user-menu {
   min-width: 280px;
   padding: 0;
+}
+
+/* En móvil, el menú debe aparecer arriba */
+@media (max-width: 768px) {
+  ::ng-deep .user-menu .mat-mdc-menu-panel,
+  ::ng-deep .mat-mdc-menu-panel.user-menu {
+    position: fixed !important;
+    top: 60px !important;
+    right: 16px !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform-origin: top right !important;
+    max-height: calc(100vh - 80px) !important;
+    overflow-y: auto !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 12px !important;
+  }
+  
+  ::ng-deep .user-menu .mat-mdc-menu-content {
+    padding: 0 !important;
+  }
 }
 
 .menu-user-header {
@@ -997,6 +1161,48 @@
 
 .logout-button:hover {
   background: rgba(244, 67, 54, 0.1) !important;
+}
+
+/* Estilos para el header del menú móvil */
+.user-info-mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-icon-mobile-header {
+  font-size: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  color: white !important;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+.user-details-mobile-header {
+  flex: 1;
+}
+
+.user-name-mobile-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.user-role-mobile-header {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 /* Estilos para móvil */

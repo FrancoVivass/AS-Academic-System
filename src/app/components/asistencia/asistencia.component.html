@@ -350,6 +350,15 @@
                 <span class="info-value">{{ fechaSeleccionada }} ({{ getDiaNombreCompleto(fechaSeleccionada) }})</span>
               </div>
             </div>
+            @if (permissionsService.esAdmin() || permissionsService.esSecretario() || permissionsService.esProfesor()) {
+              <div class="info-row">
+                <mat-icon class="info-icon">numbers</mat-icon>
+                <div>
+                  <span class="info-label">Número de Clase:</span>
+                  <span class="info-value">{{ getNumeroClase() }}</span>
+                </div>
+              </div>
+            }
             @if (cursoActual) {
               <div class="info-row">
                 <mat-icon class="info-icon">class</mat-icon>
@@ -378,6 +387,18 @@
         </div>
 
     <div class="asistencia-list">
+      @if ((permissionsService.esAdmin() || permissionsService.esSecretario() || permissionsService.esProfesor()) && getAlumnosFiltrados().length > 0) {
+        <div class="acciones-masivas">
+          <button mat-raised-button color="primary" (click)="marcarTodosPresentes()" class="btn-masivo">
+            <mat-icon>check_circle</mat-icon>
+            Marcar Todos Presentes
+          </button>
+          <button mat-raised-button color="warn" (click)="marcarTodosAusentes()" class="btn-masivo">
+            <mat-icon>cancel</mat-icon>
+            Marcar Todos Ausentes
+          </button>
+        </div>
+      }
       @for (alumno of getAlumnosFiltrados(); track alumno.id) {
         @let asistencia = getAsistenciaAlumno(alumno.id);
         @let estadisticas = getEstadisticasAlumno(alumno.id);
@@ -392,6 +413,12 @@
                 <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">class</mat-icon>
                 {{ alumno.curso || 'Sin curso' }}
               </span>
+              @if (permissionsService.esAdmin() || permissionsService.esSecretario() || permissionsService.esProfesor()) {
+                <span class="clase-numero-badge">
+                  <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">event</mat-icon>
+                  Clase #{{ getNumeroClaseAlumno(alumno.id) }}
+                </span>
+              }
             </div>
             <div class="asistencia-stats">
               <div class="stat-item">

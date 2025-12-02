@@ -1,0 +1,307 @@
+<div class="tareas-container">
+  <div class="header-section">
+    <div>
+      <h1>
+        <mat-icon>assignment</mat-icon>
+        @if (permissionsService.esProfesor()) {
+          Gestión de Tareas
+        } @else {
+          Mis Tareas
+        }
+      </h1>
+      <p>
+        @if (permissionsService.esProfesor()) {
+          Crea y gestiona tareas para tus materias
+        } @else {
+          Tareas asignadas en tus materias
+        }
+      </p>
+    </div>
+    @if (permissionsService.esProfesor()) {
+      <button class="btn-primary" (click)="abrirModalNuevo()">
+        <mat-icon>add</mat-icon>
+        Nueva Tarea
+      </button>
+    }
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+        placeholder="Buscar tareas..."
+        class="search-input"
+      />
+    </div>
+    @if (materias.length > 0) {
+      <div class="filter-box">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar por Materia</mat-label>
+          <mat-select [(ngModel)]="filtroMateria" (selectionChange)="aplicarFiltros()">
+            <mat-option value="">Todas las materias</mat-option>
+            @for (materia of materias; track materia.id) {
+              <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+  </div>
+
+  <div class="tareas-grid">
+    @for (tarea of tareasFiltradas; track tarea.id) {
+      <mat-card class="tarea-card">
+        <mat-card-header>
+          <div class="tarea-header">
+            <div>
+              <mat-card-title>{{ tarea.titulo }}</mat-card-title>
+              <mat-card-subtitle>
+                <mat-icon class="icon-small">menu_book</mat-icon>
+                {{ getNombreMateria(tarea.materiaId) }}
+              </mat-card-subtitle>
+            </div>
+            <div class="tarea-badges">
+              <mat-chip [color]="tarea.estado === 'activa' ? 'primary' : 'warn'">
+                {{ tarea.estado }}
+              </mat-chip>
+              <mat-chip>{{ tarea.tipo }}</mat-chip>
+            </div>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="tarea-descripcion">{{ tarea.descripcion }}</p>
+          <div class="tarea-info">
+            <div class="info-item">
+              <mat-icon>event</mat-icon>
+              <span><strong>Entrega:</strong> {{ tarea.fechaEntrega | date:'short' }}</span>
+            </div>
+            @if (tarea.fechaLimite) {
+              <div class="info-item">
+                <mat-icon>schedule</mat-icon>
+                <span><strong>Límite:</strong> {{ tarea.fechaLimite | date:'short' }}</span>
+              </div>
+            }
+            @if (tarea.puntos) {
+              <div class="info-item">
+                <mat-icon>star</mat-icon>
+                <span><strong>Puntos:</strong> {{ tarea.puntos }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          @if (permissionsService.esProfesor()) {
+            <button mat-button color="primary" (click)="verEntregas(tarea)">
+              <mat-icon>visibility</mat-icon>
+              Ver Entregas
+            </button>
+            <button mat-button color="accent" (click)="eliminarTarea(tarea.id)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          } @else {
+            @if (tieneEntrega(tarea.id)) {
+              <mat-chip color="primary">Entregada</mat-chip>
+            } @else {
+              <button mat-raised-button color="primary" (click)="abrirEntrega(tarea)">
+                <mat-icon>upload</mat-icon>
+                Entregar
+              </button>
+            }
+          }
+        </mat-card-actions>
+      </mat-card>
+    }
+    @if (tareasFiltradas.length === 0) {
+      <div class="empty-state">
+        <mat-icon>assignment</mat-icon>
+        <p>No hay tareas disponibles</p>
+      </div>
+    }
+  </div>
+
+  <!-- Modal para crear/editar tarea -->
+  @if (mostrarModal) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion ? 'Editar Tarea' : 'Nueva Tarea' }}</h2>
+          <button class="btn-close" (click)="cerrarModal()">×</button>
+        </div>
+        <form [formGroup]="tareaForm" (ngSubmit)="guardarTarea()" class="modal-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Título *</mat-label>
+            <input matInput formControlName="titulo" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Materia *</mat-label>
+            <mat-select formControlName="materiaId" required>
+              <mat-option value="">Seleccione una materia</mat-option>
+              @for (materia of materias; track materia.id) {
+                <mat-option [value]="materia.id">{{ materia.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción *</mat-label>
+            <textarea matInput formControlName="descripcion" rows="4" required></textarea>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha de Entrega *</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="fechaEntrega" required>
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha Límite (opcional)</mat-label>
+              <input matInput [matDatepicker]="picker2" formControlName="fechaLimite">
+              <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+              <mat-datepicker #picker2></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo *</mat-label>
+              <mat-select formControlName="tipo" required>
+                <mat-option value="tarea">Tarea</mat-option>
+                <mat-option value="trabajo_practico">Trabajo Práctico</mat-option>
+                <mat-option value="examen">Examen</mat-option>
+                <mat-option value="proyecto">Proyecto</mat-option>
+                <mat-option value="otro">Otro</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Puntos (opcional)</mat-label>
+              <input matInput type="number" formControlName="puntos" min="0">
+            </mat-form-field>
+          </div>
+
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarModal()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal para entregar tarea -->
+  @if (tareaParaEntregar) {
+    <div class="modal-overlay" (click)="tareaParaEntregar = null">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Entregar Tarea: {{ tareaParaEntregar.titulo }}</h2>
+          <button class="btn-close" (click)="tareaParaEntregar = null">×</button>
+        </div>
+        <form [formGroup]="entregaForm" (ngSubmit)="entregarTarea()" class="modal-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Comentario (opcional)</mat-label>
+            <textarea matInput formControlName="comentario" rows="4"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Archivos (URLs separadas por comas)</mat-label>
+            <textarea matInput formControlName="archivos" rows="3" placeholder="Ingrese URLs de archivos separadas por comas. Ej: https://ejemplo.com/archivo1.pdf, https://ejemplo.com/archivo2.docx"></textarea>
+            <mat-hint>Puede ingresar múltiples URLs separadas por comas. También puede subir archivos directamente (próximamente).</mat-hint>
+          </mat-form-field>
+          
+          <!-- Campo para subir archivos (futuro) -->
+          <!-- 
+          <div class="file-upload-section">
+            <label class="file-upload-label">
+              <input type="file" multiple (change)="onFileSelected($event)" style="display: none;">
+              <mat-icon>cloud_upload</mat-icon>
+              <span>Subir Archivos</span>
+            </label>
+            @if (archivosSeleccionados.length > 0) {
+              <div class="archivos-lista">
+                @for (archivo of archivosSeleccionados; track archivo.name) {
+                  <div class="archivo-item">
+                    <mat-icon>attach_file</mat-icon>
+                    <span>{{ archivo.name }}</span>
+                    <button mat-icon-button (click)="removerArchivo(archivo)">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          -->
+
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="tareaParaEntregar = null">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">Entregar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal para ver entregas (profesor) -->
+  @if (tareaSeleccionada && permissionsService.esProfesor()) {
+    <div class="modal-overlay" (click)="tareaSeleccionada = null">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Entregas: {{ tareaSeleccionada.titulo }}</h2>
+          <button class="btn-close" (click)="tareaSeleccionada = null">×</button>
+        </div>
+        <div class="entregas-list">
+          @if (entregas.length > 0) {
+            @for (entrega of entregas; track entrega.id) {
+              <mat-card class="entrega-card">
+                <mat-card-content>
+                  <div class="entrega-header">
+                    <div>
+                      <strong>{{ getNombreAlumno(entrega.alumnoId) }}</strong>
+                      <span class="entrega-fecha">{{ entrega.fechaEntrega | date:'short' }}</span>
+                    </div>
+                    <mat-chip [color]="entrega.estado === 'calificada' ? 'primary' : 'accent'">
+                      {{ entrega.estado }}
+                    </mat-chip>
+                  </div>
+                  @if (entrega.comentario) {
+                    <p class="entrega-comentario">{{ entrega.comentario }}</p>
+                  }
+                  @if (entrega.calificacion !== undefined) {
+                    <div class="calificacion">
+                      <strong>Calificación:</strong> {{ entrega.calificacion }} / {{ tareaSeleccionada.puntos || 10 }}
+                    </div>
+                  }
+                  @if (entrega.observaciones) {
+                    <p class="observaciones">{{ entrega.observaciones }}</p>
+                  }
+                  @if (entrega.estado === 'pendiente') {
+                    <div class="calificar-section">
+                      <input type="number" #calificacionInput [max]="tareaSeleccionada.puntos || 10" min="0" placeholder="Calificación">
+                      <textarea #observacionesInput placeholder="Observaciones"></textarea>
+                      <button mat-raised-button color="primary" (click)="calificarEntrega(entrega, +calificacionInput.value, observacionesInput.value)">
+                        Calificar
+                      </button>
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+          } @else {
+            <p class="empty-message">No hay entregas para esta tarea</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+
+
+
+

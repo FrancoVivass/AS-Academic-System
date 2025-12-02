@@ -48,6 +48,21 @@
 
 .alumno-name {
   font-weight: 600;
+}
+
+.alumno-link {
+  color: var(--institucion-primary, #2b7bcc);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.alumno-link:hover {
+  color: var(--institucion-secondary, #1e5a9e);
+  text-decoration: underline;
+}
+
+.alumno-name {
+  font-weight: 600;
   color: #1a1a1a;
   font-size: 0.9375rem;
 }
@@ -109,6 +124,74 @@
   flex-direction: column;
   gap: 0.625rem;
   max-width: 320px;
+}
+
+/* Filtros section */
+.filters-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+  row-gap: 1.75rem;
+}
+
+.filter-field {
+  width: 100%;
+}
+
+.carrera-field {
+  margin-bottom: 0.5rem;
+}
+
+.curso-field {
+  margin-top: 0.5rem;
+}
+
+.search-field {
+  width: 100%;
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+
+/* Estadísticas de materia card */
+.estadisticas-materia-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  grid-column: 1 / -1;
+}
+
+.estadisticas-materia-card h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.stats-grid .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stats-grid .stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stats-grid .stat-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .estadistica-materia {

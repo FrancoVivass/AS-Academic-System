@@ -4,36 +4,262 @@
 /* Estilos específicos para Configuración */
 .configuracion-container {
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  background: #fafafa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   min-height: 100vh;
 }
 
-.config-sections {
+.header-section {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.header-section h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Modo oscuro: Header h1 en blanco (no gradiente) */
+:root.dark-mode .header-section h1,
+html.dark-mode .header-section h1,
+body.dark-theme .header-section h1,
+[data-theme="dark"] .header-section h1 {
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background-clip: unset !important;
+}
+
+.header-section p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Bento Grid Layout */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.bento-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.bento-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  border-color: #e0e0e0;
+}
+
+.bento-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Tamaños de cards */
+.bento-large {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-medium {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-small {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.danger-zone {
+  border-color: #fee2e2;
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.danger-zone::before {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
 }
 
 .config-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  width: 100%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.config-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--institucion-primary, #2b7bcc) 0%, #1565c0 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.config-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  border-color: #e0e0e0;
+}
+
+.config-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Modo oscuro más oscuro */
+:root.dark-mode .config-card,
+html.dark-mode .config-card,
+body.dark-theme .config-card,
+[data-theme="dark"] .config-card {
+  background: #0a0a0a !important;
+  border-color: #1a1a1a !important;
+}
+
+:root.dark-mode .config-card h2,
+html.dark-mode .config-card h2,
+body.dark-theme .config-card h2,
+[data-theme="dark"] .config-card h2 {
+  color: #ffffff !important;
+}
+
+:root.dark-mode .config-card p,
+html.dark-mode .config-card p,
+body.dark-theme .config-card p,
+[data-theme="dark"] .config-card p {
+  color: #b0b0b0 !important;
+}
+
+:root.dark-mode .preference-item,
+html.dark-mode .preference-item,
+body.dark-theme .preference-item,
+[data-theme="dark"] .preference-item {
+  background: #1a1a1a !important;
+  border-color: #2a2a2a !important;
 }
 
 .config-card h2 {
   color: #1a1a1a;
-  font-size: 1.25rem;
-  margin-bottom: 1.25rem;
-  font-weight: 600;
+  font-size: 1.75rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.02em;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.config-card h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--institucion-primary, #2b7bcc) 0%, #1565c0 100%);
+  border-radius: 2px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-icon {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  color: var(--institucion-primary, #2b7bcc);
+  background: rgba(43, 123, 204, 0.1);
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bento-card h2 {
+  color: #1a1a1a;
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-content p {
+  color: #6b7280;
+  font-size: 0.9375rem;
+  margin: 0;
+  line-height: 1.6;
 }
 
 .config-form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
 }
 
@@ -41,110 +267,549 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .form-group label {
-  color: #1a1a1a;
+  color: #374151;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
 }
 
 .form-group input {
-  padding: 0.625rem 0.875rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  transition: all 0.15s ease;
-  background: white;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fafafa;
   color: #1a1a1a;
+  width: 100%;
+  font-weight: 500;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: var(--institucion-primary, #2b7bcc);
-  box-shadow: 0 0 0 3px rgba(43, 123, 204, 0.1);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(43, 123, 204, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Modo oscuro: Intercambiar en input focus */
+:root.dark-mode .form-group input:focus,
+html.dark-mode .form-group input:focus,
+body.dark-theme .form-group input:focus,
+[data-theme="dark"] .form-group input:focus {
+  border-color: var(--institucion-secondary, #1565c0) !important;
+  box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.2) !important;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon input {
+  padding-right: 3rem;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 0.5rem;
+  color: #6b7280;
+}
+
+.toggle-visibility:hover {
+  color: var(--institucion-primary, #2b7bcc);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .form-group input:disabled {
-  background: #f9fafb;
+  background: #f3f4f6;
   cursor: not-allowed;
-  color: #6b7280;
+  color: #9ca3af;
+  border-color: #e5e7eb;
 }
 
 .form-group small {
-  color: #6b7280;
-  font-size: 0.8125rem;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: -0.25rem;
 }
 
 .preference-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 12px;
+  border: 2px solid #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  gap: 1rem;
+  min-width: 0;
 }
 
-.preference-item h3 {
-  color: #1a1a1a;
-  margin: 0 0 0.25rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
+.preference-item > * {
+  flex-shrink: 1;
+  min-width: 0;
 }
 
-.preference-item p {
-  color: #6b7280;
-  margin: 0;
-  font-size: 0.875rem;
+.preference-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(43, 123, 204, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-transform: none;
+.preference-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-.btn-primary {
-  background: var(--institucion-primary, #2b7bcc);
-  color: white;
+.preference-item:hover::before {
+  left: 100%;
 }
 
-.btn-primary:hover {
-  background: var(--institucion-secondary, #1565c0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.btn-secondary {
-  background: #6b7280;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #4b5563;
+.preference-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .btn-toggle-theme {
-  padding: 0.625rem 1.25rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #1a1a1a;
-  font-weight: 500;
-  font-size: 0.875rem;
+  flex-shrink: 0;
+  max-width: fit-content;
+}
+
+.preference-item h3 {
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.preference-item p {
+  color: #cbd5e1;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--institucion-primary);
+  color: white;
+  box-shadow: 0 4px 16px rgba(43, 123, 204, 0.35);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(43, 123, 204, 0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(75, 85, 99, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(75, 85, 99, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-primary mat-icon,
+.btn-secondary mat-icon,
+.btn-danger mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive Bento Grid */
+@media (max-width: 1200px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .bento-large {
+    grid-column: span 2;
+  }
+  
+  .bento-medium {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 968px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .bento-large,
+  .bento-medium {
+    grid-column: span 2;
+  }
+  
+  .bento-small {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bento-large,
+  .bento-medium,
+  .bento-small {
+    grid-column: span 1;
+  }
+  
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+.btn-toggle-theme {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, #1565c0 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 16px rgba(43, 123, 204, 0.4);
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.btn-toggle-theme:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+}
+
+.btn-toggle-theme:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 16px rgba(43, 123, 204, 0.4);
+}
+
+.btn-toggle-theme::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-toggle-theme:hover::before {
+  width: 200px;
+  height: 200px;
 }
 
 .btn-toggle-theme:hover {
-  background: #f9fafb;
-  border-color: var(--institucion-primary, #2b7bcc);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(43, 123, 204, 0.5);
+}
+
+.btn-toggle-theme:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.btn-toggle-theme mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-toggle-theme span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Modo oscuro para configuración - Intercambiar primario/secundario y todo blanco */
+:root.dark-mode .configuracion-container,
+html.dark-mode .configuracion-container,
+body.dark-theme .configuracion-container,
+[data-theme="dark"] .configuracion-container {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
+}
+
+:root.dark-mode .bento-card,
+html.dark-mode .bento-card,
+body.dark-theme .bento-card,
+[data-theme="dark"] .bento-card {
+  background: #1a1a1a !important;
+  border-color: #2a2a2a !important;
+}
+
+:root.dark-mode .bento-card.danger-zone,
+html.dark-mode .bento-card.danger-zone,
+body.dark-theme .bento-card.danger-zone,
+[data-theme="dark"] .bento-card.danger-zone {
+  background: linear-gradient(135deg, #1a0a0a 0%, #2a1a1a 100%) !important;
+  border-color: #3a1a1a !important;
+}
+
+/* Todos los textos, letras y elementos en blanco */
+:root.dark-mode .configuracion-container,
+html.dark-mode .configuracion-container,
+body.dark-theme .configuracion-container,
+[data-theme="dark"] .configuracion-container {
+  color: #ffffff !important;
+}
+
+:root.dark-mode .configuracion-container *,
+html.dark-mode .configuracion-container *,
+body.dark-theme .configuracion-container *,
+[data-theme="dark"] .configuracion-container * {
+  color: #ffffff !important;
+}
+
+/* Todos los mat-icon en blanco */
+:root.dark-mode .configuracion-container mat-icon,
+html.dark-mode .configuracion-container mat-icon,
+body.dark-theme .configuracion-container mat-icon,
+[data-theme="dark"] .configuracion-container mat-icon {
+  color: #ffffff !important;
+}
+
+/* Asegurar que botones tengan texto blanco */
+:root.dark-mode .configuracion-container button,
+html.dark-mode .configuracion-container button,
+body.dark-theme .configuracion-container button,
+[data-theme="dark"] .configuracion-container button {
+  color: #ffffff !important;
+}
+
+:root.dark-mode .configuracion-container button mat-icon,
+html.dark-mode .configuracion-container button mat-icon,
+body.dark-theme .configuracion-container button mat-icon,
+[data-theme="dark"] .configuracion-container button mat-icon {
+  color: #ffffff !important;
+}
+
+/* Excepciones específicas */
+:root.dark-mode .bento-card h2,
+html.dark-mode .bento-card h2,
+body.dark-theme .bento-card h2,
+[data-theme="dark"] .bento-card h2,
+:root.dark-mode .card-content p,
+html.dark-mode .card-content p,
+body.dark-theme .card-content p,
+[data-theme="dark"] .card-content p,
+:root.dark-mode .form-group label,
+html.dark-mode .form-group label,
+body.dark-theme .form-group label,
+[data-theme="dark"] .form-group label,
+:root.dark-mode .form-group small,
+html.dark-mode .form-group small,
+body.dark-theme .form-group small,
+[data-theme="dark"] .form-group small,
+:root.dark-mode .header-section h1,
+html.dark-mode .header-section h1,
+body.dark-theme .header-section h1,
+[data-theme="dark"] .header-section h1,
+:root.dark-mode .header-section p,
+html.dark-mode .header-section p,
+body.dark-theme .header-section p,
+[data-theme="dark"] .header-section p,
+:root.dark-mode .preference-item h3,
+html.dark-mode .preference-item h3,
+body.dark-theme .preference-item h3,
+[data-theme="dark"] .preference-item h3,
+:root.dark-mode .preference-item p,
+html.dark-mode .preference-item p,
+body.dark-theme .preference-item p,
+[data-theme="dark"] .preference-item p {
+  color: #ffffff !important;
+}
+
+:root.dark-mode .card-header,
+html.dark-mode .card-header,
+body.dark-theme .card-header,
+[data-theme="dark"] .card-header {
+  border-bottom-color: #2a2a2a !important;
+}
+
+:root.dark-mode .form-group input,
+html.dark-mode .form-group input,
+body.dark-theme .form-group input,
+[data-theme="dark"] .form-group input {
+  background: #2a2a2a !important;
+  border-color: #3a3a3a !important;
+  color: #ffffff !important;
+}
+
+:root.dark-mode .form-group input:focus,
+html.dark-mode .form-group input:focus,
+body.dark-theme .form-group input:focus,
+[data-theme="dark"] .form-group input:focus {
+  background: #333333 !important;
+  border-color: var(--institucion-secondary, #1565c0) !important;
+}
+
+:root.dark-mode .form-group input:disabled,
+html.dark-mode .form-group input:disabled,
+body.dark-theme .form-group input:disabled,
+[data-theme="dark"] .form-group input:disabled {
+  background: #1a1a1a !important;
+  color: #9ca3af !important;
+}
+
+:root.dark-mode .header-section,
+html.dark-mode .header-section,
+body.dark-theme .header-section,
+[data-theme="dark"] .header-section {
+  border-bottom-color: #2a2a2a !important;
+}
+
+/* Intercambiar primario por secundario en botones */
+:root.dark-mode .btn-primary,
+html.dark-mode .btn-primary,
+body.dark-theme .btn-primary,
+[data-theme="dark"] .btn-primary {
+  background: linear-gradient(135deg, var(--institucion-secondary, #1565c0) 0%, var(--institucion-primary, #2b7bcc) 100%) !important;
+}
+
+:root.dark-mode .btn-primary:hover,
+html.dark-mode .btn-primary:hover,
+body.dark-theme .btn-primary:hover,
+[data-theme="dark"] .btn-primary:hover {
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, var(--institucion-secondary, #1565c0) 100%) !important;
+}
+
+:root.dark-mode .btn-toggle-theme,
+html.dark-mode .btn-toggle-theme,
+body.dark-theme .btn-toggle-theme,
+[data-theme="dark"] .btn-toggle-theme {
+  background: linear-gradient(135deg, var(--institucion-secondary, #1565c0) 0%, var(--institucion-primary, #2b7bcc) 100%) !important;
+}
+
+:root.dark-mode .btn-toggle-theme:hover,
+html.dark-mode .btn-toggle-theme:hover,
+body.dark-theme .btn-toggle-theme:hover,
+[data-theme="dark"] .btn-toggle-theme:hover {
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, var(--institucion-secondary, #1565c0) 100%) !important;
+}
+
+/* Intercambiar en card-icon - color blanco pero background con secundario */
+:root.dark-mode .card-icon,
+html.dark-mode .card-icon,
+body.dark-theme .card-icon,
+[data-theme="dark"] .card-icon {
+  color: #ffffff !important;
+  background: rgba(21, 101, 192, 0.1) !important;
+}
+
+:root.dark-mode .card-icon mat-icon,
+html.dark-mode .card-icon mat-icon,
+body.dark-theme .card-icon mat-icon,
+[data-theme="dark"] .card-icon mat-icon {
+  color: #ffffff !important;
+}
+
+/* Intercambiar en borde superior de cards */
+:root.dark-mode .bento-card::before,
+html.dark-mode .bento-card::before,
+body.dark-theme .bento-card::before,
+[data-theme="dark"] .bento-card::before {
+  background: linear-gradient(90deg, var(--institucion-secondary, #1565c0) 0%, var(--institucion-primary, #2b7bcc) 100%) !important;
 }
 
 /* Responsive */

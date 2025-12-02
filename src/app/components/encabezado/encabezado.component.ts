@@ -8,6 +8,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { InstitucionService } from '../../services/institucion.service';
+import { MensajeService } from '../../services/mensaje.service';
 import { Usuario } from '../../models/usuario.model';
 import { Institucion } from '../../models/institucion.model';
 
@@ -28,23 +29,47 @@ import { Institucion } from '../../models/institucion.model';
 export class EncabezadoComponent implements OnInit {
   mobileMenuOpen = false;
   isInApp = false; // Indica si estamos en la sección de gestión (/app/*)
+  mensajesNoLeidos: number = 0;
 
   constructor(
     public authService: AuthService,
     public institucionService: InstitucionService,
+    private mensajeService: MensajeService,
     private router: Router
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Detectar si estamos en la ruta /app/*
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.isInApp = event.url.startsWith('/app');
+      if (this.isInApp) {
+        this.cargarMensajesNoLeidos();
+      }
     });
     
     // Verificar la ruta actual al cargar
     this.isInApp = this.router.url.startsWith('/app');
+    if (this.isInApp) {
+      await this.cargarMensajesNoLeidos();
+    }
+  }
+
+  async cargarMensajesNoLeidos(): Promise<void> {
+    const usuario = this.authService.getCurrentUser();
+    if (!usuario) {
+      this.mensajesNoLeidos = 0;
+      return;
+    }
+    
+    try {
+      const mensajes = await this.mensajeService.getMensajesNoLeidos(usuario.id);
+      this.mensajesNoLeidos = mensajes.length;
+    } catch (error) {
+      console.error('Error cargando mensajes no leídos:', error);
+      this.mensajesNoLeidos = 0;
+    }
   }
 
   toggleMobileMenu(): void {

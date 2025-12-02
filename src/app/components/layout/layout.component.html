@@ -5,8 +5,13 @@
   <button mat-raised-button 
           class="floating-menu-button" 
           [class.hidden]="sidenavOpened"
-          (click)="toggleSidenav()">
-    <mat-icon>menu</mat-icon>
+          [class.menu-open]="sidenavOpened"
+          (click)="toggleSidenav()"
+          matTooltip="Menú de navegación">
+    <div class="icon-container">
+      <mat-icon class="icon-menu" [class.hidden]="sidenavOpened">menu</mat-icon>
+      <mat-icon class="icon-close" [class.hidden]="!sidenavOpened">close</mat-icon>
+    </div>
   </button>
 
   <mat-sidenav-container class="sidenav-container">
@@ -76,7 +81,11 @@
     </div>
   </div>
   <mat-divider></mat-divider>
-  <button mat-menu-item [routerLink]="['/configuracion']">
+  <button mat-menu-item [routerLink]="['/app/perfil']">
+    <mat-icon>account_circle</mat-icon>
+    <span>Mi Perfil</span>
+  </button>
+  <button mat-menu-item [routerLink]="['/app/configuracion']">
     <mat-icon>settings</mat-icon>
     <span>Configuración</span>
   </button>

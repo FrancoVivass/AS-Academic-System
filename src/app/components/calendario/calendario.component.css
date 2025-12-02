@@ -141,6 +141,40 @@
   background: rgba(43, 123, 204, 0.05);
 }
 
+.evento-fecha-hora {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.evento-fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.evento-hora {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+
+.evento-hora mat-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: #9ca3af;
+}
+
+.fecha-formato {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .calendario-content {

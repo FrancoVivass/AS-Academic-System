@@ -47,8 +47,8 @@
 
       <!-- Mensaje de Bienvenida -->
       <div class="welcome-section">
-        <h1 class="welcome-title">Bienvenido Devuelta!</h1>
-        <p class="welcome-subtitle">Ingresa con una cuenta existente o puedes crearte una</p>
+        <h1 class="welcome-title">¡Bienvenido de vuelta!</h1>
+        <p class="welcome-subtitle">Ingresa con tu cuenta para acceder al sistema</p>
       </div>
 
       <!-- Formulario de Login -->
@@ -79,7 +79,7 @@
               <mat-error>{{ getErrorMessage('password') }}</mat-error>
             }
           </mat-form-field>
-          <a href="#" class="forgot-password-link">Olvidaste tu contraseña?</a>
+          <a (click)="onForgotPassword($event)" class="forgot-password-link">Olvidaste tu contraseña?</a>
         </div>
 
           <button 
@@ -95,14 +95,9 @@
           </button>
       </form>
 
-      <!-- Link de Registro -->
-      <div class="register-section">
-        <p class="register-text">¿Eres nuevo? <a routerLink="/registro" class="register-link">Regístrate Aquí</a></p>
-      </div>
-
       <!-- Copyright -->
       <div class="copyright-section">
-        <p class="copyright-text">© 2023 ALL RIGHTS RESERVED</p>
+        <p class="copyright-text">© 2025 Todos los derechos reservado <a href="https://vivasfranco.dev/">Vivas Franco</a></p>
       </div>
     </div>
   </div>

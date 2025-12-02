@@ -252,6 +252,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible !important;
+}
+
+.user-avatar mat-icon {
+  overflow: visible !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 64px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .user-avatar:hover {
@@ -306,7 +318,7 @@
   margin: 0.6rem 1.25rem;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: visible;
+  overflow: visible !important;
   padding: 1rem 1.5rem !important;
   border: 2px solid transparent;
   background: transparent !important;
@@ -334,6 +346,7 @@
   letter-spacing: 0.3px;
   position: relative;
   z-index: 1;
+  overflow: visible !important;
 }
 
 .nav-item::before {
@@ -408,12 +421,18 @@
   width: 26px !important;
   height: 26px !important;
   margin-right: 1rem !important;
+  overflow: visible !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .nav-item:hover mat-icon {
   transform: scale(1.15) rotate(5deg);
   background: rgba(25, 118, 210, 0.12);
   color: #1976d2;
+  overflow: visible !important;
 }
 
 .nav-item.active mat-icon {
@@ -423,6 +442,7 @@
   transform: scale(1.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   color: white !important;
+  overflow: visible !important;
 }
 
 .main-content {
@@ -527,19 +547,87 @@
 }
 
 
+.floating-menu-button .icon-container {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .floating-menu-button mat-icon {
   color: var(--white) !important;
-  position: relative;
+  position: absolute;
   z-index: 1;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 32px !important;
   width: 32px !important;
   height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.floating-menu-button:hover mat-icon {
-  transform: scale(1.2) rotate(-10deg);
+.floating-menu-button .icon-menu {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-menu-button .icon-menu.hidden {
+  opacity: 0;
+  transform: rotate(180deg) scale(0);
+  pointer-events: none;
+}
+
+.floating-menu-button .icon-close {
+  opacity: 0;
+  transform: rotate(-180deg) scale(0);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-menu-button .icon-close.hidden {
+  opacity: 0;
+  transform: rotate(-180deg) scale(0);
+  pointer-events: none;
+}
+
+.floating-menu-button .icon-close:not(.hidden) {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Animación de hover - pulso suave */
+.floating-menu-button:hover .icon-menu:not(.hidden) {
+  animation: pulse-hover 1.5s ease-in-out infinite;
+  transform: scale(1.1);
+}
+
+.floating-menu-button:hover .icon-close:not(.hidden) {
+  animation: pulse-hover 1.5s ease-in-out infinite;
+  transform: scale(1.1);
+}
+
+@keyframes pulse-hover {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Animación de rotación al hacer clic */
+.floating-menu-button:active .icon-menu:not(.hidden) {
+  transform: rotate(90deg) scale(0.95);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-menu-button:active .icon-close:not(.hidden) {
+  transform: rotate(-90deg) scale(0.95);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menu-header {
@@ -655,6 +743,11 @@
     font-size: 24px !important;
     width: 24px !important;
     height: 24px !important;
+    overflow: visible !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 
@@ -718,6 +811,11 @@
     width: 22px !important;
     height: 22px !important;
     margin-right: 0.875rem !important;
+    overflow: visible !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .nav-item::before {
@@ -796,6 +894,11 @@
     width: 20px !important;
     height: 20px !important;
     margin-right: 0.75rem !important;
+    overflow: visible !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .nav-list-container {

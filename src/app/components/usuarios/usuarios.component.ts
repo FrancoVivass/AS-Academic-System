@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +30,7 @@ import { Carrera } from '../../models/carrera.model';
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,
@@ -52,6 +54,8 @@ export class UsuariosComponent implements OnInit {
   busquedaAlumnos: string = '';
   selectedTab: number = 0;
   carreras: Carrera[] = [];
+  filtroCarreraAlumnos: string = '';
+  passwordVisible: Map<string, boolean> = new Map();
 
   // Columnas para profesores
   displayedColumnsProfesores: string[] = ['nombre', 'email', 'username', 'password', 'dni', 'especialidad', 'materias', 'estado'];
@@ -229,18 +233,42 @@ export class UsuariosComponent implements OnInit {
   }
 
   onBusquedaAlumnosChange(): void {
-    if (!this.busquedaAlumnos.trim()) {
-      this.alumnosFiltrados = [...this.alumnos];
-      return;
+    this.aplicarFiltrosAlumnos();
+  }
+
+  onFiltroCarreraAlumnosChange(): void {
+    this.aplicarFiltrosAlumnos();
+  }
+
+  aplicarFiltrosAlumnos(): void {
+    let filtrados = [...this.alumnos];
+
+    // Filtrar por carrera
+    if (this.filtroCarreraAlumnos) {
+      filtrados = filtrados.filter(a => a.carreraId === this.filtroCarreraAlumnos);
     }
 
-    const busqueda = this.busquedaAlumnos.toLowerCase();
-    this.alumnosFiltrados = this.alumnos.filter(a =>
-      a.nombre.toLowerCase().includes(busqueda) ||
-      a.apellido.toLowerCase().includes(busqueda) ||
-      a.email.toLowerCase().includes(busqueda) ||
-      (a.dni && a.dni.toLowerCase().includes(busqueda))
-    );
+    // Filtrar por búsqueda
+    if (this.busquedaAlumnos.trim()) {
+      const busqueda = this.busquedaAlumnos.toLowerCase();
+      filtrados = filtrados.filter(a =>
+        a.nombre.toLowerCase().includes(busqueda) ||
+        a.apellido.toLowerCase().includes(busqueda) ||
+        a.email.toLowerCase().includes(busqueda) ||
+        (a.dni && a.dni.toLowerCase().includes(busqueda))
+      );
+    }
+
+    this.alumnosFiltrados = filtrados;
+  }
+
+  togglePasswordVisibility(usuarioId: string): void {
+    const current = this.passwordVisible.get(usuarioId) || false;
+    this.passwordVisible.set(usuarioId, !current);
+  }
+
+  isPasswordVisible(usuarioId: string): boolean {
+    return this.passwordVisible.get(usuarioId) || false;
   }
 
   getCantidadMaterias(docente: Docente): number {

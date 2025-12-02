@@ -68,11 +68,11 @@
         <ng-container matColumnDef="nombre">
           <th mat-header-cell *matHeaderCellDef>Docente</th>
           <td mat-cell *matCellDef="let docente">
-            <div class="cell-docente">
+            <div class="cell-docente" [matTooltip]="docente.nombre + ' ' + docente.apellido">
               <mat-icon class="cell-icon">person</mat-icon>
               <div>
                 <div class="docente-name">{{ docente.nombre }} {{ docente.apellido }}</div>
-                <div class="docente-username">{{ docente.username }}</div>
+                <div class="docente-username" [matTooltip]="docente.username">{{ docente.username }}</div>
               </div>
             </div>
           </td>
@@ -94,7 +94,7 @@
 
         <ng-container matColumnDef="email">
           <th mat-header-cell *matHeaderCellDef>Email</th>
-          <td mat-cell *matCellDef="let docente">{{ docente.email }}</td>
+          <td mat-cell *matCellDef="let docente" [matTooltip]="docente.email">{{ docente.email }}</td>
         </ng-container>
 
         <ng-container matColumnDef="acciones">

@@ -41,8 +41,8 @@
     @for (materia of materiasFiltradas; track materia.id) {
       <div class="materia-card">
         <div class="materia-header">
-          <h3>{{ materia.nombre }}</h3>
-          <span class="codigo-badge">{{ materia.codigo }}</span>
+          <h3 [matTooltip]="materia.nombre">{{ materia.nombre }}</h3>
+          <span class="codigo-badge" [matTooltip]="materia.codigo">{{ materia.codigo }}</span>
         </div>
         <div class="materia-info">
           <div class="materia-badges">
@@ -51,14 +51,14 @@
             </mat-chip>
             <mat-chip>{{ materia.tipo || 'obligatoria' }}</mat-chip>
           </div>
-          <p><strong>Profesor:</strong> {{ materia.profesor || 'Sin asignar' }}</p>
+          <p><strong>Profesor:</strong> <span [matTooltip]="materia.profesor || 'Sin asignar'">{{ materia.profesor || 'Sin asignar' }}</span></p>
           <p><strong>Curso:</strong> 
-            <span class="badge">{{ getCursosNombreDeMateria(materia.id) }}</span>
+            <span class="badge" [matTooltip]="getCursosNombreDeMateria(materia.id)">{{ getCursosNombreDeMateria(materia.id) }}</span>
           </p>
-          <p><strong>Horario:</strong> {{ materia.horario || 'Sin horario' }}</p>
+          <p><strong>Horario:</strong> <span [matTooltip]="materia.horario || 'Sin horario'">{{ materia.horario || 'Sin horario' }}</span></p>
           <p><strong>Créditos:</strong> {{ materia.creditos || 0 }}</p>
           <p><strong>Horas Semanales:</strong> {{ materia.horasSemanales || 0 }}</p>
-          <p><strong>Inscritos:</strong> {{ getCantidadInscritos(materia.id) }} alumnos</p>
+          <p><strong>Inscritos:</strong> {{ getCantidadInscritosSync(materia.id) }} alumnos</p>
           @if (materia.descripcion) {
             <p class="descripcion">{{ materia.descripcion }}</p>
           }
@@ -67,6 +67,48 @@
           @if (permissionsService.esAlumno()) {
             <!-- Alumno: Solo ver información, no puede editar -->
             <span class="readonly-badge">Solo lectura</span>
+          }           @else if (permissionsService.esProfesor()) {
+            <!-- Profesor: Atajos rápidos mejorados -->
+            <div class="materia-stats-quick">
+              <div class="stat-quick-item">
+                <mat-icon>people</mat-icon>
+                <span>{{ getCantidadInscritosSync(materia.id) }} alumnos</span>
+              </div>
+              <div class="stat-quick-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>{{ getPromedioAsistencia(materia.id) }}% asist.</span>
+              </div>
+            </div>
+            <div class="materia-actions-grid">
+              <a class="btn-action" [routerLink]="['/app/alumnos']" [queryParams]="{materia: materia.id}" [matTooltip]="'Ver alumnos de esta materia'">
+                <mat-icon>people</mat-icon>
+                <span>Alumnos</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/asistencia']" [queryParams]="{materia: materia.id}" [matTooltip]="'Tomar asistencia'">
+                <mat-icon>check_circle</mat-icon>
+                <span>Asistencia</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/notas']" [queryParams]="{materia: materia.id}" [matTooltip]="'Cargar notas'">
+                <mat-icon>grade</mat-icon>
+                <span>Notas</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/reportes']" [queryParams]="{materia: materia.id}" [matTooltip]="'Ver reportes'">
+                <mat-icon>assessment</mat-icon>
+                <span>Reportes</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/mensajes']" [queryParams]="{materia: materia.id}" [matTooltip]="'Enviar mensajes'">
+                <mat-icon>message</mat-icon>
+                <span>Mensajes</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/cursos']" [queryParams]="{materia: materia.id}" [matTooltip]="'Ver curso'">
+                <mat-icon>class</mat-icon>
+                <span>Curso</span>
+              </a>
+              <a class="btn-action" [routerLink]="['/app/tareas']" [queryParams]="{materia: materia.id}" [matTooltip]="'Gestionar tareas'">
+                <mat-icon>assignment</mat-icon>
+                <span>Tareas</span>
+              </a>
+            </div>
           } @else {
             @if (permissionsService.esSecretario() || permissionsService.esAdmin()) {
               <button class="btn-secondary" (click)="abrirInscripciones(materia)">
@@ -301,7 +343,7 @@
         
         <mat-stepper [linear]="true" #stepper>
           <!-- Paso 1: Datos Básicos -->
-          <mat-step [stepControl]="materiaForm" label="1. Datos Básicos">
+          <mat-step [stepControl]="materiaForm" label="Datos Básicos">
             <form [formGroup]="materiaForm" class="wizard-form">
               <h3>Complete los datos básicos de la materia</h3>
               <div class="form-row">
@@ -331,7 +373,7 @@
           </mat-step>
 
           <!-- Paso 2: Asignar Profesor -->
-          <mat-step label="2. Asignar Profesor">
+          <mat-step label="Asignar Profesor">
             <div class="wizard-form">
               <h3>Seleccione el profesor que dictará esta materia</h3>
               <p class="info-text">El profesor debe estar registrado en el sistema. La materia quedará asignada a este profesor.</p>
@@ -374,8 +416,8 @@
             </div>
           </mat-step>
 
-          <!-- Paso 4: Configuración Final -->
-          <mat-step label="4. Configuración Final">
+          <!-- Paso 3: Configuración Final -->
+          <mat-step label="Configuración Final">
             <form [formGroup]="materiaForm" class="wizard-form">
               <h3>Complete la configuración de la materia</h3>
               <p class="info-text">Configure horas, créditos, correlatividades y otros parámetros.</p>

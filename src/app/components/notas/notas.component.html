@@ -54,6 +54,125 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Sección de Promedios -->
+  <mat-card class="promedios-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>assessment</mat-icon>
+        Promedios de Notas
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="promedios-grid">
+        <!-- Promedio General -->
+        <div class="promedio-item">
+          <div class="promedio-icon general">
+            <mat-icon>calculate</mat-icon>
+          </div>
+          <div class="promedio-info">
+            <div class="promedio-label">Promedio General</div>
+            <div class="promedio-value" [class.excelente]="getPromedioGeneral() >= 9" 
+                 [class.bueno]="getPromedioGeneral() >= 7 && getPromedioGeneral() < 9"
+                 [class.regular]="getPromedioGeneral() < 7">
+              {{ getPromedioGeneral().toFixed(2) }}
+            </div>
+            <div class="promedio-count">{{ notasFiltradas.length }} nota(s)</div>
+          </div>
+        </div>
+
+        <!-- Promedio por Materia (si hay filtro) -->
+        @if (filtroMateria) {
+          <div class="promedio-item">
+            <div class="promedio-icon materia">
+              <mat-icon>menu_book</mat-icon>
+            </div>
+            <div class="promedio-info">
+              <div class="promedio-label">Promedio de {{ getNombreMateria(filtroMateria) }}</div>
+              <div class="promedio-value" [class.excelente]="getPromedioPorMateria(filtroMateria) >= 9" 
+                   [class.bueno]="getPromedioPorMateria(filtroMateria) >= 7 && getPromedioPorMateria(filtroMateria) < 9"
+                   [class.regular]="getPromedioPorMateria(filtroMateria) < 7">
+                {{ getPromedioPorMateria(filtroMateria).toFixed(2) }}
+              </div>
+              <div class="promedio-count">{{ getCantidadNotasPorMateria(filtroMateria) }} nota(s)</div>
+            </div>
+          </div>
+        }
+
+        <!-- Promedio por Alumno (si hay filtro) -->
+        @if (filtroAlumno) {
+          <div class="promedio-item">
+            <div class="promedio-icon alumno">
+              <mat-icon>person</mat-icon>
+            </div>
+            <div class="promedio-info">
+              <div class="promedio-label">Promedio de {{ getNombreAlumno(filtroAlumno) }}</div>
+              <div class="promedio-value" [class.excelente]="getPromedioPorAlumno(filtroAlumno) >= 9" 
+                   [class.bueno]="getPromedioPorAlumno(filtroAlumno) >= 7 && getPromedioPorAlumno(filtroAlumno) < 9"
+                   [class.regular]="getPromedioPorAlumno(filtroAlumno) < 7">
+                {{ getPromedioPorAlumno(filtroAlumno).toFixed(2) }}
+              </div>
+              <div class="promedio-count">{{ getCantidadNotasPorAlumno(filtroAlumno) }} nota(s)</div>
+            </div>
+          </div>
+        }
+
+        <!-- Promedio por Carrera (si hay filtro) -->
+        @if (filtroCarrera) {
+          <div class="promedio-item">
+            <div class="promedio-icon carrera">
+              <mat-icon>school</mat-icon>
+            </div>
+            <div class="promedio-info">
+              <div class="promedio-label">Promedio de {{ getNombreCarrera(filtroCarrera) }}</div>
+              <div class="promedio-value" [class.excelente]="getPromedioPorCarrera(filtroCarrera) >= 9" 
+                   [class.bueno]="getPromedioPorCarrera(filtroCarrera) >= 7 && getPromedioPorCarrera(filtroCarrera) < 9"
+                   [class.regular]="getPromedioPorCarrera(filtroCarrera) < 7">
+                {{ getPromedioPorCarrera(filtroCarrera).toFixed(2) }}
+              </div>
+              <div class="promedio-count">{{ getCantidadNotasPorCarrera(filtroCarrera) }} nota(s)</div>
+            </div>
+          </div>
+        }
+
+        <!-- Promedio del Alumno (si es alumno) -->
+        @if (permissionsService.esAlumno()) {
+          <div class="promedio-item destacado">
+            <div class="promedio-icon mi-promedio">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="promedio-info">
+              <div class="promedio-label">Mi Promedio General</div>
+              <div class="promedio-value" [class.excelente]="getMiPromedioGeneral() >= 9" 
+                   [class.bueno]="getMiPromedioGeneral() >= 7 && getMiPromedioGeneral() < 9"
+                   [class.regular]="getMiPromedioGeneral() < 7">
+                {{ getMiPromedioGeneral().toFixed(2) }}
+              </div>
+              <div class="promedio-count">{{ getMisNotas().length }} nota(s)</div>
+            </div>
+          </div>
+          
+          <!-- Promedios por Materia para Alumno -->
+          @for (promedioMateria of getPromediosPorMateriaAlumno(); track promedioMateria.materiaId) {
+            <div class="promedio-item">
+              <div class="promedio-icon materia">
+                <mat-icon>menu_book</mat-icon>
+              </div>
+              <div class="promedio-info">
+                <div class="promedio-label">{{ promedioMateria.nombreMateria }}</div>
+                <div class="promedio-value" [class.excelente]="promedioMateria.promedio >= 9" 
+                     [class.bueno]="promedioMateria.promedio >= 7 && promedioMateria.promedio < 9"
+                     [class.regular]="promedioMateria.promedio < 7">
+                  {{ promedioMateria.promedio.toFixed(2) }}
+                </div>
+                <div class="promedio-count">{{ promedioMateria.cantidad }} nota(s)</div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
   <mat-card class="table-card">
     <mat-card-content>
       <table mat-table [dataSource]="notasFiltradas" class="notas-table">

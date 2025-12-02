@@ -112,15 +112,29 @@
   flex-direction: column;
   gap: 12px;
   align-items: flex-start;
+  width: 100%;
 }
 
 .upload-area input[type="file"] {
-  display: none;
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
 }
 
 .upload-area button {
   font-family: "Raleway", sans-serif;
   font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.upload-area button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .documento-preview {

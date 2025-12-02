@@ -328,12 +328,12 @@
       <table mat-table [dataSource]="carreras" class="carreras-table">
         <ng-container matColumnDef="nombre">
           <th mat-header-cell *matHeaderCellDef>Nombre</th>
-          <td mat-cell *matCellDef="let carrera">{{ carrera.nombre }}</td>
+          <td mat-cell *matCellDef="let carrera" [matTooltip]="carrera.nombre">{{ carrera.nombre }}</td>
         </ng-container>
 
         <ng-container matColumnDef="codigo">
           <th mat-header-cell *matHeaderCellDef>Código</th>
-          <td mat-cell *matCellDef="let carrera">{{ carrera.codigo }}</td>
+          <td mat-cell *matCellDef="let carrera" [matTooltip]="carrera.codigo">{{ carrera.codigo }}</td>
         </ng-container>
 
         <ng-container matColumnDef="duracion">

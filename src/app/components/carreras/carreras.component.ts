@@ -14,6 +14,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CarreraService } from '../../services/carrera.service';
 import { CursoService } from '../../services/curso.service';
 import { MateriaService } from '../../services/materia.service';
@@ -51,7 +52,8 @@ import { SupabaseService } from '../../services/supabase.service';
     MatStepperModule,
     MatCheckboxModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatTooltipModule
   ],
   templateUrl: './carreras.component.html',
   styleUrl: './carreras.component.css'

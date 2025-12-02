@@ -11,7 +11,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule } from '@angular/material/dialog';
-import { DatePipe } from '@angular/common';
 import { EventoService } from '../../services/evento.service';
 import { MateriaService } from '../../services/materia.service';
 import { AuthService } from '../../services/auth.service';
@@ -35,8 +34,7 @@ import { Materia } from '../../models/materia.model';
     MatDatepickerModule,
     MatNativeDateModule,
     MatChipsModule,
-    MatDialogModule,
-    DatePipe
+    MatDialogModule
   ],
   templateUrl: './calendario.component.html',
   styleUrl: './calendario.component.css'
@@ -96,17 +94,71 @@ export class CalendarioComponent implements OnInit {
   }
 
   async loadEventos(): Promise<void> {
+    // Recargar eventos desde el servicio para asegurar que estén actualizados
     this.eventos = await this.eventoService.getEventos();
+    // Filtrar eventos eliminados (verificar que existan en el servicio)
+    this.eventos = this.eventos.filter(e => e && e.id);
     this.eventosProximos = await this.eventoService.getEventosProximos(30);
+    // Recargar eventos por fecha después de cargar eventos
+    await this.cargarEventosPorFecha();
   }
 
   async cargarEventosPorFecha(): Promise<void> {
-    // Cargar eventos de todos los días del mes actual
+    // Limpiar eventos por fecha
+    this.eventosPorFecha.clear();
+    
+    // Asegurarse de que los eventos estén cargados
+    if (this.eventos.length === 0) {
+      await this.loadEventos();
+    }
+    
+    // Cargar eventos de todos los días del mes actual Y del mes siguiente
+    // Esto asegura que los eventos del mes siguiente aparezcan
     const diasDelMes = this.getDiasDelMes();
-    for (const dia of diasDelMes) {
-      const fechaStr = dia.toISOString().split('T')[0];
-      const eventos = await this.eventoService.getEventosByFecha(fechaStr);
-      this.eventosPorFecha.set(fechaStr, eventos);
+    const mesSiguiente = this.mesActual === 11 ? 0 : this.mesActual + 1;
+    const anioSiguiente = this.mesActual === 11 ? this.anioActual + 1 : this.anioActual;
+    const primerDiaSiguiente = new Date(anioSiguiente, mesSiguiente, 1);
+    const ultimoDiaSiguiente = new Date(anioSiguiente, mesSiguiente + 1, 0);
+    const diasDelMesSiguiente: Date[] = [];
+    for (let i = 1; i <= ultimoDiaSiguiente.getDate(); i++) {
+      diasDelMesSiguiente.push(new Date(anioSiguiente, mesSiguiente, i));
+    }
+    
+    // Combinar días del mes actual y siguiente
+    const todosLosDias = [...diasDelMes, ...diasDelMesSiguiente];
+    
+    for (const dia of todosLosDias) {
+      // Normalizar la fecha a medianoche para comparación (usando hora local)
+      const diaNormalizado = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+      const fechaStr = `${diaNormalizado.getFullYear()}-${String(diaNormalizado.getMonth() + 1).padStart(2, '0')}-${String(diaNormalizado.getDate()).padStart(2, '0')}`;
+      
+      // Filtrar eventos del día desde la lista de eventos cargados (solo eventos válidos)
+      const eventosDelDia = this.eventos.filter(e => {
+        if (!e.fecha) return false;
+        // Parsear fecha de manera segura (manejar diferentes formatos)
+        let fechaEvento: Date;
+        if (typeof e.fecha === 'string') {
+          // Si es string, puede venir en formato ISO o local
+          if (e.fecha.includes('T')) {
+            fechaEvento = new Date(e.fecha);
+          } else {
+            // Formato YYYY-MM-DD
+            const partes = e.fecha.split('-');
+            fechaEvento = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+          }
+        } else {
+          fechaEvento = new Date(e.fecha);
+        }
+        
+        // Normalizar a medianoche (hora local)
+        const fechaNormalizada = new Date(fechaEvento.getFullYear(), fechaEvento.getMonth(), fechaEvento.getDate());
+        const fechaStrEvento = `${fechaNormalizada.getFullYear()}-${String(fechaNormalizada.getMonth() + 1).padStart(2, '0')}-${String(fechaNormalizada.getDate()).padStart(2, '0')}`;
+        return fechaStrEvento === fechaStr;
+      });
+      
+      if (eventosDelDia.length > 0) {
+        this.eventosPorFecha.set(fechaStr, eventosDelDia);
+      }
     }
   }
 
@@ -119,11 +171,45 @@ export class CalendarioComponent implements OnInit {
   }
 
   getEventosDelDia(fecha: Date): Evento[] {
-    const fechaStr = fecha.toISOString().split('T')[0];
-    return this.eventosPorFecha.get(fechaStr) || [];
+    // Normalizar la fecha a medianoche para comparación (usando hora local)
+    const fechaNormalizada = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    const fechaStr = `${fechaNormalizada.getFullYear()}-${String(fechaNormalizada.getMonth() + 1).padStart(2, '0')}-${String(fechaNormalizada.getDate()).padStart(2, '0')}`;
+    
+    // Primero intentar obtener del mapa
+    let eventos = this.eventosPorFecha.get(fechaStr);
+    
+    // Si no hay en el mapa, buscar directamente en los eventos (solo eventos válidos)
+    if (!eventos || eventos.length === 0) {
+      eventos = this.eventos.filter(e => {
+        if (!e.fecha) return false;
+        // Parsear fecha de manera segura
+        let fechaEvento: Date;
+        if (typeof e.fecha === 'string') {
+          if (e.fecha.includes('T')) {
+            fechaEvento = new Date(e.fecha);
+          } else {
+            const partes = e.fecha.split('-');
+            fechaEvento = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+          }
+        } else {
+          fechaEvento = new Date(e.fecha);
+        }
+        
+        // Normalizar a medianoche (hora local)
+        const fechaEventoNormalizada = new Date(fechaEvento.getFullYear(), fechaEvento.getMonth(), fechaEvento.getDate());
+        const fechaStrEvento = `${fechaEventoNormalizada.getFullYear()}-${String(fechaEventoNormalizada.getMonth() + 1).padStart(2, '0')}-${String(fechaEventoNormalizada.getDate()).padStart(2, '0')}`;
+        return fechaStrEvento === fechaStr;
+      });
+      // Guardar en el mapa para futuras consultas
+      if (eventos.length > 0) {
+        this.eventosPorFecha.set(fechaStr, eventos);
+      }
+    }
+    
+    return eventos || [];
   }
 
-  cambiarMes(direccion: number): void {
+  async cambiarMes(direccion: number): Promise<void> {
     this.mesActual += direccion;
     if (this.mesActual < 0) {
       this.mesActual = 11;
@@ -132,6 +218,9 @@ export class CalendarioComponent implements OnInit {
       this.mesActual = 0;
       this.anioActual++;
     }
+    // Recargar eventos del nuevo mes
+    await this.loadEventos();
+    await this.cargarEventosPorFecha();
   }
 
   abrirModalNuevo(): void {
@@ -152,7 +241,7 @@ export class CalendarioComponent implements OnInit {
     this.eventoForm.patchValue(evento);
   }
 
-  guardarEvento(): void {
+  async guardarEvento(): Promise<void> {
     if (this.eventoForm.invalid) {
       this.notificationService.showWarning('Por favor complete todos los campos requeridos');
       return;
@@ -166,7 +255,7 @@ export class CalendarioComponent implements OnInit {
         ...this.eventoForm.value,
         color: tipoSeleccionado?.color || this.eventoSeleccionado.color
       };
-      this.eventoService.updateEvento(eventoActualizado);
+      await this.eventoService.updateEvento(eventoActualizado);
       this.notificationService.showSuccess('Evento actualizado correctamente');
     } else {
       const nuevoEvento: Evento = {
@@ -176,18 +265,26 @@ export class CalendarioComponent implements OnInit {
         color: tipoSeleccionado?.color || '#246a73',
         recordatorio: false
       };
-      this.eventoService.addEvento(nuevoEvento);
+      await this.eventoService.addEvento(nuevoEvento);
       this.notificationService.showSuccess('Evento creado correctamente');
     }
 
-    this.loadEventos();
+    // Limpiar eventos por fecha y recargar
+    this.eventosPorFecha.clear();
+    await this.loadEventos();
     this.cerrarModal();
   }
 
-  eliminarEvento(id: string): void {
+  async eliminarEvento(id: string): Promise<void> {
     if (confirm('¿Está seguro de eliminar este evento?')) {
-      this.eventoService.deleteEvento(id);
-      this.loadEventos();
+      await this.eventoService.deleteEvento(id);
+      // Remover el evento de la lista local inmediatamente
+      this.eventos = this.eventos.filter(e => e.id !== id);
+      this.eventosProximos = this.eventosProximos.filter(e => e.id !== id);
+      // Limpiar eventos por fecha y recargar
+      this.eventosPorFecha.clear();
+      // Recargar desde el servicio para asegurar sincronización
+      await this.loadEventos();
       this.notificationService.showSuccess('Evento eliminado correctamente');
     }
   }
@@ -212,8 +309,31 @@ export class CalendarioComponent implements OnInit {
     const ultimoDia = new Date(this.anioActual, this.mesActual + 1, 0);
     const dias: Date[] = [];
     
+    // Agregar días del mes anterior para completar la primera semana
+    const primerDiaSemana = primerDia.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+    if (primerDiaSemana > 0) {
+      const mesAnterior = this.mesActual === 0 ? 11 : this.mesActual - 1;
+      const anioAnterior = this.mesActual === 0 ? this.anioActual - 1 : this.anioActual;
+      const ultimoDiaMesAnterior = new Date(anioAnterior, mesAnterior + 1, 0);
+      for (let i = ultimoDiaMesAnterior.getDate() - primerDiaSemana + 1; i <= ultimoDiaMesAnterior.getDate(); i++) {
+        dias.push(new Date(anioAnterior, mesAnterior, i));
+      }
+    }
+    
+    // Agregar días del mes actual
     for (let i = 1; i <= ultimoDia.getDate(); i++) {
       dias.push(new Date(this.anioActual, this.mesActual, i));
+    }
+    
+    // Agregar días del mes siguiente para completar la última semana
+    const ultimoDiaSemana = ultimoDia.getDay();
+    const diasFaltantes = 6 - ultimoDiaSemana;
+    if (diasFaltantes > 0) {
+      const mesSiguiente = this.mesActual === 11 ? 0 : this.mesActual + 1;
+      const anioSiguiente = this.mesActual === 11 ? this.anioActual + 1 : this.anioActual;
+      for (let i = 1; i <= diasFaltantes; i++) {
+        dias.push(new Date(anioSiguiente, mesSiguiente, i));
+      }
     }
     
     return dias;
@@ -231,5 +351,25 @@ export class CalendarioComponent implements OnInit {
            fecha.getMonth() === hoy.getMonth() &&
            fecha.getFullYear() === hoy.getFullYear();
   }
+
+  formatearFecha(fechaStr: string): string {
+    // Parsear fecha de manera segura para evitar problemas de zona horaria
+    let fecha: Date;
+    if (fechaStr.includes('T')) {
+      fecha = new Date(fechaStr);
+    } else {
+      // Formato YYYY-MM-DD
+      const partes = fechaStr.split('-');
+      fecha = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    }
+    
+    // Usar métodos locales para evitar problemas de zona horaria
+    const dia = fecha.getDate().toString().padStart(2, '0');
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const anio = fecha.getFullYear();
+    // Formato: DD/MM - YYYY (separando el año)
+    return `${dia}/${mes} - ${anio}`;
+  }
+
 }
 

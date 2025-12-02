@@ -148,6 +148,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
         { label: 'Mis Materias', icon: 'menu_book', route: '/app/materias', visible: true },
         { label: 'Tomar Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
         { label: 'Cargar Notas', icon: 'grade', route: '/app/notas', visible: true },
+        { label: 'Tareas', icon: 'assignment', route: '/app/tareas', visible: true },
         { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: true },
         { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },

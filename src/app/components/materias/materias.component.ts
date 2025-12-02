@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MateriaService } from '../../services/materia.service';
 import { AlumnoService } from '../../services/alumno.service';
 import { CarreraService } from '../../services/carrera.service';
@@ -30,6 +32,7 @@ import { Curso } from '../../models/curso.model';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -40,7 +43,8 @@ import { Curso } from '../../models/curso.model';
     MatSelectModule,
     MatCheckboxModule,
     MatChipsModule,
-    MatStepperModule
+    MatStepperModule,
+    MatTooltipModule
   ],
   templateUrl: './materias.component.html',
   styleUrl: './materias.component.css'
@@ -64,6 +68,9 @@ export class MateriasComponent implements OnInit {
   docentes: Docente[] = [];
   materiasDisponibles: Materia[] = [];
   correlatividadesSeleccionadas: string[] = [];
+  materiaStatsCache: { [materiaId: string]: number } = {}; // Cache para estadísticas
+  alumnosCache: Alumno[] = []; // Cache de alumnos para cálculos rápidos
+  cantidadInscritosCache: { [materiaId: string]: number } = {}; // Cache de cantidad de inscritos
   
   // Wizard data
   wizardData: {
@@ -182,16 +189,24 @@ export class MateriasComponent implements OnInit {
 
   async loadMaterias(): Promise<void> {
     try {
+      // Cargar alumnos para el cache
+      this.alumnosCache = await this.alumnoService.getAlumnos();
+      
       let todasLasMaterias = await this.materiaService.getMaterias();
       console.log('Materias obtenidas del servicio:', todasLasMaterias.length, todasLasMaterias);
       
-      // Si es alumno, obtener materias desde los cursos donde está inscrito
+      // Si es alumno, obtener materias desde los cursos donde está inscrito Y que pertenezcan a su carrera
       if (this.permissionsService.esAlumno()) {
         const usuarioId = this.authService.getCurrentUser()?.id;
         if (usuarioId) {
           const alumno = await this.alumnoService.getAlumnoById(usuarioId);
-          if (alumno) {
-            // Obtener cursos donde está inscrito el alumno
+          if (alumno && alumno.carreraId) {
+            // Primero filtrar por carrera del alumno
+            todasLasMaterias = todasLasMaterias.filter(m => 
+              m.carreraId === alumno.carreraId
+            );
+            
+            // Luego obtener cursos donde está inscrito el alumno
             const todosLosCursos = await this.cursoService.getCursos();
             const cursosDelAlumno = todosLosCursos.filter(c => 
               c.alumnos.includes(usuarioId) || 
@@ -205,8 +220,14 @@ export class MateriasComponent implements OnInit {
               curso.materias.forEach(materiaId => materiasIds.add(materiaId));
             });
             
-            // Filtrar materias que están en los cursos del alumno
-            todasLasMaterias = todasLasMaterias.filter(m => materiasIds.has(m.id));
+            // Filtrar materias que están en los cursos del alumno Y pertenecen a su carrera
+            todasLasMaterias = todasLasMaterias.filter(m => 
+              materiasIds.has(m.id) && m.carreraId === alumno.carreraId
+            );
+          } else if (alumno && !alumno.carreraId) {
+            // Si el alumno no tiene carrera asignada, no mostrar materias
+            console.warn('Alumno sin carrera asignada, no se mostrarán materias');
+            todasLasMaterias = [];
           }
         }
       }
@@ -235,12 +256,27 @@ export class MateriasComponent implements OnInit {
       
       console.log('Materias después de filtros de rol:', todasLasMaterias.length);
       this.materias = todasLasMaterias;
+      
+      // Calcular cantidad de inscritos para cada materia
+      await this.calcularCantidadInscritos();
+      
       this.aplicarFiltros();
       console.log('Materias filtradas finales:', this.materiasFiltradas.length);
     } catch (error) {
       console.error('Error cargando materias:', error);
       this.materias = [];
       this.materiasFiltradas = [];
+    }
+  }
+
+  async calcularCantidadInscritos(): Promise<void> {
+    // Limpiar cache anterior
+    this.cantidadInscritosCache = {};
+    
+    // Calcular para cada materia
+    for (const materia of this.materias) {
+      const cantidad = await this.getCantidadInscritos(materia.id);
+      this.cantidadInscritosCache[materia.id] = cantidad;
     }
   }
 
@@ -261,6 +297,11 @@ export class MateriasComponent implements OnInit {
     }
 
     this.materiasFiltradas = filtradas;
+    
+    // Cargar estadísticas si es profesor
+    if (this.permissionsService.esProfesor()) {
+      this.loadMateriaStats();
+    }
   }
 
   onBusquedaChange(): void {
@@ -801,7 +842,10 @@ export class MateriasComponent implements OnInit {
 
 
   getCursosUnicos(): string[] {
-    const cursos = this.materias.map(m => m.curso).filter((c, i, arr) => arr.indexOf(c) === i);
+    const cursos = this.materias
+      .map(m => m.curso)
+      .filter(c => c && c.trim() !== '') // Filtrar cursos vacíos o en blanco
+      .filter((c, i, arr) => arr.indexOf(c) === i); // Eliminar duplicados
     return cursos.sort();
   }
 
@@ -818,8 +862,118 @@ export class MateriasComponent implements OnInit {
     }).join(', ');
   }
 
-  getCantidadInscritos(materiaId: string): number {
-    return this.materiaService.getInscripcionesByMateria(materiaId).length;
+  async getCantidadInscritos(materiaId: string): Promise<number> {
+    // Si está en cache, retornar el valor cacheado
+    if (this.cantidadInscritosCache[materiaId] !== undefined) {
+      return this.cantidadInscritosCache[materiaId];
+    }
+
+    // Obtener la materia para verificar su carrera
+    const materia = this.materias.find(m => m.id === materiaId);
+    if (!materia) {
+      this.cantidadInscritosCache[materiaId] = 0;
+      return 0;
+    }
+
+    // Buscar cursos que tienen esta materia
+    const cursosConMateria = this.cursos.filter(c => c.materias.includes(materiaId));
+    if (cursosConMateria.length === 0) {
+      this.cantidadInscritosCache[materiaId] = 0;
+      return 0;
+    }
+
+    // Obtener IDs de alumnos de esos cursos (desde c.alumnos)
+    const idsAlumnosCursos = new Set<string>();
+    cursosConMateria.forEach(curso => {
+      if (curso.alumnos && curso.alumnos.length > 0) {
+        curso.alumnos.forEach(alumnoId => idsAlumnosCursos.add(alumnoId));
+      }
+    });
+
+    // Usar cache de alumnos si está disponible, sino cargar
+    const todosLosAlumnos = this.alumnosCache.length > 0 
+      ? this.alumnosCache 
+      : await this.alumnoService.getAlumnos();
+    
+    if (this.alumnosCache.length === 0) {
+      this.alumnosCache = todosLosAlumnos;
+    }
+
+    // Filtrar alumnos que:
+    // 1. Están en los cursos que tienen esta materia (desde c.alumnos)
+    // 2. O tienen cursoId que coincide con algún curso que tiene la materia
+    // 3. O tienen cursoIds que incluyen algún curso que tiene la materia
+    // 4. Y pertenecen a la carrera de la materia (si la materia tiene carreraId)
+    const alumnosFiltrados = todosLosAlumnos.filter(alumno => {
+      // Verificar si está en los cursos directamente
+      const estaEnCurso = idsAlumnosCursos.has(alumno.id);
+      
+      // Verificar si tiene cursoId que coincide
+      const tieneCursoId = alumno.cursoId && cursosConMateria.some(c => c.id === alumno.cursoId);
+      
+      // Verificar si tiene cursoIds que incluyen algún curso
+      const tieneCursoIds = alumno.cursoIds && alumno.cursoIds.some(cId => 
+        cursosConMateria.some(c => c.id === cId)
+      );
+      
+      // Verificar carrera si la materia tiene carreraId
+      const perteneceACarrera = !materia.carreraId || alumno.carreraId === materia.carreraId;
+      
+      return (estaEnCurso || tieneCursoId || tieneCursoIds) && perteneceACarrera;
+    });
+    
+    const cantidad = alumnosFiltrados.length;
+    this.cantidadInscritosCache[materiaId] = cantidad;
+    return cantidad;
+  }
+
+  // Método síncrono para usar en el template
+  getCantidadInscritosSync(materiaId: string): number {
+    return this.cantidadInscritosCache[materiaId] || 0;
+  }
+
+  getPromedioAsistencia(materiaId: string): number {
+    // Retornar valor del cache si existe, sino 0
+    return this.materiaStatsCache[materiaId] || 0;
+  }
+
+  async loadMateriaStats(): Promise<void> {
+    // Cargar estadísticas para todas las materias del profesor
+    if (!this.permissionsService.esProfesor()) return;
+
+    for (const materia of this.materiasFiltradas) {
+      try {
+        const cursosConMateria = this.cursos.filter(c => c.materias.includes(materia.id));
+        const idsAlumnos = new Set<string>();
+        
+        cursosConMateria.forEach(curso => {
+          curso.alumnos?.forEach(alumnoId => idsAlumnos.add(alumnoId));
+        });
+
+        if (idsAlumnos.size === 0) {
+          this.materiaStatsCache[materia.id] = 0;
+          continue;
+        }
+
+        const porcentajes: number[] = [];
+        for (const alumnoId of idsAlumnos) {
+          const porcentaje = await this.alumnoService.getPorcentajeAsistencia(alumnoId, materia.id);
+          if (!isNaN(porcentaje)) {
+            porcentajes.push(porcentaje);
+          }
+        }
+
+        if (porcentajes.length === 0) {
+          this.materiaStatsCache[materia.id] = 0;
+        } else {
+          const promedio = porcentajes.reduce((a, b) => a + b, 0) / porcentajes.length;
+          this.materiaStatsCache[materia.id] = Math.round(promedio);
+        }
+      } catch (error) {
+        console.error(`Error calculando promedio de asistencia para materia ${materia.id}:`, error);
+        this.materiaStatsCache[materia.id] = 0;
+      }
+    }
   }
 }
 

@@ -37,8 +37,18 @@ export const routes: Routes = [
     canActivate: [institucionGuard]
   },
   {
-    path: 'registro',
-    loadComponent: () => import('./components/registro/registro.component').then(m => m.RegistroComponent),
+    path: 'forgot-password',
+    loadComponent: () => import('./components/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent),
+    canActivate: [institucionGuard]
+  },
+  {
+    path: 'verify-code',
+    loadComponent: () => import('./components/verify-code/verify-code').then(m => m.VerifyCodeComponent),
+    canActivate: [institucionGuard]
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./components/reset-password/reset-password').then(m => m.ResetPasswordComponent),
     canActivate: [institucionGuard]
   },
   {
@@ -87,6 +97,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/mensajes/mensajes.component').then(m => m.MensajesComponent)
       },
       {
+        path: 'tareas',
+        loadComponent: () => import('./components/tareas/tareas.component').then(m => m.TareasComponent)
+      },
+      {
         path: 'reportes',
         loadComponent: () => import('./components/reportes/reportes.component').then(m => m.ReportesComponent)
       },
@@ -129,6 +143,14 @@ export const routes: Routes = [
       {
         path: 'analisis',
         loadComponent: () => import('./components/analisis/analisis.component').then(m => m.AnalisisComponent)
+      },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./components/perfil/perfil.component').then(m => m.PerfilComponent)
+      },
+      {
+        path: 'perfil/:id',
+        loadComponent: () => import('./components/perfil/perfil.component').then(m => m.PerfilComponent)
       },
       {
         path: 'configuracion',

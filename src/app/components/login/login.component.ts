@@ -8,10 +8,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { InstitucionService } from '../../services/institucion.service';
 import { NotificationService } from '../../services/notification.service';
+import { ForgotPasswordComponent } from '../forgot-password/forgot-password';
 import { Institucion } from '../../models/institucion.model';
 
 @Component({
@@ -27,6 +29,7 @@ import { Institucion } from '../../models/institucion.model';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
+    MatDialogModule,
     RouterModule
   ],
   templateUrl: './login.component.html',
@@ -43,7 +46,8 @@ export class LoginComponent {
     private authService: AuthService,
     private institucionService: InstitucionService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dialog: MatDialog
   ) {
     this.currentInstitucion = this.institucionService.getCurrentInstitucion();
     if (this.authService.isAuthenticated()) {
@@ -51,7 +55,7 @@ export class LoginComponent {
     }
 
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      username: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(4)]]
     });
   }
@@ -85,5 +89,21 @@ export class LoginComponent {
       return `Mínimo ${control.errors?.['minlength'].requiredLength} caracteres`;
     }
     return '';
+  }
+
+  onForgotPassword(event: Event): void {
+    event.preventDefault();
+    
+    const dialogRef = this.dialog.open(ForgotPasswordComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      disableClose: false,
+      panelClass: 'forgot-password-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // Los modales se manejan internamente, no hay necesidad de navegar
+      // El flujo es: forgot-password -> verify-code -> reset-password (todo en modales)
+    });
   }
 }

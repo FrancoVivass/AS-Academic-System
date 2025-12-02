@@ -5,14 +5,19 @@
         <mat-icon>people</mat-icon>
         Gestión de Usuarios
       </h1>
-      <p>Visualiza y gestiona los usuarios del sistema separados por profesores y alumnos</p>
+      <p>Administra profesores y alumnos del sistema de forma centralizada</p>
     </div>
   </div>
 
   <mat-card class="usuarios-card">
-    <mat-tab-group [(selectedIndex)]="selectedTab">
+    <mat-tab-group [(selectedIndex)]="selectedTab" class="usuarios-tabs">
       <!-- Tab de Profesores -->
-      <mat-tab label="Profesores">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>school</mat-icon>
+          <span>Profesores</span>
+          <mat-chip class="tab-badge">{{ profesoresFiltrados.length }}</mat-chip>
+        </ng-template>
         <div class="tab-content">
           <div class="search-section">
             <mat-form-field appearance="outline" class="search-field">
@@ -30,9 +35,9 @@
               <ng-container matColumnDef="nombre">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
                 <td mat-cell *matCellDef="let profesor">
-                  <div class="user-info">
+                  <div class="user-info" [matTooltip]="getNombreCompleto(profesor)">
                     <mat-icon class="user-icon">person</mat-icon>
-                    <span>{{ getNombreCompleto(profesor) }}</span>
+                    <a [routerLink]="['/app/perfil', profesor.id]" class="user-link">{{ getNombreCompleto(profesor) }}</a>
                   </div>
                 </td>
               </ng-container>
@@ -41,7 +46,7 @@
                 <th mat-header-cell *matHeaderCellDef>Email</th>
                 <td mat-cell *matCellDef="let profesor">
                   <div class="email-cell">
-                    <span>{{ profesor.email }}</span>
+                    <span [matTooltip]="profesor.email">{{ profesor.email }}</span>
                     <button mat-icon-button (click)="copiarEmail(profesor.email)" matTooltip="Copiar email">
                       <mat-icon>content_copy</mat-icon>
                     </button>
@@ -53,7 +58,7 @@
                 <th mat-header-cell *matHeaderCellDef>Usuario</th>
                 <td mat-cell *matCellDef="let profesor">
                   <div class="username-cell">
-                    <span class="username-text">{{ profesor.username }}</span>
+                    <span class="username-text" [matTooltip]="profesor.username">{{ profesor.username }}</span>
                     <button mat-icon-button (click)="copiarUsername(profesor.username)" matTooltip="Copiar usuario">
                       <mat-icon>content_copy</mat-icon>
                     </button>
@@ -65,8 +70,17 @@
                 <th mat-header-cell *matHeaderCellDef>Contraseña</th>
                 <td mat-cell *matCellDef="let profesor">
                   <div class="password-cell">
-                    <span class="password-text">{{ getPassword(profesor) }}</span>
+                    <span class="password-text">
+                      @if (isPasswordVisible(profesor.id)) {
+                        {{ getPassword(profesor) }}
+                      } @else {
+                        {{ getPassword(profesor) !== '-' ? '****' : '-' }}
+                      }
+                    </span>
                     @if (getPassword(profesor) !== '-') {
+                      <button mat-icon-button (click)="togglePasswordVisibility(profesor.id)" matTooltip="Mostrar/Ocultar contraseña">
+                        <mat-icon>{{ isPasswordVisible(profesor.id) ? 'visibility_off' : 'visibility' }}</mat-icon>
+                      </button>
                       <button mat-icon-button (click)="copiarPassword(getPassword(profesor))" matTooltip="Copiar contraseña">
                         <mat-icon>content_copy</mat-icon>
                       </button>
@@ -82,7 +96,7 @@
 
               <ng-container matColumnDef="especialidad">
                 <th mat-header-cell *matHeaderCellDef>Especialidad</th>
-                <td mat-cell *matCellDef="let profesor">{{ profesor.especialidad || '-' }}</td>
+                <td mat-cell *matCellDef="let profesor" [matTooltip]="profesor.especialidad || '-'">{{ profesor.especialidad || '-' }}</td>
               </ng-container>
 
               <ng-container matColumnDef="materias">
@@ -112,13 +126,27 @@
       </mat-tab>
 
       <!-- Tab de Alumnos -->
-      <mat-tab label="Alumnos">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>person</mat-icon>
+          <span>Alumnos</span>
+          <mat-chip class="tab-badge">{{ alumnosFiltrados.length }}</mat-chip>
+        </ng-template>
         <div class="tab-content">
           <div class="search-section">
             <mat-form-field appearance="outline" class="search-field">
               <mat-label>Buscar alumnos</mat-label>
               <input matInput [(ngModel)]="busquedaAlumnos" (input)="onBusquedaAlumnosChange()" placeholder="Nombre, apellido, email o DNI...">
               <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Filtrar por Carrera</mat-label>
+              <mat-select [(ngModel)]="filtroCarreraAlumnos" (selectionChange)="onFiltroCarreraAlumnosChange()">
+                <mat-option value="">Todas las carreras</mat-option>
+                @for (carrera of carreras; track carrera.id) {
+                  <mat-option [value]="carrera.id">{{ carrera.nombre }}</mat-option>
+                }
+              </mat-select>
             </mat-form-field>
             <div class="stats">
               <mat-chip>{{ alumnosFiltrados.length }} alumno(s)</mat-chip>
@@ -130,9 +158,9 @@
               <ng-container matColumnDef="nombre">
                 <th mat-header-cell *matHeaderCellDef>Nombre</th>
                 <td mat-cell *matCellDef="let alumno">
-                  <div class="user-info">
+                  <div class="user-info" [matTooltip]="getNombreCompleto(alumno)">
                     <mat-icon class="user-icon">person</mat-icon>
-                    <span>{{ getNombreCompleto(alumno) }}</span>
+                    <a [routerLink]="['/app/perfil', alumno.id]" class="user-link">{{ getNombreCompleto(alumno) }}</a>
                   </div>
                 </td>
               </ng-container>
@@ -141,7 +169,7 @@
                 <th mat-header-cell *matHeaderCellDef>Email</th>
                 <td mat-cell *matCellDef="let alumno">
                   <div class="email-cell">
-                    <span>{{ alumno.email }}</span>
+                    <span [matTooltip]="alumno.email">{{ alumno.email }}</span>
                     <button mat-icon-button (click)="copiarEmail(alumno.email)" matTooltip="Copiar email">
                       <mat-icon>content_copy</mat-icon>
                     </button>
@@ -153,7 +181,7 @@
                 <th mat-header-cell *matHeaderCellDef>Usuario</th>
                 <td mat-cell *matCellDef="let alumno">
                   <div class="username-cell">
-                    <span class="username-text">{{ getUsername(alumno) }}</span>
+                    <span class="username-text" [matTooltip]="getUsername(alumno)">{{ getUsername(alumno) }}</span>
                     @if (getUsername(alumno) !== '-') {
                       <button mat-icon-button (click)="copiarUsername(getUsername(alumno))" matTooltip="Copiar usuario">
                         <mat-icon>content_copy</mat-icon>
@@ -167,8 +195,17 @@
                 <th mat-header-cell *matHeaderCellDef>Contraseña</th>
                 <td mat-cell *matCellDef="let alumno">
                   <div class="password-cell">
-                    <span class="password-text">{{ getPassword(alumno) }}</span>
+                    <span class="password-text">
+                      @if (isPasswordVisible(alumno.id)) {
+                        {{ getPassword(alumno) }}
+                      } @else {
+                        {{ getPassword(alumno) !== '-' ? '****' : '-' }}
+                      }
+                    </span>
                     @if (getPassword(alumno) !== '-') {
+                      <button mat-icon-button (click)="togglePasswordVisibility(alumno.id)" matTooltip="Mostrar/Ocultar contraseña">
+                        <mat-icon>{{ isPasswordVisible(alumno.id) ? 'visibility_off' : 'visibility' }}</mat-icon>
+                      </button>
                       <button mat-icon-button (click)="copiarPassword(getPassword(alumno))" matTooltip="Copiar contraseña">
                         <mat-icon>content_copy</mat-icon>
                       </button>
@@ -179,17 +216,17 @@
 
               <ng-container matColumnDef="dni">
                 <th mat-header-cell *matHeaderCellDef>DNI</th>
-                <td mat-cell *matCellDef="let alumno">{{ alumno.dni || '-' }}</td>
+                <td mat-cell *matCellDef="let alumno" [matTooltip]="alumno.dni || '-'">{{ alumno.dni || '-' }}</td>
               </ng-container>
 
               <ng-container matColumnDef="curso">
                 <th mat-header-cell *matHeaderCellDef>Curso</th>
-                <td mat-cell *matCellDef="let alumno">{{ alumno.curso || '-' }}</td>
+                <td mat-cell *matCellDef="let alumno" [matTooltip]="alumno.curso || '-'">{{ alumno.curso || '-' }}</td>
               </ng-container>
 
               <ng-container matColumnDef="carrera">
                 <th mat-header-cell *matHeaderCellDef>Carrera</th>
-                <td mat-cell *matCellDef="let alumno">
+                <td mat-cell *matCellDef="let alumno" [matTooltip]="alumno.carreraId ? getNombreCarrera(alumno.carreraId) : '-'">
                   @if (alumno.carreraId) {
                     <span>{{ getNombreCarrera(alumno.carreraId) }}</span>
                   } @else {

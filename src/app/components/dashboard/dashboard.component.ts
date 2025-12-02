@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,8 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+import { DatePipe } from '@angular/common';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { NgChartsModule } from 'ng2-charts';
 import { AlumnoService } from '../../services/alumno.service';
@@ -22,10 +24,14 @@ import { CarreraService } from '../../services/carrera.service';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { ReportService } from '../../services/report.service';
+import { MensajeService } from '../../services/mensaje.service';
+import { TareaService } from '../../services/tarea.service';
 import { Alumno, Nota, Asistencia } from '../../models/alumno.model';
 import { Materia } from '../../models/materia.model';
 import { Docente } from '../../models/usuario.model';
 import { Curso } from '../../models/curso.model';
+import { Mensaje } from '../../models/mensaje.model';
+import { Tarea } from '../../models/tarea.model';
 
 interface Advertencia {
   tipo: 'warning' | 'error' | 'info' | 'success';
@@ -78,6 +84,8 @@ interface ClaseDelDia {
     MatTabsModule,
     MatListModule,
     MatTooltipModule,
+    MatDividerModule,
+    DatePipe,
     NgChartsModule
   ],
   templateUrl: './dashboard.component.html',
@@ -108,6 +116,8 @@ export class DashboardComponent implements OnInit {
   clasesDelDia: ClaseDelDia[] = [];
   topAlumnos: any[] = [];
   materiasPopulares: any[] = [];
+  mensajesRecientes: Mensaje[] = [];
+  mensajesNoLeidos: number = 0;
   
   // Gráficos
   public barChartOptions: ChartConfiguration['options'] = {
@@ -186,13 +196,30 @@ export class DashboardComponent implements OnInit {
     private docenteService: DocenteService,
     private cursoService: CursoService,
     private carreraService: CarreraService,
-    private authService: AuthService,
+    public authService: AuthService,
     public permissionsService: PermissionsService,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private mensajeService: MensajeService,
+    private tareaService: TareaService,
+    public router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadData();
+    this.loadMensajesRecientes();
+  }
+
+  async loadMensajesRecientes(): Promise<void> {
+    const usuarioId = this.authService.getCurrentUser()?.id;
+    if (!usuarioId) return;
+
+    try {
+      this.mensajesRecientes = await this.mensajeService.getMensajesRecientes(usuarioId, 5);
+      const mensajesNoLeidos = await this.mensajeService.getMensajesNoLeidos(usuarioId);
+      this.mensajesNoLeidos = mensajesNoLeidos.length;
+    } catch (error) {
+      console.error('Error cargando mensajes recientes:', error);
+    }
   }
 
   async loadData(): Promise<void> {
@@ -343,6 +370,7 @@ export class DashboardComponent implements OnInit {
     }
 
     this.totalMaterias = this.materias.length;
+    await this.loadMensajesRecientes();
   }
 
   // Dashboard para Profesor
@@ -408,33 +436,96 @@ export class DashboardComponent implements OnInit {
     this.totalAlumnos = todosLosAlumnosIds.size;
     this.totalMaterias = this.materias.length;
 
-    // Alumnos por materia (usando cursos y carreras)
+    // Alumnos por materia (usando cursos y carreras) - Versión mejorada
     const alumnosPorMateriaPromises = todasLasMaterias.map(async (materia) => {
-      // Buscar alumnos en cursos que tienen esta materia
+      // Buscar cursos que tienen esta materia
       const cursosConMateria = cursos.filter(c => c.materias.includes(materia.id));
-      const idsAlumnos = [...new Set(cursosConMateria.flatMap(c => c.alumnos || []))];
       
-      // También incluir alumnos de la carrera si la materia tiene carreraId
-      if (materia.carreraId && alumnosPorCarrera[materia.carreraId]) {
-        alumnosPorCarrera[materia.carreraId].forEach(a => idsAlumnos.push(a.id));
-      }
+      // Información de cursos asociados - Filtrar cursos válidos y formatear
+      const cursosInfo = cursosConMateria
+        .filter(c => c && c.id && c.nombre) // Solo cursos válidos
+        .map(c => {
+          const ano = c.año || 1;
+          const division = c.division || 'A';
+          const turno = c.turno || 'mañana';
+          
+          // Crear nombre formateado para el chip
+          const nombreFormateado = `${ano}° ${division} - ${turno}`;
+          
+          return {
+            id: c.id,
+            nombre: c.nombre || nombreFormateado,
+            ano: ano,
+            division: division,
+            turno: turno,
+            nombreFormateado: nombreFormateado
+          };
+        });
       
-      const alumnosPromises = [...new Set(idsAlumnos)]
-        .map(id => this.alumnoService.getAlumnoById(id));
-      const alumnos = (await Promise.all(alumnosPromises))
-        .filter(a => a !== undefined) as Alumno[];
-
-      const alumnosDetallePromises = alumnos.map(async (a) => ({
+      // Obtener IDs de alumnos de esos cursos (desde c.alumnos)
+      const idsAlumnosCursos = new Set<string>();
+      cursosConMateria.forEach(curso => {
+        if (curso.alumnos && curso.alumnos.length > 0) {
+          curso.alumnos.forEach(alumnoId => idsAlumnosCursos.add(alumnoId));
+        }
+      });
+      
+      // Obtener todos los alumnos y filtrar
+      const todosLosAlumnos = await this.alumnoService.getAlumnos();
+      
+      // Filtrar alumnos que:
+      // 1. Están en los cursos que tienen esta materia (desde c.alumnos)
+      // 2. O tienen cursoId que coincide con algún curso que tiene la materia
+      // 3. O tienen cursoIds que incluyen algún curso que tiene la materia
+      // 4. Y pertenecen a la carrera de la materia (si la materia tiene carreraId)
+      const alumnosFiltrados = todosLosAlumnos.filter(alumno => {
+        // Verificar si está en los cursos directamente
+        const estaEnCurso = idsAlumnosCursos.has(alumno.id);
+        
+        // Verificar si tiene cursoId que coincide
+        const tieneCursoId = alumno.cursoId && cursosConMateria.some(c => c.id === alumno.cursoId);
+        
+        // Verificar si tiene cursoIds que incluyen algún curso
+        const tieneCursoIds = alumno.cursoIds && alumno.cursoIds.some(cId => 
+          cursosConMateria.some(c => c.id === cId)
+        );
+        
+        // Verificar carrera si la materia tiene carreraId
+        const perteneceACarrera = !materia.carreraId || alumno.carreraId === materia.carreraId;
+        
+        return (estaEnCurso || tieneCursoId || tieneCursoIds) && perteneceACarrera;
+      });
+      
+      const alumnosDetallePromises = alumnosFiltrados.map(async (a) => ({
+        id: a.id,
         nombre: `${a.nombre} ${a.apellido}`,
         promedio: await this.alumnoService.getPromedioAlumno(a.id),
         asistencia: await this.alumnoService.getPorcentajeAsistencia(a.id, materia.id)
       }));
       const alumnosDetalle = await Promise.all(alumnosDetallePromises);
 
+      // Obtener tareas de esta materia
+      const todasLasTareas = await this.tareaService.getTareasByMateria(materia.id);
+      const tareasActivas = todasLasTareas.filter(t => t.estado === 'activa');
+      const hoy = new Date();
+      const tareasPendientes = tareasActivas.filter(t => {
+        if (t.fechaLimite) {
+          return new Date(t.fechaLimite) >= hoy;
+        }
+        return true;
+      });
+
       return {
         materia: materia.nombre,
-        cantidad: alumnos.length,
-        alumnos: alumnosDetalle
+        materiaId: materia.id,
+        cantidad: alumnosFiltrados.length,
+        alumnos: alumnosDetalle,
+        cursos: cursosInfo,
+        tareas: {
+          total: todasLasTareas.length,
+          activas: tareasActivas.length,
+          pendientes: tareasPendientes.length
+        }
       };
     });
     this.alumnosPorMateria = await Promise.all(alumnosPorMateriaPromises);

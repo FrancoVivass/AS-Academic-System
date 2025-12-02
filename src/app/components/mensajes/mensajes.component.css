@@ -60,6 +60,118 @@
   font-weight: 600;
 }
 
+.bandejas-toggle {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.bandeja-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.bandeja-btn:hover {
+  background: #f9fafb;
+  border-color: var(--institucion-primary, #2b7bcc);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(43, 123, 204, 0.15);
+}
+
+.bandeja-btn.active {
+  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, #1565c0 100%);
+  color: white;
+  border-color: var(--institucion-primary, #2b7bcc);
+  box-shadow: 0 4px 12px rgba(43, 123, 204, 0.3);
+}
+
+.bandeja-btn.active mat-icon {
+  color: white;
+}
+
+.bandeja-btn mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.bandeja-btn:hover mat-icon {
+  transform: scale(1.1);
+}
+
+.badge-chip-small {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.125rem 0.375rem;
+  min-height: 18px;
+  height: 18px;
+  font-weight: 600;
+}
+
+.badge-chip-unread {
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.125rem 0.375rem;
+  min-height: 18px;
+  height: 18px;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.mensaje-detalle {
+  padding: 1rem;
+}
+
+.btn-volver {
+  margin-bottom: 1rem;
+  color: var(--institucion-primary, #2b7bcc);
+}
+
+.detalle-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detalle-header h3 {
+  margin: 0 0 0.75rem 0;
+  color: #1a1a1a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.detalle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.detalle-contenido {
+  color: #1a1a1a;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-size: 0.9375rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .mensajes-container {

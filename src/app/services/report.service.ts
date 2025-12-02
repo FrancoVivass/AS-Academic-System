@@ -141,13 +141,31 @@ export class ReportService {
     csv += '=== REPORTE DE ALUMNOS ===\n';
     csv += 'Nombre,Apellido,DNI,Curso,Promedio,Asistencia%,Notas,Asistencias,Materias\n';
     reporteAlumnos.forEach(r => {
-      csv += `${r.alumno.nombre},${r.alumno.apellido},${r.alumno.dni},${r.alumno.curso},${r.promedio},${r.porcentajeAsistencia},${r.cantidadNotas},${r.cantidadAsistencias},${r.materiasInscritas}\n`;
+      // Escapar valores que contengan comas, comillas o saltos de línea
+      const escapeCSV = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+      csv += `${escapeCSV(r.alumno.nombre)},${escapeCSV(r.alumno.apellido)},${escapeCSV(r.alumno.dni)},${escapeCSV(r.alumno.curso)},${escapeCSV(r.promedio)},${escapeCSV(r.porcentajeAsistencia)},${escapeCSV(r.cantidadNotas)},${escapeCSV(r.cantidadAsistencias)},${escapeCSV(r.materiasInscritas)}\n`;
     });
 
     csv += '\n=== REPORTE DE MATERIAS ===\n';
     csv += 'Nombre,Código,Profesor,Inscritos,Promedio General,Asistencia%\n';
     reporteMaterias.forEach(r => {
-      csv += `${r.materia.nombre},${r.materia.codigo},${r.materia.profesor},${r.cantidadInscritos},${r.promedioGeneral},${r.porcentajeAsistencia}\n`;
+      // Escapar valores que contengan comas, comillas o saltos de línea
+      const escapeCSV = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+      csv += `${escapeCSV(r.materia.nombre)},${escapeCSV(r.materia.codigo)},${escapeCSV(r.materia.profesor)},${escapeCSV(r.cantidadInscritos)},${escapeCSV(r.promedioGeneral)},${escapeCSV(r.porcentajeAsistencia)}\n`;
     });
 
     return csv;

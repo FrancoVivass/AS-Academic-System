@@ -70,6 +70,18 @@
   color: var(--institucion-primary, #2b7bcc);
 }
 
+/* Modo oscuro: Intercambiar primario y secundario en iconos de header */
+:root.dark-mode .header-section h1 mat-icon,
+html.dark-mode .header-section h1 mat-icon,
+body.dark-theme .header-section h1 mat-icon,
+[data-theme="dark"] .header-section h1 mat-icon,
+:root.dark-mode .header h1 mat-icon,
+html.dark-mode .header h1 mat-icon,
+body.dark-theme .header h1 mat-icon,
+[data-theme="dark"] .header h1 mat-icon {
+  color: var(--institucion-secondary, #1565c0) !important;
+}
+
 .header-section p {
   margin: 0;
   color: #6b7280;
@@ -96,9 +108,147 @@
 
 .header-section button[mat-raised-button]:hover,
 .header button[mat-raised-button]:hover {
-  background: var(--institucion-secondary, #1565c0);
+  background: var(--institucion-primary, #2b7bcc);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
+}
+
+/* Modo oscuro: Intercambiar primario y secundario en gestión */
+/* Aplicar intercambio de colores en modo oscuro solo dentro de componentes de gestión */
+:root.dark-mode .gestion-container *,
+html.dark-mode .gestion-container *,
+body.dark-theme .gestion-container *,
+[data-theme="dark"] .gestion-container *,
+:root.dark-mode .docentes-container *,
+html.dark-mode .docentes-container *,
+body.dark-theme .docentes-container *,
+[data-theme="dark"] .docentes-container *,
+:root.dark-mode .alumnos-container *,
+html.dark-mode .alumnos-container *,
+body.dark-theme .alumnos-container *,
+[data-theme="dark"] .alumnos-container *,
+:root.dark-mode .materias-container *,
+html.dark-mode .materias-container *,
+body.dark-theme .materias-container *,
+[data-theme="dark"] .materias-container *,
+:root.dark-mode .cursos-container *,
+html.dark-mode .cursos-container *,
+body.dark-theme .cursos-container *,
+[data-theme="dark"] .cursos-container *,
+:root.dark-mode .aulas-container *,
+html.dark-mode .aulas-container *,
+body.dark-theme .aulas-container *,
+[data-theme="dark"] .aulas-container *,
+:root.dark-mode .asistencia-container *,
+html.dark-mode .asistencia-container *,
+body.dark-theme .asistencia-container *,
+[data-theme="dark"] .asistencia-container *,
+:root.dark-mode .notas-container *,
+html.dark-mode .notas-container *,
+body.dark-theme .notas-container *,
+[data-theme="dark"] .notas-container *,
+:root.dark-mode .dashboard-container *,
+html.dark-mode .dashboard-container *,
+body.dark-theme .dashboard-container *,
+[data-theme="dark"] .dashboard-container *,
+:root.dark-mode .calendario-container *,
+html.dark-mode .calendario-container *,
+body.dark-theme .calendario-container *,
+[data-theme="dark"] .calendario-container *,
+:root.dark-mode .biblioteca-container *,
+html.dark-mode .biblioteca-container *,
+body.dark-theme .biblioteca-container *,
+[data-theme="dark"] .biblioteca-container *,
+:root.dark-mode .mensajes-container *,
+html.dark-mode .mensajes-container *,
+body.dark-theme .mensajes-container *,
+[data-theme="dark"] .mensajes-container *,
+:root.dark-mode .reportes-container *,
+html.dark-mode .reportes-container *,
+body.dark-theme .reportes-container *,
+[data-theme="dark"] .reportes-container *,
+:root.dark-mode .justificativos-container *,
+html.dark-mode .justificativos-container *,
+body.dark-theme .justificativos-container *,
+[data-theme="dark"] .justificativos-container *,
+:root.dark-mode .equivalencias-container *,
+html.dark-mode .equivalencias-container *,
+body.dark-theme .equivalencias-container *,
+[data-theme="dark"] .equivalencias-container *,
+:root.dark-mode .auditoria-container *,
+html.dark-mode .auditoria-container *,
+body.dark-theme .auditoria-container *,
+[data-theme="dark"] .auditoria-container *,
+:root.dark-mode .configuracion-container *,
+html.dark-mode .configuracion-container *,
+body.dark-theme .configuracion-container *,
+[data-theme="dark"] .configuracion-container *,
+:root.dark-mode .usuarios-container *,
+html.dark-mode .usuarios-container *,
+body.dark-theme .usuarios-container *,
+[data-theme="dark"] .usuarios-container *,
+:root.dark-mode .tareas-container *,
+html.dark-mode .tareas-container *,
+body.dark-theme .tareas-container *,
+[data-theme="dark"] .tareas-container *,
+:root.dark-mode .solicitudes-container *,
+html.dark-mode .solicitudes-container *,
+body.dark-theme .solicitudes-container *,
+[data-theme="dark"] .solicitudes-container * {
+  /* Intercambiar primario y secundario usando variables temporales */
+  --institucion-primary-temp: var(--institucion-primary);
+  --institucion-secondary-temp: var(--institucion-secondary);
+}
+
+/* Botones: Intercambiar primario por secundario en modo oscuro */
+:root.dark-mode .header-section button[mat-raised-button],
+html.dark-mode .header-section button[mat-raised-button],
+body.dark-theme .header-section button[mat-raised-button],
+[data-theme="dark"] .header-section button[mat-raised-button],
+:root.dark-mode .header button[mat-raised-button],
+html.dark-mode .header button[mat-raised-button],
+body.dark-theme .header button[mat-raised-button],
+[data-theme="dark"] .header button[mat-raised-button] {
+  background: var(--institucion-secondary, #1565c0) !important;
+}
+
+:root.dark-mode .header-section button[mat-raised-button]:hover,
+html.dark-mode .header-section button[mat-raised-button]:hover,
+body.dark-theme .header-section button[mat-raised-button]:hover,
+[data-theme="dark"] .header-section button[mat-raised-button]:hover,
+:root.dark-mode .header button[mat-raised-button]:hover,
+html.dark-mode .header button[mat-raised-button]:hover,
+body.dark-theme .header button[mat-raised-button]:hover,
+[data-theme="dark"] .header button[mat-raised-button]:hover {
+  background: var(--institucion-primary, #2b7bcc) !important;
+}
+
+/* Iconos y elementos con color primario: usar secundario en modo oscuro */
+:root.dark-mode .header-section h1 mat-icon,
+html.dark-mode .header-section h1 mat-icon,
+body.dark-theme .header-section h1 mat-icon,
+[data-theme="dark"] .header-section h1 mat-icon,
+:root.dark-mode .header h1 mat-icon,
+html.dark-mode .header h1 mat-icon,
+body.dark-theme .header h1 mat-icon,
+[data-theme="dark"] .header h1 mat-icon,
+:root.dark-mode .stat-icon.primary,
+html.dark-mode .stat-icon.primary,
+body.dark-theme .stat-icon.primary,
+[data-theme="dark"] .stat-icon.primary,
+:root.dark-mode .info-icon,
+html.dark-mode .info-icon,
+body.dark-theme .info-icon,
+[data-theme="dark"] .info-icon {
+  color: var(--institucion-secondary, #1565c0) !important;
+}
+
+/* Backgrounds con primario: usar secundario en modo oscuro */
+:root.dark-mode .stat-icon.primary,
+html.dark-mode .stat-icon.primary,
+body.dark-theme .stat-icon.primary,
+[data-theme="dark"] .stat-icon.primary {
+  background: rgba(21, 101, 192, 0.1) !important;
 }
 
 /* Cards de estadísticas */
@@ -148,6 +298,15 @@
   color: var(--institucion-primary, #2b7bcc);
 }
 
+/* Modo oscuro: Intercambiar primario y secundario en stat-icon */
+:root.dark-mode .stat-icon.primary,
+html.dark-mode .stat-icon.primary,
+body.dark-theme .stat-icon.primary,
+[data-theme="dark"] .stat-icon.primary {
+  background: rgba(21, 101, 192, 0.1) !important;
+  color: var(--institucion-secondary, #1565c0) !important;
+}
+
 .stat-icon.success {
   background: rgba(34, 197, 94, 0.1);
   color: #22c55e;
@@ -169,7 +328,7 @@
 }
 
 .stat-value {
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
@@ -206,6 +365,14 @@
   height: 1.5rem;
   color: var(--institucion-primary, #2b7bcc);
   flex-shrink: 0;
+}
+
+/* Modo oscuro: Intercambiar primario y secundario en info-icon */
+:root.dark-mode .info-icon,
+html.dark-mode .info-icon,
+body.dark-theme .info-icon,
+[data-theme="dark"] .info-icon {
+  color: var(--institucion-secondary, #1565c0) !important;
 }
 
 /* Tablas modernas */

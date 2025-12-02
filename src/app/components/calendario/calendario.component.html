@@ -60,11 +60,16 @@
           @for (evento of eventosProximos; track evento.id) {
             <div class="evento-item" [style.border-left-color]="evento.color">
               <div class="evento-info">
-                <div class="evento-fecha">
-                  <mat-icon>calendar_today</mat-icon>
-                  <span>{{ evento.fecha | date:'shortDate' }}</span>
+                <div class="evento-fecha-hora">
+                  <div class="evento-fecha">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span class="fecha-formato">{{ formatearFecha(evento.fecha) }}</span>
+                  </div>
                   @if (evento.hora) {
-                    <span class="evento-hora">{{ evento.hora }}</span>
+                    <div class="evento-hora">
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{ evento.hora }} Hs.</span>
+                    </div>
                   }
                 </div>
                 <div class="evento-titulo">{{ evento.titulo }}</div>
@@ -119,6 +124,7 @@
               <input matInput [matDatepicker]="picker" formControlName="fecha" required>
               <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
               <mat-datepicker #picker></mat-datepicker>
+              <mat-hint>Formato: DD/MM/YYYY</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Hora</mat-label>

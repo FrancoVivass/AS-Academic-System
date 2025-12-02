@@ -185,6 +185,25 @@
   gap: 0.5rem;
 }
 
+.clase-numero-badge {
+  background: #e0e7ff;
+  color: #3f51b5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.clase-numero-badge mat-icon {
+  font-size: 0.875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
 .curso-badge {
   display: inline-flex;
   align-items: center;
@@ -318,6 +337,35 @@
   height: 1.125rem;
   position: relative;
   z-index: 1;
+  overflow: visible;
+}
+
+/* Corregir iconos cortados */
+.stat-detail-item mat-icon,
+.icon-alumno,
+.info-icon {
+  overflow: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.acciones-masivas {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-masivo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .btn-accion span {

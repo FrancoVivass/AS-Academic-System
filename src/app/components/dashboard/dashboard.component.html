@@ -82,6 +82,63 @@
       </mat-card>
     </div>
 
+    <!-- Sección de Promedios por Materia -->
+    @if (materiasResumen.length > 0) {
+      <div class="promedios-materias-section">
+        <h2 class="section-title">
+          <mat-icon>assessment</mat-icon>
+          Promedios por Materia
+        </h2>
+        <div class="promedios-materias-grid">
+          @for (materia of materiasResumen; track materia.id) {
+            <mat-card class="promedio-materia-card" [class.excelente]="materia.promedio >= 9" 
+                     [class.bueno]="materia.promedio >= 7 && materia.promedio < 9"
+                     [class.regular]="materia.promedio < 7 && materia.promedio > 0"
+                     [class.sin-notas]="materia.promedio === 0">
+              <mat-card-content>
+                <div class="promedio-materia-content">
+                  <div class="materia-header-promedio">
+                    <mat-icon class="materia-icon">menu_book</mat-icon>
+                    <div class="materia-info-promedio">
+                      <h3>{{ materia.nombre }}</h3>
+                      <div class="promedio-numero" [class.excelente]="materia.promedio >= 9" 
+                           [class.bueno]="materia.promedio >= 7 && materia.promedio < 9"
+                           [class.regular]="materia.promedio < 7 && materia.promedio > 0"
+                           [class.sin-notas]="materia.promedio === 0">
+                        @if (materia.promedio > 0) {
+                          {{ materia.promedio.toFixed(2) }}
+                        } @else {
+                          Sin notas
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div class="materia-stats-promedio">
+                    <div class="stat-item-promedio">
+                      <mat-icon>check_circle</mat-icon>
+                      <span>{{ materia.asistencia }}% asist.</span>
+                    </div>
+                    <div class="stat-item-promedio">
+                      <mat-chip [color]="materia.estado === 'regular' ? 'primary' : 'warn'">
+                        {{ materia.estado }}
+                      </mat-chip>
+                    </div>
+                  </div>
+                  @if (materia.ultimaNota) {
+                    <div class="ultima-nota">
+                      <span class="ultima-nota-label">Última nota:</span>
+                      <span class="ultima-nota-value">{{ materia.ultimaNota.calificacion }}</span>
+                      <span class="ultima-nota-fecha">{{ materia.ultimaNota.fecha | date:'shortDate' }}</span>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </div>
+    }
+
     <!-- Alertas y Advertencias -->
     @if (advertencias.length > 0) {
       <div class="advertencias-section">
@@ -329,35 +386,219 @@
       </div>
     }
 
-    <!-- Estado de Cursos -->
+    <!-- Mensajes Recientes -->
+    <div class="mensajes-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <mat-icon>message</mat-icon>
+          Mensajes
+        </h2>
+        <button mat-stroked-button color="primary" [routerLink]="['/app/mensajes']" class="ver-todos-btn">
+          <mat-icon>arrow_forward</mat-icon>
+          Ver todos
+          @if (mensajesNoLeidos > 0) {
+            <mat-chip class="badge-chip-small">{{ mensajesNoLeidos }}</mat-chip>
+          }
+        </button>
+      </div>
+      @if (mensajesRecientes.length > 0) {
+        <mat-card class="mensajes-card">
+          <mat-card-content>
+            <mat-list>
+              @for (mensaje of mensajesRecientes; track mensaje.id) {
+                <mat-list-item 
+                  class="mensaje-item"
+                  [class.no-leido]="!mensaje.leido && mensaje.destinatarioId === authService.getCurrentUser()?.id"
+                  [routerLink]="['/app/mensajes']">
+                  <div class="mensaje-icon-wrapper">
+                    <mat-icon>{{ mensaje.leido ? 'mail' : 'mail_outline' }}</mat-icon>
+                  </div>
+                  <div class="mensaje-content">
+                    <div class="mensaje-header">
+                      <span class="mensaje-asunto">{{ mensaje.asunto }}</span>
+                      @if (!mensaje.leido && mensaje.destinatarioId === authService.getCurrentUser()?.id) {
+                        <mat-chip class="nuevo-chip">Nuevo</mat-chip>
+                      }
+                    </div>
+                    <div class="mensaje-preview">{{ mensaje.contenido.length > 60 ? mensaje.contenido.substring(0, 60) + '...' : mensaje.contenido }}</div>
+                    <div class="mensaje-fecha">{{ mensaje.fecha | date:'short' }}</div>
+                  </div>
+                </mat-list-item>
+                @if (!$last) {
+                  <mat-divider></mat-divider>
+                }
+              }
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card class="mensajes-card">
+          <mat-card-content>
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <p>No hay mensajes recientes</p>
+              <button mat-stroked-button color="primary" [routerLink]="['/app/mensajes']" class="empty-state-btn">
+                Ir a Mensajes
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <!-- Mis Materias - Versión Mejorada -->
     @if (alumnosPorMateria.length > 0) {
       <div class="estado-cursos-section">
         <h2 class="section-title">
-          <mat-icon>assessment</mat-icon>
-          Estado de Mis Cursos
+          <mat-icon>menu_book</mat-icon>
+          Mis Materias
         </h2>
         <div class="alumnos-materia-grid">
-          @for (item of alumnosPorMateria; track item.materia) {
+          @for (item of alumnosPorMateria; track item.materiaId) {
             <mat-card class="materia-alumnos-card">
               <mat-card-header>
-                <mat-card-title>{{ item.materia }}</mat-card-title>
-                <mat-chip>{{ item.cantidad }} alumnos</mat-chip>
+                <mat-card-title>
+                  <div class="materia-header-title">
+                    <mat-icon class="materia-icon-header">menu_book</mat-icon>
+                    <span>{{ item.materia }}</span>
+                  </div>
+                </mat-card-title>
+                <div class="materia-header-stats">
+                  <mat-chip class="alumnos-chip">
+                    <mat-icon>people</mat-icon>
+                    {{ item.cantidad }} alumnos
+                  </mat-chip>
+                  @if (item.tareas) {
+                    <mat-chip class="tareas-chip">
+                      <mat-icon>assignment</mat-icon>
+                      {{ item.tareas.activas }} tareas activas
+                    </mat-chip>
+                  }
+                </div>
               </mat-card-header>
               <mat-card-content>
-                <div class="alumnos-list">
-                  @for (alumno of item.alumnos; track alumno.nombre) {
-                    <div class="alumno-item">
-                      <span class="alumno-name">{{ alumno.nombre }}</span>
-                      <div class="alumno-stats">
-                        <span>Promedio: {{ alumno.promedio }}</span>
-                        <span>Asistencia: {{ alumno.asistencia }}%</span>
-                      </div>
+                <!-- Cursos asociados -->
+                @if (item.cursos && item.cursos.length > 0) {
+                  <div class="cursos-section">
+                    <div class="cursos-label">
+                      <mat-icon>class</mat-icon>
+                      <span>Cursos:</span>
                     </div>
-                  }
+                    <div class="cursos-list">
+                      @for (curso of item.cursos; track curso.id) {
+                        @if (curso && curso.id && curso.nombreFormateado) {
+                          <mat-chip class="curso-chip" [routerLink]="['/app/alumnos']" [queryParams]="{curso: curso.id, materia: item.materiaId}">
+                            {{ curso.nombreFormateado }}
+                          </mat-chip>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+                
+                <!-- Tareas -->
+                @if (item.tareas && item.tareas.total > 0) {
+                  <div class="tareas-info-section">
+                    <div class="tareas-stats">
+                      <div class="tarea-stat-item">
+                        <mat-icon>assignment</mat-icon>
+                        <span>{{ item.tareas.total }} total</span>
+                      </div>
+                      <div class="tarea-stat-item">
+                        <mat-icon>check_circle</mat-icon>
+                        <span>{{ item.tareas.activas }} activas</span>
+                      </div>
+                      @if (item.tareas.pendientes > 0) {
+                        <div class="tarea-stat-item warning">
+                          <mat-icon>schedule</mat-icon>
+                          <span>{{ item.tareas.pendientes }} pendientes</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                
+                <!-- Alumnos -->
+                @if (item.alumnos && item.alumnos.length > 0) {
+                  <div class="alumnos-section">
+                    <div class="alumnos-label">
+                      <mat-icon>people</mat-icon>
+                      <span>Alumnos ({{ item.alumnos.length }}):</span>
+                    </div>
+                    <div class="alumnos-list">
+                      @for (alumno of item.alumnos; track alumno.id) {
+                        <div class="alumno-item">
+                          <div class="alumno-info">
+                            <mat-icon class="alumno-icon">person</mat-icon>
+                            <span class="alumno-name">{{ alumno.nombre }}</span>
+                          </div>
+                          <div class="alumno-stats">
+                            <span class="stat-badge promedio" [class.excelente]="alumno.promedio >= 9" 
+                                  [class.bueno]="alumno.promedio >= 7 && alumno.promedio < 9"
+                                  [class.regular]="alumno.promedio < 7">
+                              {{ alumno.promedio.toFixed(1) }}
+                            </span>
+                            <span class="stat-badge asistencia" [class.buena]="alumno.asistencia >= 75" 
+                                  [class.baja]="alumno.asistencia < 75">
+                              {{ alumno.asistencia.toFixed(0) }}%
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <div class="empty-state-small">
+                    <mat-icon>info</mat-icon>
+                    <p>No hay alumnos inscritos en esta materia</p>
+                  </div>
+                }
+                
+                <!-- Atajos Rápidos -->
+                <div class="atajos-materia">
+                  <button mat-stroked-button color="primary" 
+                          [routerLink]="['/app/alumnos']" 
+                          [queryParams]="{materia: item.materiaId}"
+                          class="atajo-btn">
+                    <mat-icon>people</mat-icon>
+                    Ver Alumnos
+                  </button>
+                  <button mat-stroked-button color="primary" 
+                          [routerLink]="['/app/tareas']" 
+                          [queryParams]="{materia: item.materiaId}"
+                          class="atajo-btn">
+                    <mat-icon>assignment</mat-icon>
+                    Ver Tareas
+                  </button>
+                  <button mat-stroked-button color="primary" 
+                          [routerLink]="['/app/notas']" 
+                          [queryParams]="{materia: item.materiaId}"
+                          class="atajo-btn">
+                    <mat-icon>grade</mat-icon>
+                    Ver Notas
+                  </button>
+                  <button mat-stroked-button color="primary" 
+                          [routerLink]="['/app/asistencia']" 
+                          [queryParams]="{materia: item.materiaId}"
+                          class="atajo-btn">
+                    <mat-icon>check_circle</mat-icon>
+                    Ver Asistencia
+                  </button>
                 </div>
               </mat-card-content>
             </mat-card>
           }
+        </div>
+      </div>
+    } @else {
+      <div class="estado-cursos-section">
+        <h2 class="section-title">
+          <mat-icon>menu_book</mat-icon>
+          Mis Materias
+        </h2>
+        <div class="empty-state">
+          <mat-icon>info</mat-icon>
+          <p>No hay cursos asignados o no hay alumnos inscritos en tus materias</p>
         </div>
       </div>
     }
@@ -375,7 +616,7 @@
 
     <!-- Cards Principales -->
     <div class="stats-grid">
-      <mat-card class="stat-card">
+      <mat-card class="stat-card clickable" (click)="router.navigate(['/app/alumnos'])">
         <mat-card-content>
           <div class="stat-content">
             <div class="stat-icon-wrapper primary">
@@ -389,7 +630,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card">
+      <mat-card class="stat-card clickable" (click)="router.navigate(['/app/docentes'])">
         <mat-card-content>
           <div class="stat-content">
             <div class="stat-icon-wrapper success">
@@ -403,7 +644,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card">
+      <mat-card class="stat-card clickable" (click)="router.navigate(['/app/materias'])">
         <mat-card-content>
           <div class="stat-content">
             <div class="stat-icon-wrapper info">
@@ -417,7 +658,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card">
+      <mat-card class="stat-card clickable" (click)="router.navigate(['/app/asistencia'])">
         <mat-card-content>
           <div class="stat-content">
             <div class="stat-icon-wrapper warning">
@@ -490,9 +731,9 @@
           <mat-icon>assignment_ind</mat-icon>
           <span>Asignar Profesor</span>
         </button>
-        <button mat-raised-button color="accent" [routerLink]="['/app/reportes']" class="atajo-button">
+        <button mat-raised-button [routerLink]="['/app/reportes']" class="atajo-button atajo-reportes">
           <mat-icon>assessment</mat-icon>
-          <span>Ver Reportes</span>
+          <span>Reportes y Estadísticas</span>
         </button>
       </div>
     </div>

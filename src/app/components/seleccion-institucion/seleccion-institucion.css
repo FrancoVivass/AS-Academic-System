@@ -99,7 +99,7 @@ body.dark-theme .seleccion-container,
   font-size: 64px !important;
   width: 64px !important;
   height: 64px !important;
-  color: white !important;
+  color: rgb(0, 0, 0) !important;
 }
 
 .institucion-nombre {
@@ -147,7 +147,7 @@ body.dark-theme .seleccion-container,
 }
 
 :host ::ng-deep .select-button mat-icon {
-  color: white !important;
+  color: rgb(0, 0, 0) !important;
 }
 
 .no-institucion-section {
@@ -205,6 +205,22 @@ body.dark-theme .seleccion-container,
 .credencial-card {
   border-radius: 20px !important;
   padding: 2.5rem;
+}
+
+/* Modo oscuro para credencial card */
+:root.dark-mode .credencial-card,
+html.dark-mode .credencial-card,
+body.dark-theme .credencial-card,
+[data-theme="dark"] .credencial-card {
+  background: #ffffff !important;
+  color: #ffffff !important;
+}
+
+:root.dark-mode .credencial-header,
+html.dark-mode .credencial-header,
+body.dark-theme .credencial-header,
+[data-theme="dark"] .credencial-header {
+  border-bottom-color: #3d3d3d !important;
 }
 
 .credencial-header {
@@ -271,7 +287,7 @@ body.dark-theme .seleccion-container,
 }
 
 :host ::ng-deep .form-actions .mat-mdc-raised-button.mat-primary mat-icon {
-  color: white !important;
+  color: rgb(0, 0, 0) !important;
 }
 
 @media (max-width: 768px) {

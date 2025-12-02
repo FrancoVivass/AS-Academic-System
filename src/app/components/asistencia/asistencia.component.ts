@@ -54,6 +54,7 @@ export class AsistenciaComponent implements OnInit {
   diasDelMes: Date[] = [];
   mesActual: Date = new Date();
   mostrarDetalleMateria: string = ''; // Para alumnos: ID de la materia cuyo detalle se está mostrando
+  numeroClase: number = 1; // Número de clase actual
 
   constructor(
     private alumnoService: AlumnoService,
@@ -767,6 +768,66 @@ export class AsistenciaComponent implements OnInit {
       const fechaB = new Date(b.fecha).getTime();
       return fechaB - fechaA; // Más recientes primero
     });
+  }
+
+  async marcarTodosPresentes(): Promise<void> {
+    if (!this.permissionsService.puedeVer('editarAsistencias')) {
+      this.notificationService.showError('No tiene permisos para modificar asistencia');
+      return;
+    }
+    
+    if (!this.materiaSeleccionada || !this.fechaSeleccionada) {
+      this.notificationService.showWarning('Por favor seleccione una materia y una fecha');
+      return;
+    }
+
+    const alumnos = this.getAlumnosFiltrados();
+    for (const alumno of alumnos) {
+      await this.actualizarAsistencia(alumno, 'presente');
+    }
+    this.notificationService.showSuccess(`Se marcaron ${alumnos.length} alumnos como presentes`);
+  }
+
+  async marcarTodosAusentes(): Promise<void> {
+    if (!this.permissionsService.puedeVer('editarAsistencias')) {
+      this.notificationService.showError('No tiene permisos para modificar asistencia');
+      return;
+    }
+    
+    if (!this.materiaSeleccionada || !this.fechaSeleccionada) {
+      this.notificationService.showWarning('Por favor seleccione una materia y una fecha');
+      return;
+    }
+
+    const alumnos = this.getAlumnosFiltrados();
+    for (const alumno of alumnos) {
+      await this.actualizarAsistencia(alumno, 'ausente');
+    }
+    this.notificationService.showSuccess(`Se marcaron ${alumnos.length} alumnos como ausentes`);
+  }
+
+  getNumeroClase(): number {
+    // Calcular número de clase basado en las asistencias previas de esta materia
+    // El número de clase es el mismo para todos los alumnos (clases dadas de la materia)
+    if (!this.materiaSeleccionada) return 1;
+    
+    // Obtener todas las asistencias de esta materia (de todos los alumnos)
+    const asistenciasMateria = this.asistencias.filter(a => 
+      a.materiaId === this.materiaSeleccionada &&
+      a.fecha < this.fechaSeleccionada // Solo fechas anteriores a la seleccionada
+    );
+    
+    // Contar días únicos con asistencia (fechas en las que se tomó asistencia)
+    const fechasUnicas = new Set(asistenciasMateria.map(a => a.fecha));
+    
+    // El número de clase es la cantidad de clases anteriores + 1 (la clase actual)
+    return fechasUnicas.size + 1;
+  }
+
+  getNumeroClaseAlumno(alumnoId: string): number {
+    // Retorna el mismo número de clase para todos (clases dadas de la materia)
+    // No es específico por alumno, sino por materia
+    return this.getNumeroClase();
   }
 }
 

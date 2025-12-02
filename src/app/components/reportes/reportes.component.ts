@@ -508,10 +508,44 @@ export class ReportesComponent implements OnInit {
 
     // Aplicar filtros adicionales si existen
     if (this.filtroMateria) {
-      reportesAlumnos = reportesAlumnos.filter(r => {
-        const inscripciones = this.materiaService.getInscripcionesByAlumno(r.alumno.id);
-        return inscripciones.some(i => i.materiaId === this.filtroMateria);
+      // Filtrar reportes de alumnos: verificar si el alumno tiene notas o asistencias en esa materia
+      // o si está en un curso que tiene esa materia
+      const cursos = await this.cursoService.getCursos();
+      const cursosConMateria = cursos.filter(c => c.materias && c.materias.includes(this.filtroMateria));
+      const idsAlumnosEnMateria = new Set<string>();
+      
+      // Obtener alumnos de cursos que tienen la materia
+      cursosConMateria.forEach(curso => {
+        if (curso.alumnos && Array.isArray(curso.alumnos)) {
+          curso.alumnos.forEach((alumnoId: string) => idsAlumnosEnMateria.add(alumnoId));
+        }
       });
+      
+      // También verificar alumnos que tienen cursoId o cursoIds que coinciden
+      const todosLosAlumnos = await this.alumnoService.getAlumnos();
+      todosLosAlumnos.forEach(alumno => {
+        if (alumno.cursoId && cursosConMateria.some(c => c.id === alumno.cursoId)) {
+          idsAlumnosEnMateria.add(alumno.id);
+        }
+        if (alumno.cursoIds && Array.isArray(alumno.cursoIds)) {
+          alumno.cursoIds.forEach(cursoId => {
+            if (cursosConMateria.some(c => c.id === cursoId)) {
+              idsAlumnosEnMateria.add(alumno.id);
+            }
+          });
+        }
+      });
+      
+      // Verificar también por notas y asistencias de la materia
+      const notas = await this.alumnoService.getNotas();
+      const asistencias = await this.alumnoService.getAsistencias();
+      notas.filter(n => n.materiaId === this.filtroMateria).forEach(n => idsAlumnosEnMateria.add(n.alumnoId));
+      asistencias.filter(a => a.materiaId === this.filtroMateria).forEach(a => idsAlumnosEnMateria.add(a.alumnoId));
+      
+      // Aplicar filtro a reportes de alumnos
+      reportesAlumnos = reportesAlumnos.filter(r => idsAlumnosEnMateria.has(r.alumno.id));
+      
+      // Filtrar reportes de materias
       reportesMaterias = reportesMaterias.filter(r => r.materia.id === this.filtroMateria);
     }
 
@@ -583,6 +617,8 @@ export class ReportesComponent implements OnInit {
   }
   
   async onFiltroChange(): Promise<void> {
+    // Recargar materias filtradas cuando cambia el filtro de carrera
+    await this.loadMateriasFiltradas();
     await Promise.all([
       this.loadReportes(),
       this.loadEstadisticasExpandidas()
@@ -902,18 +938,36 @@ export class ReportesComponent implements OnInit {
   }
 
   exportarReporteAlumnos(): void {
+    const escapeCSV = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
     const header = 'Nombre,Apellido,DNI,Curso,Promedio,Asistencia%,Notas,Asistencias,Materias\n';
     const rows = this.reportesAlumnos.map(r => 
-      `${r.alumno.nombre},${r.alumno.apellido},${r.alumno.dni},${r.alumno.curso},${r.promedio},${r.porcentajeAsistencia},${r.cantidadNotas},${r.cantidadAsistencias},${r.materiasInscritas}`
+      `${escapeCSV(r.alumno.nombre)},${escapeCSV(r.alumno.apellido)},${escapeCSV(r.alumno.dni)},${escapeCSV(r.alumno.curso)},${escapeCSV(r.promedio)},${escapeCSV(r.porcentajeAsistencia)},${escapeCSV(r.cantidadNotas)},${escapeCSV(r.cantidadAsistencias)},${escapeCSV(r.materiasInscritas)}`
     ).join('\n');
     const csv = header + rows;
     this.downloadCSV(csv, 'reporte_alumnos');
   }
 
   exportarReporteMaterias(): void {
+    const escapeCSV = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
     const header = 'Nombre,Código,Profesor,Inscritos,Promedio General,Asistencia%\n';
     const rows = this.reportesMaterias.map(r => 
-      `${r.materia.nombre},${r.materia.codigo},${r.materia.profesor},${r.cantidadInscritos},${r.promedioGeneral},${r.porcentajeAsistencia}`
+      `${escapeCSV(r.materia.nombre)},${escapeCSV(r.materia.codigo)},${escapeCSV(r.materia.profesor)},${escapeCSV(r.cantidadInscritos)},${escapeCSV(r.promedioGeneral)},${escapeCSV(r.porcentajeAsistencia)}`
     ).join('\n');
     const csv = header + rows;
     this.downloadCSV(csv, 'reporte_materias');

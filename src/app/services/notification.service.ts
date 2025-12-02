@@ -35,12 +35,13 @@ export class NotificationService {
   private show(message: string, type: 'success' | 'error' | 'warning' | 'info', duration: number): void {
     const config: MatSnackBarConfig = {
       duration,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: [`snackbar-${type}`]
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
+      panelClass: [`snackbar-${type}`, 'snackbar-custom'],
+      politeness: 'polite'
     };
 
-    this.snackBar.open(message, 'Cerrar', config);
+    this.snackBar.open(message, '✕', config);
   }
 }
 

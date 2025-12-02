@@ -17,79 +17,189 @@
     <mat-card class="mensajes-list-card">
       <mat-card-header>
         <mat-card-title>
-          <mat-icon>inbox</mat-icon>
-          Bandeja de Entrada
+          <div class="bandejas-toggle">
+            <button 
+              class="bandeja-btn" 
+              [class.active]="bandejaActual === 'entrada'"
+              (click)="cambiarBandeja('entrada')">
+              <mat-icon>inbox</mat-icon>
+              Bandeja de Entrada
+              @if (mensajesEntrada.length > 0) {
+                <mat-chip class="badge-chip-small">{{ mensajesEntrada.length }}</mat-chip>
+              }
+              @if (mensajesNoLeidos.length > 0) {
+                <mat-chip class="badge-chip-unread">{{ mensajesNoLeidos.length }} sin leer</mat-chip>
+              }
+            </button>
+            <button 
+              class="bandeja-btn" 
+              [class.active]="bandejaActual === 'salida'"
+              (click)="cambiarBandeja('salida')">
+              <mat-icon>send</mat-icon>
+              Bandeja de Salida
+              @if (bandejaActual === 'salida' && mensajesSalida.length > 0) {
+                <mat-chip class="badge-chip-small">{{ mensajesSalida.length }}</mat-chip>
+              }
+            </button>
+          </div>
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <mat-list>
-          @for (mensaje of mensajes; track mensaje.id) {
-            <mat-list-item 
-              class="mensaje-item"
-              [class.no-leido]="!mensaje.leido && !esRemitente(mensaje)"
-              [class.importante]="mensaje.importante"
-              (click)="marcarComoLeido(mensaje.id)">
-              <mat-icon matListItemIcon class="mensaje-icon">
-                {{ esRemitente(mensaje) ? 'send' : 'mail' }}
-              </mat-icon>
-              <div matListItemTitle class="mensaje-header">
-                <div>
-                  <strong>{{ esRemitente(mensaje) ? 'Para: ' : 'De: ' }}{{ getNombreUsuario(esRemitente(mensaje) ? mensaje.destinatarioId : mensaje.remitenteId) }}</strong>
-                  @if (!mensaje.leido && !esRemitente(mensaje)) {
-                    <mat-chip class="nuevo-chip">Nuevo</mat-chip>
-                  }
+        @if (!mostrarDetalle) {
+          <mat-list>
+            @for (mensaje of getMensajesActuales(); track mensaje.id) {
+              <mat-list-item 
+                class="mensaje-item"
+                [class.no-leido]="!mensaje.leido && !esRemitente(mensaje)"
+                [class.importante]="mensaje.importante"
+                (click)="abrirMensaje(mensaje)">
+                <mat-icon matListItemIcon class="mensaje-icon">
+                  {{ esRemitente(mensaje) ? 'send' : 'mail' }}
+                </mat-icon>
+                <div matListItemTitle class="mensaje-header">
+                  <div>
+                    <strong>{{ esRemitente(mensaje) ? 'Para: ' : 'De: ' }}{{ getNombreUsuario(esRemitente(mensaje) ? mensaje.destinatarioId : mensaje.remitenteId) }}</strong>
+                    @if (!mensaje.leido && !esRemitente(mensaje)) {
+                      <mat-chip class="nuevo-chip">Nuevo</mat-chip>
+                    }
+                  </div>
+                  <span class="mensaje-fecha">{{ mensaje.fecha | date:'short' }}</span>
                 </div>
-                <span class="mensaje-fecha">{{ mensaje.fecha | date:'short' }}</span>
+                <div matListItemLine class="mensaje-asunto" [matTooltip]="mensaje.asunto">{{ mensaje.asunto }}</div>
+                <div matListItemLine class="mensaje-contenido" [matTooltip]="mensaje.contenido">{{ mensaje.contenido }}</div>
+              </mat-list-item>
+              <mat-divider></mat-divider>
+            }
+            @if (getMensajesActuales().length === 0) {
+              <div class="empty-state">
+                <mat-icon>inbox</mat-icon>
+                <p>No hay mensajes en esta bandeja</p>
               </div>
-              <div matListItemLine class="mensaje-asunto">{{ mensaje.asunto }}</div>
-              <div matListItemLine class="mensaje-contenido">{{ mensaje.contenido }}</div>
-            </mat-list-item>
-            <mat-divider></mat-divider>
-          }
-          @if (mensajes.length === 0) {
-            <div class="empty-state">
-              <mat-icon>inbox</mat-icon>
-              <p>No hay mensajes</p>
-            </div>
-          }
-        </mat-list>
+            }
+          </mat-list>
+        } @else {
+          <div class="mensaje-detalle">
+            <button mat-icon-button (click)="cerrarDetalle()" class="btn-volver">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+            @if (mensajeSeleccionado) {
+              <div class="detalle-header">
+                <h3>{{ mensajeSeleccionado.asunto }}</h3>
+                <div class="detalle-info">
+                  <span><strong>{{ esRemitente(mensajeSeleccionado) ? 'Para: ' : 'De: ' }}</strong>{{ getNombreUsuario(esRemitente(mensajeSeleccionado) ? mensajeSeleccionado.destinatarioId : mensajeSeleccionado.remitenteId) }}</span>
+                  <span>{{ mensajeSeleccionado.fecha | date:'short' }}</span>
+                </div>
+              </div>
+              <div class="detalle-contenido">
+                {{ mensajeSeleccionado.contenido }}
+              </div>
+            }
+          </div>
+        }
       </mat-card-content>
     </mat-card>
 
-    <mat-card class="nuevo-mensaje-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>send</mat-icon>
-          Nuevo Mensaje
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form (ngSubmit)="enviarMensaje()" class="mensaje-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Destinatario</mat-label>
-            <mat-select [(ngModel)]="destinatarioSeleccionado" name="destinatario" required>
-              @for (alumno of getAlumnos(); track alumno.id) {
-                <mat-option [value]="alumno.id">
-                  {{ alumno.nombre }} {{ alumno.apellido }} - {{ alumno.curso }}
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Asunto</mat-label>
-            <input matInput [(ngModel)]="nuevoMensaje.asunto" name="asunto" required>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Mensaje</mat-label>
-            <textarea matInput [(ngModel)]="nuevoMensaje.contenido" name="contenido" rows="6" required></textarea>
-          </mat-form-field>
-          <button mat-raised-button color="primary" type="submit" class="send-button">
+    @if (!esAlumno) {
+      <mat-card class="nuevo-mensaje-card">
+        <mat-card-header>
+          <mat-card-title>
             <mat-icon>send</mat-icon>
-            Enviar Mensaje
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+            Nuevo Mensaje
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form (ngSubmit)="enviarMensaje()" #mensajeForm="ngForm" class="mensaje-form">
+            @if (esProfesor) {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipo de Destinatario</mat-label>
+                <mat-select [(ngModel)]="tipoDestinatario" name="tipoDestinatario" (selectionChange)="onTipoDestinatarioChange()" required>
+                  <mat-option value="alumno">
+                    👤 Alumno Individual
+                  </mat-option>
+                  <mat-option value="curso">
+                    👥 Curso Completo
+                  </mat-option>
+                  <mat-option value="profesor">
+                    🎓 Otro Profesor
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            }
+            
+            @if (tipoDestinatario === 'alumno' || !esProfesor) {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Destinatario</mat-label>
+                <mat-select [(ngModel)]="destinatarioSeleccionado" name="destinatario" [required]="tipoDestinatario === 'alumno' || !esProfesor">
+                  @for (alumno of getAlumnos(); track alumno.id) {
+                    <mat-option [value]="alumno.id">
+                      {{ alumno.nombre }} {{ alumno.apellido }} - {{ alumno.curso }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            
+            @if (esProfesor && tipoDestinatario === 'curso') {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Seleccionar Curso</mat-label>
+                <mat-select [(ngModel)]="cursoSeleccionado" name="curso" required>
+                  <mat-option value="">Seleccione un curso</mat-option>
+                  @for (curso of cursosDisponibles; track curso.id) {
+                    <mat-option [value]="curso.id">
+                      {{ getNombreCurso(curso) }} ({{ curso.alumnos.length || 0 }} alumnos)
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-hint>El mensaje se enviará a todos los alumnos del curso seleccionado</mat-hint>
+              </mat-form-field>
+            }
+            
+            @if (esProfesor && tipoDestinatario === 'profesor') {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Seleccionar Profesor</mat-label>
+                <mat-select [(ngModel)]="profesorSeleccionado" name="profesor" required>
+                  <mat-option value="">Seleccione un profesor</mat-option>
+                  @for (profesor of profesoresDisponibles; track profesor.id) {
+                    <mat-option [value]="profesor.id">
+                      {{ profesor.nombre }} {{ profesor.apellido }}
+                      @if (profesor.especialidad) {
+                        - {{ profesor.especialidad }}
+                      }
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Asunto</mat-label>
+              <input matInput [(ngModel)]="nuevoMensaje.asunto" name="asunto" required>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Mensaje</mat-label>
+              <textarea matInput [(ngModel)]="nuevoMensaje.contenido" name="contenido" rows="6" required></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit" class="send-button">
+              <mat-icon>send</mat-icon>
+              @if (tipoDestinatario === 'curso' && esProfesor) {
+                Enviar a Curso Completo
+              } @else {
+                Enviar Mensaje
+              }
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-message">
+            <mat-icon>info</mat-icon>
+            <p>Como alumno, solo puedes recibir mensajes de tus profesores. Para comunicarte con ellos, contacta directamente o a través de la institución.</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
   </div>
 </div>
 

@@ -150,7 +150,7 @@ export class AuthService {
     };
   }
 
-  async login(username: string, password: string): Promise<boolean> {
+  async login(usernameOrEmail: string, password: string): Promise<boolean> {
     if (this.useSupabase) {
       try {
         // Obtener la institución actual
@@ -160,16 +160,32 @@ export class AuthService {
           return false;
         }
 
-        // Filtrar usuarios por institución
+        // Buscar por username o email
+        // Primero intentar por username
         let query = this.supabase.client
           .from('usuarios')
           .select('*')
-          .eq('username', username)
+          .eq('username', usernameOrEmail)
           .eq('password', password)
           .eq('activo', true)
           .eq('institucion_id', currentInstitucion.id);
 
-        const { data, error } = await query.single();
+        let { data, error } = await query.single();
+
+        // Si no encuentra por username, intentar por email
+        if (error || !data) {
+          query = this.supabase.client
+            .from('usuarios')
+            .select('*')
+            .eq('email', usernameOrEmail)
+            .eq('password', password)
+            .eq('activo', true)
+            .eq('institucion_id', currentInstitucion.id);
+
+          const result = await query.single();
+          data = result.data;
+          error = result.error;
+        }
 
         if (error || !data) {
           return false;
@@ -193,7 +209,11 @@ export class AuthService {
       }
     } else {
       const usuarios = this.getUsuariosFromStorage();
-      const usuario = usuarios.find(u => u.username === username && u.password === password);
+      // Buscar por username o email
+      const usuario = usuarios.find(u => 
+        (u.username === usernameOrEmail || u.email === usernameOrEmail) && 
+        u.password === password
+      );
       
       if (usuario) {
         const { password: _, ...userWithoutPassword } = usuario;

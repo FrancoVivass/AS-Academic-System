@@ -18,7 +18,7 @@ export class GlobalWidgetsComponent implements OnInit, AfterViewInit {
   isSocialCollapsed = false;
   weatherData: any = null;
   weatherLoading = true;
-  showWidgets = true; // Por defecto visible
+  showWidgets = false; // Por defecto oculto, se verifica en ngOnInit
 
   socialLinks = {
     facebook: 'https://www.facebook.com/academicsystem',
@@ -33,7 +33,7 @@ export class GlobalWidgetsComponent implements OnInit, AfterViewInit {
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    // Verificar si estamos en la ruta de gestión (/app/*)
+    // Verificar inmediatamente la ruta actual
     this.checkRoute();
     
     // Suscribirse a cambios de ruta
@@ -43,24 +43,57 @@ export class GlobalWidgetsComponent implements OnInit, AfterViewInit {
       this.checkRoute();
     });
 
-    // Cargar preferencia de modo oscuro
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      this.isDarkMode = true;
-      document.documentElement.classList.add('dark-mode');
-      document.body.classList.add('dark-mode');
-    }
+    // Cargar preferencia de modo oscuro solo si NO estamos en gestión
+    // Esto se hace después de checkRoute para asegurar que showWidgets esté correcto
+    setTimeout(() => {
+      if (this.showWidgets) {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          this.isDarkMode = true;
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
+        }
+      }
+    }, 0);
   }
 
   ngAfterViewInit(): void {
-    this.initWeatherWidget();
+    // Solo inicializar clima si NO estamos en gestión
+    if (this.showWidgets) {
+      this.initWeatherWidget();
+    }
     this.initScrollToTop();
   }
 
   private checkRoute(): void {
     const currentUrl = this.router.url;
-    // Ocultar widgets si estamos en la gestión (/app/*)
-    this.showWidgets = !currentUrl.startsWith('/app');
+    // Rutas donde se ocultan widgets (excepto WhatsApp): gestión y login
+    const isInGestion = currentUrl.startsWith('/app') || currentUrl.includes('/app/');
+    const isInLogin = currentUrl.startsWith('/login') || currentUrl === '/login';
+    const shouldHideWidgets = isInGestion || isInLogin;
+    
+    // Ocultar widgets (excepto WhatsApp) si estamos en gestión o login
+    // WhatsApp siempre se muestra, pero el resto solo fuera de estas rutas
+    const previousShowWidgets = this.showWidgets;
+    this.showWidgets = !shouldHideWidgets;
+    
+    // Si estamos en gestión o login, limpiar y ocultar clima
+    if (shouldHideWidgets) {
+      this.weatherData = null;
+      this.weatherLoading = false;
+      // Asegurar que no se muestren los widgets
+      if (previousShowWidgets !== this.showWidgets) {
+        console.log('🔒 Ocultando widgets:', currentUrl);
+      }
+    } else {
+      // Si NO estamos en estas rutas y no hay datos de clima, inicializar
+      if (!this.weatherData && this.weatherLoading) {
+        this.initWeatherWidget();
+      }
+      if (previousShowWidgets !== this.showWidgets) {
+        console.log('✅ Mostrando widgets:', currentUrl);
+      }
+    }
   }
 
   @HostListener('window:scroll')

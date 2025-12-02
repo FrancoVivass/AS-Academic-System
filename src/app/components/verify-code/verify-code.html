@@ -1,0 +1,60 @@
+<div class="verify-code-dialog">
+  <div class="dialog-header">
+    <h2>Verificar Código</h2>
+    <button mat-icon-button (click)="dialogRef.close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  
+  <div class="dialog-content">
+    <p class="instructions">
+      Ingresa el código de 6 dígitos enviado a<br><strong>{{ email }}</strong>
+    </p>
+    
+    @if (countdown > 0) {
+      <p class="countdown">Código válido por: <strong>{{ getCountdownFormatted() }}</strong></p>
+    } @else {
+      <p class="countdown expired">El código ha expirado</p>
+    }
+
+    <form [formGroup]="verifyCodeForm" (ngSubmit)="onSubmit()" class="verify-form">
+      <div class="code-inputs">
+        @for (digit of [1,2,3,4,5,6]; track digit) {
+          <input
+            type="text"
+            [formControlName]="'digit' + digit"
+            class="code-digit"
+            maxlength="1"
+            pattern="[0-9]"
+            (keydown)="onKeyDown($event, digit)"
+            #codeInput>
+        }
+      </div>
+
+      <button 
+        mat-raised-button 
+        type="submit" 
+        class="verify-button"
+        [disabled]="verifyCodeForm.invalid || loading || countdown === 0">
+        @if (loading) {
+          <span>Verificando...</span>
+        } @else {
+          <span>VERIFICAR CÓDIGO</span>
+        }
+      </button>
+    </form>
+
+    <div class="resend-section">
+      <p>¿No recibiste el código?</p>
+      <button mat-button (click)="resendCode()" [disabled]="loading">
+        Reenviar código
+      </button>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-stroked-button type="button" (click)="dialogRef.close()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

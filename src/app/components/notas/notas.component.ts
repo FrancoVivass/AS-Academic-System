@@ -529,7 +529,22 @@ export class NotasComponent implements OnInit {
     
     // Obtener carrera del alumno
     const alumno = await this.alumnoService.getAlumnoById(nota.alumnoId);
-    const carreraId = alumno?.carreraId || '';
+    let carreraId = alumno?.carreraId || '';
+    
+    // Si hay una carrera guardada en filtros y coincide con la nota, usarla
+    // Esto permite mantener la carrera seleccionada si el usuario la cambió anteriormente
+    if (this.filtroCarrera && this.carreras.some(c => c.id === this.filtroCarrera)) {
+      // Verificar que la carrera del filtro sea válida para este alumno
+      const alumnoFiltro = await this.alumnoService.getAlumnoById(nota.alumnoId);
+      if (alumnoFiltro?.carreraId === this.filtroCarrera) {
+        carreraId = this.filtroCarrera;
+      }
+    }
+    
+    // Si no hay carrera, intentar usar la del filtro actual si existe
+    if (!carreraId && this.filtroCarrera) {
+      carreraId = this.filtroCarrera;
+    }
     
     this.notaForm.patchValue({
       ...nota,
@@ -541,6 +556,10 @@ export class NotasComponent implements OnInit {
       this.filtroCarrera = carreraId;
       await this.loadMateriasPorCarrera();
       await this.loadAlumnosPorMateria();
+    } else {
+      // Si no hay carrera, limpiar materias y alumnos disponibles
+      this.materiasDisponibles = [];
+      this.alumnosDisponibles = [];
     }
     
     this.mostrarModal = true;
@@ -663,10 +682,15 @@ export class NotasComponent implements OnInit {
       this.notificationService.showSuccess('Nota registrada correctamente');
     }
 
-    // Guardar valores del formulario antes de cerrar el modal
+    // Guardar valores del formulario antes de cerrar el modal (incluyendo carrera)
     const materiaIdGuardada = formValue.materiaId;
     const alumnoIdGuardada = formValue.alumnoId;
-    const carreraIdGuardada = formValue.carreraId;
+    const carreraIdGuardada = formValue.carreraId || this.filtroCarrera; // Usar carrera del formulario o mantener la del filtro
+    
+    // Guardar carrera en filtros para mantenerla al editar
+    if (carreraIdGuardada) {
+      this.filtroCarrera = carreraIdGuardada;
+    }
     
     // Cerrar modal primero
     this.cerrarModal();
@@ -762,12 +786,112 @@ export class NotasComponent implements OnInit {
     return this.nombresMaterias.get(materiaId) || 'Desconocida';
   }
 
+  getNombreCarrera(carreraId: string): string {
+    const carrera = this.carreras.find(c => c.id === carreraId);
+    return carrera ? carrera.nombre : 'Carrera desconocida';
+  }
+
   getMaterias(): Materia[] {
     return this.materiasDisponibles;
   }
 
   getAlumnos() {
     return this.alumnosDisponibles;
+  }
+
+  // Métodos para calcular promedios
+  getPromedioGeneral(): number {
+    if (this.notasFiltradas.length === 0) return 0;
+    const suma = this.notasFiltradas.reduce((acc, nota) => acc + nota.calificacion, 0);
+    return suma / this.notasFiltradas.length;
+  }
+
+  getPromedioPorMateria(materiaId: string): number {
+    const notasMateria = this.notasFiltradas.filter(n => n.materiaId === materiaId);
+    if (notasMateria.length === 0) return 0;
+    const suma = notasMateria.reduce((acc, nota) => acc + nota.calificacion, 0);
+    return suma / notasMateria.length;
+  }
+
+  getPromedioPorAlumno(alumnoId: string): number {
+    const notasAlumno = this.notasFiltradas.filter(n => n.alumnoId === alumnoId);
+    if (notasAlumno.length === 0) return 0;
+    const suma = notasAlumno.reduce((acc, nota) => acc + nota.calificacion, 0);
+    return suma / notasAlumno.length;
+  }
+
+  getPromedioPorCarrera(carreraId: string): number {
+    // Obtener alumnos de la carrera
+    const alumnosCarrera = this.alumnosDisponibles.filter(a => a.carreraId === carreraId);
+    const idsAlumnos = alumnosCarrera.map(a => a.id);
+    
+    // Filtrar notas de alumnos de esa carrera
+    const notasCarrera = this.notasFiltradas.filter(n => idsAlumnos.includes(n.alumnoId));
+    if (notasCarrera.length === 0) return 0;
+    const suma = notasCarrera.reduce((acc, nota) => acc + nota.calificacion, 0);
+    return suma / notasCarrera.length;
+  }
+
+  getCantidadNotasPorMateria(materiaId: string): number {
+    return this.notasFiltradas.filter(n => n.materiaId === materiaId).length;
+  }
+
+  getCantidadNotasPorAlumno(alumnoId: string): number {
+    return this.notasFiltradas.filter(n => n.alumnoId === alumnoId).length;
+  }
+
+  getCantidadNotasPorCarrera(carreraId: string): number {
+    const alumnosCarrera = this.alumnosDisponibles.filter(a => a.carreraId === carreraId);
+    const idsAlumnos = alumnosCarrera.map(a => a.id);
+    return this.notasFiltradas.filter(n => idsAlumnos.includes(n.alumnoId)).length;
+  }
+
+  // Para alumnos: obtener sus propias notas y promedio
+  getMisNotas(): Nota[] {
+    if (!this.permissionsService.esAlumno()) return [];
+    const usuarioId = this.authService.getCurrentUser()?.id;
+    return this.notasFiltradas.filter(n => n.alumnoId === usuarioId);
+  }
+
+  getMiPromedioGeneral(): number {
+    const misNotas = this.getMisNotas();
+    if (misNotas.length === 0) return 0;
+    const suma = misNotas.reduce((acc, nota) => acc + nota.calificacion, 0);
+    return suma / misNotas.length;
+  }
+
+  // Para alumnos: obtener promedios por materia
+  getPromediosPorMateriaAlumno(): Array<{materiaId: string, nombreMateria: string, promedio: number, cantidad: number}> {
+    if (!this.permissionsService.esAlumno()) return [];
+    
+    const misNotas = this.getMisNotas();
+    if (misNotas.length === 0) return [];
+    
+    // Agrupar notas por materia
+    const notasPorMateria = new Map<string, Nota[]>();
+    misNotas.forEach(nota => {
+      if (!notasPorMateria.has(nota.materiaId)) {
+        notasPorMateria.set(nota.materiaId, []);
+      }
+      notasPorMateria.get(nota.materiaId)!.push(nota);
+    });
+    
+    // Calcular promedio por materia
+    const promedios: Array<{materiaId: string, nombreMateria: string, promedio: number, cantidad: number}> = [];
+    notasPorMateria.forEach((notas, materiaId) => {
+      const suma = notas.reduce((acc, nota) => acc + nota.calificacion, 0);
+      const promedio = suma / notas.length;
+      const nombreMateria = this.getNombreMateria(materiaId);
+      promedios.push({
+        materiaId,
+        nombreMateria,
+        promedio,
+        cantidad: notas.length
+      });
+    });
+    
+    // Ordenar por nombre de materia
+    return promedios.sort((a, b) => a.nombreMateria.localeCompare(b.nombreMateria));
   }
 }
 

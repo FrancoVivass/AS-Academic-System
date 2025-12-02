@@ -1,0 +1,310 @@
+<div class="perfil-container">
+  @if (usuarioPerfil) {
+    <!-- Header del Perfil -->
+    <div class="perfil-header">
+      <div class="cover-photo">
+        <!-- Foto de portada (futuro) -->
+      </div>
+      <div class="profile-info-header">
+        <div class="avatar-section">
+          @if (modoEdicion && esMiPerfil) {
+            <div class="avatar-edit">
+              <img [src]="formData.avatar || 'assets/default-avatar.png'" 
+                   [alt]="getNombreCompleto()" 
+                   class="avatar-large"
+                   onerror="this.src='assets/default-avatar.png'">
+              <label class="avatar-upload-btn">
+                <input type="file" accept="image/*" (change)="onFileSelected($event)" style="display: none;">
+                <mat-icon>camera_alt</mat-icon>
+              </label>
+            </div>
+          } @else {
+            <img [src]="usuarioPerfil.avatar || 'assets/default-avatar.png'" 
+                 [alt]="getNombreCompleto()" 
+                 class="avatar-large"
+                 onerror="this.src='assets/default-avatar.png'">
+          }
+        </div>
+        <div class="profile-basic-info">
+          <h1 class="profile-name">{{ getNombreCompleto() }}</h1>
+          <div class="profile-meta">
+            <mat-chip class="rol-chip">{{ getRolDisplayName() }}</mat-chip>
+            @if (carrera) {
+              <span class="meta-item">
+                <mat-icon>school</mat-icon>
+                {{ carrera.nombre }}
+              </span>
+            }
+            @if (cursos.length > 0) {
+              <span class="meta-item">
+                <mat-icon>class</mat-icon>
+                @for (curso of cursos; track curso.id) {
+                  {{ getNombreCurso(curso) }}
+                  @if (!$last) {, }
+                }
+              </span>
+            }
+            @if (getEdad()) {
+              <span class="meta-item">
+                <mat-icon>cake</mat-icon>
+                {{ getEdad() }} años
+              </span>
+            }
+          </div>
+          @if (esMiPerfil) {
+            <div class="profile-actions">
+              @if (!modoEdicion) {
+                <button mat-raised-button color="primary" (click)="activarModoEdicion()">
+                  <mat-icon>edit</mat-icon>
+                  Editar Perfil
+                </button>
+              } @else {
+                <button mat-raised-button color="primary" (click)="guardarPerfil()">
+                  <mat-icon>save</mat-icon>
+                  Guardar Cambios
+                </button>
+                <button mat-stroked-button (click)="cancelarEdicion()">
+                  <mat-icon>close</mat-icon>
+                  Cancelar
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido del Perfil -->
+    <div class="perfil-content">
+      <div class="perfil-main">
+        <!-- Información Personal -->
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>person</mat-icon>
+              Información Personal
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (modoEdicion && esMiPerfil) {
+              <form class="profile-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre *</mat-label>
+                    <input matInput [(ngModel)]="formData.nombre" name="nombre" required>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Apellido *</mat-label>
+                    <input matInput [(ngModel)]="formData.apellido" name="apellido" required>
+                  </mat-form-field>
+                </div>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Email *</mat-label>
+                    <input matInput type="email" [(ngModel)]="formData.email" name="email" required>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Teléfono</mat-label>
+                    <input matInput type="tel" [(ngModel)]="formData.telefono" name="telefono">
+                  </mat-form-field>
+                </div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Dirección</mat-label>
+                  <input matInput [(ngModel)]="formData.direccion" name="direccion">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Fecha de Nacimiento</mat-label>
+                  <input matInput type="date" [(ngModel)]="formData.fechaNacimiento" name="fechaNacimiento">
+                </mat-form-field>
+                @if (usuarioPerfil.rol === 'profesor') {
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Especialidad</mat-label>
+                    <input matInput [(ngModel)]="formData.especialidad" name="especialidad">
+                  </mat-form-field>
+                }
+              </form>
+            } @else {
+              <div class="info-list">
+                <div class="info-item">
+                  <mat-icon>email</mat-icon>
+                  <div>
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ usuarioPerfil.email }}</span>
+                  </div>
+                </div>
+                @if (usuarioPerfil.telefono) {
+                  <div class="info-item">
+                    <mat-icon>phone</mat-icon>
+                    <div>
+                      <span class="info-label">Teléfono</span>
+                      <span class="info-value">{{ usuarioPerfil.telefono }}</span>
+                    </div>
+                  </div>
+                }
+                @if (usuarioPerfil.direccion) {
+                  <div class="info-item">
+                    <mat-icon>location_on</mat-icon>
+                    <div>
+                      <span class="info-label">Dirección</span>
+                      <span class="info-value">{{ usuarioPerfil.direccion }}</span>
+                    </div>
+                  </div>
+                }
+                @if (usuarioPerfil.fechaNacimiento) {
+                  <div class="info-item">
+                    <mat-icon>cake</mat-icon>
+                    <div>
+                      <span class="info-label">Fecha de Nacimiento</span>
+                      <span class="info-value">{{ usuarioPerfil.fechaNacimiento | date:'longDate' }}</span>
+                    </div>
+                  </div>
+                }
+                @if (docenteData?.especialidad) {
+                  <div class="info-item">
+                    <mat-icon>work</mat-icon>
+                    <div>
+                      <span class="info-label">Especialidad</span>
+                      <span class="info-value">{{ docenteData?.especialidad || '' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Materias -->
+        @if (materias.length > 0) {
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>menu_book</mat-icon>
+                @if (usuarioPerfil.rol === 'alumno') {
+                  Materias Inscritas
+                } @else {
+                  Materias Asignadas
+                }
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="materias-grid">
+                @for (materia of materias; track materia.id) {
+                  <mat-chip class="materia-chip">
+                    <mat-icon>book</mat-icon>
+                    {{ materia.nombre }}
+                  </mat-chip>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Estadísticas -->
+        @if (usuarioPerfil.rol === 'alumno' && estadisticas.promedio !== undefined) {
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>assessment</mat-icon>
+                Estadísticas Académicas
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-value">{{ estadisticas.promedio !== undefined && estadisticas.promedio !== null ? estadisticas.promedio.toFixed(2) : 'N/A' }}</div>
+                  <div class="stat-label">Promedio General</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">{{ estadisticas.asistencia !== undefined && estadisticas.asistencia !== null ? estadisticas.asistencia.toFixed(0) : 'N/A' }}%</div>
+                  <div class="stat-label">Asistencia</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">{{ estadisticas.materiasInscritas || 0 }}</div>
+                  <div class="stat-label">Materias</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+
+      <!-- Sidebar -->
+      <div class="perfil-sidebar">
+        <!-- Estadísticas Rápidas -->
+        <mat-card class="sidebar-card">
+          <mat-card-header>
+            <mat-card-title>Resumen</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="sidebar-stats">
+              @if (usuarioPerfil.rol === 'alumno') {
+                <div class="sidebar-stat">
+                  <mat-icon>grade</mat-icon>
+                  <div>
+                    <div class="sidebar-stat-value">{{ estadisticas.promedio !== undefined && estadisticas.promedio !== null ? estadisticas.promedio.toFixed(2) : 'N/A' }}</div>
+                    <div class="sidebar-stat-label">Promedio</div>
+                  </div>
+                </div>
+                <div class="sidebar-stat">
+                  <mat-icon>check_circle</mat-icon>
+                  <div>
+                    <div class="sidebar-stat-value">{{ estadisticas.asistencia !== undefined && estadisticas.asistencia !== null ? estadisticas.asistencia.toFixed(0) : 'N/A' }}%</div>
+                    <div class="sidebar-stat-label">Asistencia</div>
+                  </div>
+                </div>
+              } @else if (usuarioPerfil.rol === 'profesor') {
+                <div class="sidebar-stat">
+                  <mat-icon>menu_book</mat-icon>
+                  <div>
+                    <div class="sidebar-stat-value">{{ estadisticas.materiasAsignadas || 0 }}</div>
+                    <div class="sidebar-stat-label">Materias</div>
+                  </div>
+                </div>
+                <div class="sidebar-stat">
+                  <mat-icon>people</mat-icon>
+                  <div>
+                    <div class="sidebar-stat-value">{{ estadisticas.alumnosTotales || 0 }}</div>
+                    <div class="sidebar-stat-label">Alumnos</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Acciones Rápidas -->
+        @if (esMiPerfil) {
+          <mat-card class="sidebar-card">
+            <mat-card-header>
+              <mat-card-title>Acciones</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <button mat-stroked-button class="action-btn" [routerLink]="['/app/configuracion']">
+                <mat-icon>settings</mat-icon>
+                Configuración
+              </button>
+            </mat-card-content>
+          </mat-card>
+        } @else {
+          <mat-card class="sidebar-card">
+            <mat-card-header>
+              <mat-card-title>Contactar</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <button mat-raised-button color="primary" class="action-btn" [routerLink]="['/app/mensajes']" [queryParams]="{destinatario: usuarioPerfil.id}">
+                <mat-icon>message</mat-icon>
+                Enviar Mensaje
+              </button>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="loading-state">
+      <mat-icon>person</mat-icon>
+      <p>Cargando perfil...</p>
+    </div>
+  }
+</div>
+

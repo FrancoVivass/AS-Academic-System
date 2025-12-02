@@ -5,7 +5,7 @@
       Centro de Ayuda
     </h1>
     <p class="page-subtitle">
-      Encuentra respuestas a tus preguntas y aprende a usar todas las funcionalidades del sistema
+      Encuentre respuestas a sus consultas y aprenda a utilizar todas las funcionalidades del sistema
     </p>
   </div>
 
@@ -92,11 +92,52 @@
         <mat-icon class="contacto-icon">support_agent</mat-icon>
         <h2>¿Necesitas más ayuda?</h2>
         <p>Si no encuentras la respuesta que buscas o necesitas asistencia personalizada, contáctanos y nuestro equipo te ayudará.</p>
-        <button mat-raised-button color="primary" class="contacto-button" (click)="irAContacto()">
-          <mat-icon>email</mat-icon>
-          Asistencia al Cliente
-        </button>
+        <div class="contacto-buttons">
+          <button mat-raised-button color="primary" class="contacto-button" (click)="abrirFormularioSoporte()">
+            <mat-icon>message</mat-icon>
+            Enviar Mensaje de Soporte
+          </button>
+          <button mat-stroked-button color="primary" class="contacto-button" [routerLink]="['/']" [fragment]="'contacto'">
+            <mat-icon>email</mat-icon>
+            Contacto General
+          </button>
+        </div>
       </div>
     </mat-card>
   </div>
+
+  <!-- Modal de mensajería de soporte -->
+  @if (mostrarFormularioSoporte) {
+    <div class="modal-overlay" (click)="cerrarFormularioSoporte()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <mat-icon>support_agent</mat-icon>
+            Mensaje de Soporte
+          </h2>
+          <button class="btn-close" (click)="cerrarFormularioSoporte()">×</button>
+        </div>
+        <form (ngSubmit)="enviarMensajeSoporte()" class="soporte-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Asunto *</mat-label>
+            <input matInput [(ngModel)]="mensajeSoporte.asunto" name="asunto" required placeholder="Ej: Problema con la carga de notas">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mensaje *</mat-label>
+            <textarea matInput [(ngModel)]="mensajeSoporte.contenido" name="contenido" rows="6" required placeholder="Describe tu consulta o problema en detalle..."></textarea>
+            <mat-hint>Nuestro equipo de soporte responderá a tu mensaje lo antes posible.</mat-hint>
+          </mat-form-field>
+
+          <div class="modal-actions">
+            <button mat-button type="button" (click)="cerrarFormularioSoporte()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit">
+              <mat-icon>send</mat-icon>
+              Enviar Mensaje
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 </div>
