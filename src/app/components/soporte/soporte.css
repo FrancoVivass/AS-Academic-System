@@ -134,99 +134,9 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-/* ==================== TOGGLE MODO OSCURO ==================== */
-.theme-toggle {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 52px;
-  height: 52px;
-  border-radius: 0;
-  background: var(--bg-white);
-  color: var(--icon-color);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-soft);
-  z-index: 998;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.theme-toggle:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-.theme-toggle mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-}
-
-/* ==================== BOTÓN WHATSAPP FLOTANTE ==================== */
-.whatsapp-float {
-  position: fixed;
-  bottom: 40px;
-  right: 100px;
-  width: 52px;
-  height: 52px;
-  background: #25D366;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: var(--shadow-soft);
-  z-index: 998;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.whatsapp-float:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
-}
-
-/* ==================== BOTÓN SCROLL TO TOP ==================== */
-.scroll-to-top {
-  position: fixed;
-  bottom: 40px;
-  left: 40px;
-  width: 52px;
-  height: 52px;
-  border-radius: 0;
-  background: var(--bg-white);
-  color: var(--icon-color);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-soft);
-  z-index: 998;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.scroll-to-top:hover {
-  background: var(--bg-light);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-.scroll-to-top mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-}
+/* ==================== WIDGETS GLOBALES ==================== */
+/* Los estilos de los widgets (theme-toggle, whatsapp-float, scroll-to-top, weather-widget) 
+   están en global-widgets.component.css para mantener consistencia en todas las páginas */
 
 /* ==================== PAGE CONTAINER ==================== */
 .page-container {
@@ -569,24 +479,5 @@ color: var(--boton-comenzar);
     justify-content: center;
   }
 
-  .theme-toggle {
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .whatsapp-float {
-    bottom: 20px;
-    right: 80px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .scroll-to-top {
-    bottom: 20px;
-    left: 20px;
-    width: 48px;
-    height: 48px;
-  }
+  /* Los estilos responsive de los widgets están en global-widgets.component.css */
 }

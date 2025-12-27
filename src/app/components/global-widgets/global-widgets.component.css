@@ -253,76 +253,153 @@ body.dark-theme .social-widget,
 /* ==================== WIDGET DE CLIMA ==================== */
 .weather-widget {
   position: fixed;
-  bottom: 120px;
-  right: 40px;
-  background: transparent;
-  color: var(--text-dark);
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
+  bottom: 110px; /* Arriba del WhatsApp (40px) y modo oscuro (40px) que tienen 52px de altura */
+  right: 25px; /* Alineado con el botón de modo oscuro */
   z-index: 1000;
-  min-width: 220px;
-  animation: fadeInUp 0.5s ease;
-  text-align: right;
+  min-width: 110px;
+  animation: fadeInUp 0.5s ease-out;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-.weather-content {
+.weather-caja {
+  padding: 1.25rem;
+
+  transition: all 0.3s ease;
+}
+
+
+
+html.dark-mode .weather-caja,
+body.dark-mode .weather-caja {
+  background: rgba(31, 41, 55, 0.95);
+  border-color: rgba(75, 85, 99, 0.5);
+  color: var(--timeline-background);
+}
+
+.weather-ubicacion {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--timeline-background);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+html.dark-mode .weather-ubicacion,
+body.dark-mode .weather-ubicacion {
+  color: #ffffff;
+}
+
+.weather-content-wrapper {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
+  justify-content: center;
 }
 
-.weather-icon {
-  margin-bottom: 0;
+.weather-icono-animado {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  animation: float 3s ease-in-out infinite;
+  margin-bottom: 0.5rem;
 }
 
-.weather-icon mat-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  opacity: 0.9;
-  color: var(--text-dark);
-  filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.12));
-  transition: color 0.3s ease;
-}
-
-:root.dark-mode .weather-widget,
-html.dark-mode .weather-widget,
-body.dark-mode .weather-widget,
-:root.dark-mode .weather-icon mat-icon,
-html.dark-mode .weather-icon mat-icon,
-body.dark-mode .weather-icon mat-icon {
-  color: var(--text-dark);
-}
-
-.weather-info {
-  text-align: right;
-}
-
-.weather-temp {
-  font-size: 2.5rem;
+.weather-temperatura-valor {
+  font-size: 2rem;
   font-weight: 700;
+  color: var(--timeline-background);
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
   line-height: 1;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.weather-desc {
-  font-size: 1rem;
-  opacity: 0.95;
-  margin-bottom: 6px;
-  text-transform: uppercase;
+html.dark-mode .weather-temperatura-valor,
+body.dark-mode .weather-temperatura-valor {
+  color: #ffffff;
+}
+
+.weather-temperatura-descripcion {
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  color: var(--timeline-background);
+  margin-top: 0.25rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.weather-location {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  font-weight: 400;
+html.dark-mode .weather-temperatura-descripcion,
+body.dark-mode .weather-temperatura-descripcion {
+  color: #ffffff;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .weather-widget {
+    bottom: 90px; /* Arriba de los botones que están a 20px con 45px de altura = 65px, más espacio = 90px */
+    right: 20px; /* Alineado con los botones en móvil */
+    min-width: 180px;
+  }
+
+  .weather-caja {
+    padding: 0.75rem;
+  }
+
+  .weather-icono-animado {
+    width: 96px;
+    height: 96px;
+  }
+
+  .weather-temperatura-valor {
+    font-size: 2rem;
+  }
+
+  .weather-ubicacion {
+    font-size: 0.8125rem;
+  }
+
+  .weather-temperatura-descripcion {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .weather-widget {
+    bottom: 75px; /* Arriba de los botones que están a 15px con 40px de altura = 55px, más espacio = 75px */
+    right: 15px; /* Alineado con los botones en móvil pequeño */
+    min-width: 160px;
+  }
+
+  .weather-caja {
+    padding: 0.5rem;
+  }
+
+  .weather-icono-animado {
+    width: 64px;
+    height: 64px;
+  }
+
+  .weather-temperatura-valor {
+    font-size: 1.75rem;
+  }
+
+  .weather-ubicacion {
+    font-size: 0.75rem;
+  }
+
+  .weather-temperatura-descripcion {
+    font-size: 0.625rem;
+  }
 }
 
 /* ==================== BOTÓN SCROLL TO TOP ==================== */

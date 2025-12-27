@@ -129,35 +129,93 @@ export class GlobalWidgetsComponent implements OnInit, AfterViewInit {
   }
 
   private initWeatherWidget(): void {
+    this.weatherLoading = true;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // Simular datos de clima
-          this.weatherData = {
-            temp: 22,
-            description: 'Parcialmente nublado',
-            location: 'Buenos Aires',
-            icon: 'cloudy-day-1'
-          };
-          this.weatherLoading = false;
+          const lon = position.coords.longitude;
+          const lat = position.coords.latitude;
+          // API Key de OpenWeatherMap
+          const apiKey = '10b09c14bc0b62c8b063d4bd63a88997';
+          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=es`;
+
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              const temp = Math.round(data.main.temp);
+              const desc = data.weather[0].description;
+              const location = data.name;
+              const weatherMain = data.weather[0].main;
+
+              // Determinar el icono según el tipo de clima
+              let iconName = 'cloudy-day-1.svg'; // Por defecto
+              
+              switch (weatherMain) {
+                case 'Thunderstorm':
+                  iconName = 'thunder.svg';
+                  break;
+                case 'Drizzle':
+                  iconName = 'rainy-2.svg';
+                  break;
+                case 'Rain':
+                  iconName = 'rainy-7.svg';
+                  break;
+                case 'Snow':
+                  iconName = 'snowy-6.svg';
+                  break;
+                case 'Clear':
+                  iconName = 'day.svg';
+                  break;
+                case 'Atmosphere':
+                  iconName = 'weather.svg';
+                  break;
+                case 'Clouds':
+                  iconName = 'cloudy-day-1.svg';
+                  break;
+                default:
+                  iconName = 'cloudy-day-1.svg';
+              }
+
+              this.weatherData = {
+                temp: temp,
+                description: desc.toUpperCase(),
+                location: location,
+                icon: iconName,
+                windSpeed: data.wind?.speed || 0
+              };
+              this.weatherLoading = false;
+            })
+            .catch(error => {
+              console.error('Error al obtener datos del clima:', error);
+              // Datos por defecto en caso de error
+              this.weatherData = {
+                temp: 22,
+                description: 'Parcialmente nublado',
+                location: 'Buenos Aires',
+                icon: 'cloudy-day-1.svg'
+              };
+              this.weatherLoading = false;
+            });
         },
-        () => {
+        (error) => {
+          console.error('Error de geolocalización:', error);
           // Si falla la geolocalización, usar datos por defecto
           this.weatherData = {
             temp: 22,
             description: 'Parcialmente nublado',
             location: 'Buenos Aires',
-            icon: 'cloudy-day-1'
+            icon: 'cloudy-day-1.svg'
           };
           this.weatherLoading = false;
         }
       );
     } else {
+      // Si no hay soporte de geolocalización, usar datos por defecto
       this.weatherData = {
         temp: 22,
         description: 'Parcialmente nublado',
         location: 'Buenos Aires',
-        icon: 'cloudy-day-1'
+        icon: 'cloudy-day-1.svg'
       };
       this.weatherLoading = false;
     }
