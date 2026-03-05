@@ -1,0 +1,52 @@
+# ⚡ CONEXIÓN ACTUALIZADA
+
+## ✅ Cambios Realizados
+
+| Archivo | Cambio |
+|---------|--------|
+| `environment.ts` | ✅ Actualizado |
+| `supabase.config.ts` | ✅ Actualizado |
+| `CONFIGURACION_SUPABASE.md` | ✅ Actualizado |
+
+---
+
+## 🔐 Nueva Conexión
+
+**URL:** `https://iujfqxfkpyeluqgtzdbd.supabase.co`
+
+**Key:** `sb_publishable_vDB6DWBczNLrLI2Hf2GwSQ_GYGIQAFV`
+
+---
+
+## 🚀 Pasos Siguientes
+
+### 1. Recarga Angular
+```
+Ctrl+Shift+R (para limpiar caché)
+```
+
+### 2. Ejecuta el Script SQL
+```
+1. Supabase Dashboard
+2. SQL Editor → New Query
+3. Abre BASEdedatos.sql (copia TODO)
+4. Pégalo en Supabase
+5. Click RUN
+6. Espera ✅ Success
+```
+
+### 3. Verifica
+```
+La app debería conectar sin error 503
+```
+
+---
+
+## 📊 Nueva BD
+- **Proyecto:** iujfqxfkpyeluqgtzdbd
+- **Estado:** Vacía (necesita script)
+- **Tablas:** 0 (después del script: 23+)
+
+---
+
+**Todo listo para usar con la nueva Data API ✅**

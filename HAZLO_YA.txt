@@ -1,0 +1,30 @@
+# 🚀 HAZLO YA (30 SEGUNDOS)
+
+## El Error
+```
+Error 503 en consola
+Las instituciones no aparecen
+```
+
+## La Solución
+```
+1. Abre: https://app.supabase.com/
+2. Entra al proyecto: AS-Academic-System
+3. SQL Editor → New Query
+4. Abre el archivo: /AS-Academic-System/BASEdedatos.sql
+5. Copia TODO (Ctrl+A, Ctrl+C)
+6. Pégalo en Supabase (Ctrl+V)
+7. Click en RUN
+8. Espera ✅ Success
+9. Recarga Angular (F5)
+```
+
+## ¿Funciona?
+```
+✅ SÍ → Ve a usar la app
+❌ NO → Lee SOLUCIONES_RAPIDAS.md
+```
+
+---
+
+**Nada más que hacer por tu parte. El script lo hace TODO.**

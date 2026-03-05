@@ -30,20 +30,36 @@ export class InstitucionService {
       try {
         const instituciones = await this.getInstitucionesFromSupabase();
         this.institucionesSubject.next(instituciones);
+        console.log(`✅ ${instituciones.length} instituciones cargadas desde Supabase`);
         // Si no hay instituciones, inicializar las por defecto
         if (instituciones.length === 0) {
+          console.warn('⚠️ No hay instituciones en Supabase, creando datos por defecto...');
           await this.initializeDefaultInstituciones();
         }
-      } catch (error) {
-        console.error('Error cargando instituciones desde Supabase:', error);
+      } catch (error: any) {
+        console.error('❌ Error cargando instituciones desde Supabase:', error);
+        
+        // Log detallado del error
+        if (error?.status === 503) {
+          console.error('🚨 Error 503: La tabla "instituciones" no existe. Ejecuta el script BASEdedatos.sql en Supabase');
+          console.error('📖 Consulta GUIA_ERROR_503.md para más información');
+        } else if (error?.status === 401) {
+          console.error('🔐 Error 401: Problema de autenticación. Revisa tus credenciales en environment.ts');
+        } else if (error?.status === 404) {
+          console.error('🔍 Error 404: Proyecto Supabase no encontrado. Verifica la URL correcta');
+        }
+        
         // Fallback a localStorage
+        console.log('↩️ Usando datos de localStorage como fallback...');
         const instituciones = this.getInstitucionesFromStorage();
         this.institucionesSubject.next(instituciones);
         if (instituciones.length === 0) {
+          console.log('📝 Inicializando instituciones por defecto desde localStorage...');
           this.initializeDefaultInstitucionesSync();
         }
       }
     } else {
+      console.log('ℹ️ Usando localStorage (Supabase deshabilitado)');
       const instituciones = this.getInstitucionesFromStorage();
       this.institucionesSubject.next(instituciones);
       if (instituciones.length === 0) {
