@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  appUrl: 'https://tu-dominio.com', // Cambiar a tu dominio de producción
+  appUrl: 'https://academicsystem.com.ar', // Cambiar a tu dominio de producción
   supabase: {
     url: 'https://wvxvefwilbnjzpanaopl.supabase.co',
     anonKey: 'sb_publishable_uRE-ybQJF2HUDpatHim_Ug_JDIJCgfw'
