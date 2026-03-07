@@ -1094,8 +1094,7 @@ export class AsistenciaComponent implements OnInit {
         'Fecha': fecha.toLocaleDateString('es-ES'),
         'Día': ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SÁB'][fecha.getDay()],
         'Estado': asistencia.estado || 'Sin Registrar',
-        'Observaciones': asistencia.observaciones || '-',
-        'Registrado Por': asistencia.profesor || 'Sistema'
+        'Observaciones': asistencia.observaciones || '-'
       };
     });
   }
