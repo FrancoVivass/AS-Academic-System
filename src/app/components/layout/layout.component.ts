@@ -150,6 +150,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
         { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: true },
+        { label: 'Materias', icon: 'subject', route: '/app/materias', visible: true },
+        { label: 'Aulas', icon: 'room', route: '/app/aulas', visible: true },
         { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: true },
         { label: 'Docentes', icon: 'person', route: '/app/docentes', visible: true },
         { label: 'Registrar Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },

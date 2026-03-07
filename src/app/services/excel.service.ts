@@ -9,6 +9,80 @@ export class ExcelService {
   constructor() { }
 
   /**
+   * Exportar datos detallados con múltiples hojas de análisis
+   */
+  exportarDetalladoAsistencia(
+    datosDetallados: any[],
+    datosEstadisticas: any[],
+    datosAlertasRiesgo: any[],
+    datosComparativa: any[],
+    datosResumen: any,
+    nombreArchivo: string = 'asistencia-detallado'
+  ): void {
+    const wb = XLSX.utils.book_new();
+
+    // Hoja 1: RESUMEN GENERAL
+    if (datosResumen && Object.keys(datosResumen).length > 0) {
+      const datosResumenArray = [datosResumen];
+      const ws0 = XLSX.utils.json_to_sheet(datosResumenArray);
+      ws0['!cols'] = this.ajustarAnchoBloques([
+        { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+      ]);
+      this.aplicarEstilosEncabezado(ws0);
+      XLSX.utils.book_append_sheet(wb, ws0, '📊 Resumen');
+    }
+
+    // Hoja 2: REGISTRO DETALLADO DE ASISTENCIA
+    if (datosDetallados && datosDetallados.length > 0) {
+      const ws1 = XLSX.utils.json_to_sheet(datosDetallados);
+      ws1['!cols'] = this.ajustarAnchoBloques([
+        { wch: 22 }, { wch: 12 }, { wch: 25 }, { wch: 15 },
+        { wch: 18 }, { wch: 35 }
+      ]);
+      this.aplicarEstilosEncabezado(ws1);
+      XLSX.utils.book_append_sheet(wb, ws1, '📋 Registro Detallado');
+    }
+
+    // Hoja 3: ESTADÍSTICAS POR ALUMNO
+    if (datosEstadisticas && datosEstadisticas.length > 0) {
+      const ws2 = XLSX.utils.json_to_sheet(datosEstadisticas);
+      ws2['!cols'] = this.ajustarAnchoBloques([
+        { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 10 },
+        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+        { wch: 14 }, { wch: 15 }
+      ]);
+      this.aplicarEstilosEncabezado(ws2);
+      XLSX.utils.book_append_sheet(wb, ws2, '📈 Estadísticas');
+    }
+
+    // Hoja 4: ALERTAS Y RIESGOS (Alumnos con baja asistencia)
+    if (datosAlertasRiesgo && datosAlertasRiesgo.length > 0) {
+      const ws3 = XLSX.utils.json_to_sheet(datosAlertasRiesgo);
+      ws3['!cols'] = this.ajustarAnchoBloques([
+        { wch: 22 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
+        { wch: 12 }, { wch: 30 }, { wch: 40 }
+      ]);
+      this.aplicarEstilosEncabezado(ws3);
+      XLSX.utils.book_append_sheet(wb, ws3, '⚠️ Alertas Riesgo');
+    }
+
+    // Hoja 5: COMPARATIVA Y ANÁLISIS
+    if (datosComparativa && datosComparativa.length > 0) {
+      const ws4 = XLSX.utils.json_to_sheet(datosComparativa);
+      ws4['!cols'] = this.ajustarAnchoBloques([
+        { wch: 22 }, { wch: 12 }, { wch: 35 }, { wch: 18 }
+      ]);
+      this.aplicarEstilosEncabezado(ws4);
+      XLSX.utils.book_append_sheet(wb, ws4, '🔄 Comparativa');
+    }
+
+    // Generar y descargar
+    const fechaActual = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `${nombreArchivo}_${fechaActual}.xlsx`);
+  }
+
+  /**
    * Exportar datos de asistencia a Excel
    */
   exportarAsistenciaAExcel(
@@ -165,4 +239,23 @@ export class ExcelService {
     const fechaActual = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `${nombreArchivo}_${fechaActual}.xlsx`);
   }
+
+  /**
+   * Métodos auxiliares para formato y estilos
+   */
+  private ajustarAnchoBloques(anchosBase: any[]): any[] {
+    return anchosBase.map(col => ({
+      ...col,
+      // Asegurar ancho mínimo
+      wch: Math.max(col.wch || 15, 10)
+    }));
+  }
+
+  private aplicarEstilosEncabezado(hoja: any): void {
+    // Aplicar estilos al encabezado (primera fila)
+    if (hoja['!rows']) {
+      hoja['!rows'][0] = { hpt: 18, hidden: false };
+    }
+  }
 }
+

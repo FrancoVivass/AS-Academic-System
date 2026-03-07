@@ -905,7 +905,7 @@ export class AsistenciaComponent implements OnInit {
 
     try {
       const carreraInfo = this.carreras.find(c => c.id === this.carreraSeleccionada);
-      const nombreArchivo = `asistencia_carrera_${carreraInfo?.nombre}_${new Date().getTime()}`;
+      const nombreArchivo = `asistencia_carrera_${carreraInfo?.nombre || 'completa'}_${new Date().getTime()}`;
 
       // Obtener todas las asistencias de la carrera
       const todasLasAsistencias = await this.alumnoService.getAsistenciasByCarrera(this.carreraSeleccionada);
@@ -921,25 +921,24 @@ export class AsistenciaComponent implements OnInit {
         });
       }
 
-      // Construir datos según opciones seleccionadas
-      const datosAsistencia = this.construirDatosExportacion(asistenciasFiltradas);
+      // Construir datos detallados
+      const datosDetallados = this.construirDatosDetallados(asistenciasFiltradas);
+      const datosEstadisticas = this.construirEstadisticasCarreraDetalladas();
+      const datosAlertasRiesgo = this.construirAlertasRiesgo();
+      const datosComparativa = this.construirComparativaAsistencia();
+      const datosResumen = this.construirResumenCarrera(carreraInfo, asistenciasFiltradas);
 
-      // Estadísticas por materia y alumno
-      const datosEstadisticas = this.construirEstadisticasCarrera();
+      // Exportar con el nuevo método detallado
+      this.excelService.exportarDetalladoAsistencia(
+        datosDetallados,
+        datosEstadisticas,
+        datosAlertasRiesgo,
+        datosComparativa,
+        datosResumen,
+        nombreArchivo
+      );
 
-      this.excelService.exportarReporteGeneralAsistencia({
-        materias: [{
-          'Carrera': carreraInfo?.nombre || '',
-          'Total Materias': this.materiasFiltradas.length,
-          'Total Alumnos': this.alumnos.length,
-          'Período': new Date().toLocaleDateString('es-ES'),
-          'Tipo Exportación': 'Carrera Completa'
-        }],
-        alumnos: datosAsistencia,
-        estadisticas: datosEstadisticas
-      }, nombreArchivo);
-
-      this.notificationService.showSuccess(`Asistencia de carrera exportada correctamente a Excel`);
+      this.notificationService.showSuccess(`Asistencia de carrera exportada correctamente a Excel con análisis completo`);
     } catch (error: any) {
       console.error('Error al exportar asistencia de carrera:', error);
       this.notificationService.showError('Error al exportar asistencia');
@@ -958,7 +957,7 @@ export class AsistenciaComponent implements OnInit {
     try {
       const materiaInfo = this.materias.find(m => m.id === this.materiaSeleccionada);
       const carreraInfo = this.carreras.find(c => c.id === this.carreraSeleccionada);
-      const nombreArchivo = `asistencia_${materiaInfo?.nombre}_${new Date().getTime()}`;
+      const nombreArchivo = `asistencia_${materiaInfo?.nombre || 'materia'}_${new Date().getTime()}`;
 
       // Obtener asistencias de la materia
       let asistenciasMateria = await this.alumnoService.getAsistenciasByMateria(this.materiaSeleccionada);
@@ -973,22 +972,24 @@ export class AsistenciaComponent implements OnInit {
         });
       }
 
-      const datosAsistencia = this.construirDatosExportacion(asistenciasMateria);
-      const datosEstadisticas = this.construirEstadisticasMateria(this.materiaSeleccionada);
+      // Construir datos detallados
+      const datosDetallados = this.construirDatosDetallados(asistenciasMateria);
+      const datosEstadisticas = this.construirEstadisticasMateriaDetalladas(this.materiaSeleccionada);
+      const datosAlertasRiesgo = this.construirAlertasRiesgoMateria(this.materiaSeleccionada);
+      const datosComparativa = this.construirComparativMateria(this.materiaSeleccionada);
+      const datosResumen = this.construirResumenMateria(materiaInfo, carreraInfo, asistenciasMateria);
 
-      this.excelService.exportarReporteGeneralAsistencia({
-        materias: [{
-          'Materia': materiaInfo?.nombre || '',
-          'Carrera': carreraInfo?.nombre || '',
-          'Código': materiaInfo?.codigo || '',
-          'Total Alumnos': this.getAlumnosFiltrados().length,
-          'Período': new Date().toLocaleDateString('es-ES')
-        }],
-        alumnos: datosAsistencia,
-        estadisticas: datosEstadisticas
-      }, nombreArchivo);
+      // Exportar con el nuevo método detallado
+      this.excelService.exportarDetalladoAsistencia(
+        datosDetallados,
+        datosEstadisticas,
+        datosAlertasRiesgo,
+        datosComparativa,
+        datosResumen,
+        nombreArchivo
+      );
 
-      this.notificationService.showSuccess('Asistencia de materia exportada correctamente a Excel');
+      this.notificationService.showSuccess('Asistencia de materia exportada correctamente a Excel con análisis completo');
     } catch (error: any) {
       console.error('Error al exportar asistencia:', error);
       this.notificationService.showError('Error al exportar asistencia');
@@ -1073,6 +1074,274 @@ export class AsistenciaComponent implements OnInit {
 
       return dato;
     });
+  }
+
+  /**
+   * Construir datos detallados para exportación con información expandida
+   */
+  private construirDatosDetallados(asistencias: Asistencia[]): any[] {
+    return asistencias.map(asistencia => {
+      const alumno = this.alumnos.find(a => a.id === asistencia.alumnoId);
+      const materia = this.materias.find(m => m.id === asistencia.materiaId);
+      const fecha = new Date(asistencia.fecha);
+      
+      return {
+        'Alumno': alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido',
+        'DNI': alumno?.dni || 'N/A',
+        'Email': alumno?.email || 'N/A',
+        'Materia': materia?.nombre || '',
+        'Código Materia': materia?.codigo || '',
+        'Fecha': fecha.toLocaleDateString('es-ES'),
+        'Día': ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SÁB'][fecha.getDay()],
+        'Estado': asistencia.estado || 'Sin Registrar',
+        'Observaciones': asistencia.observaciones || '-',
+        'Registrado Por': asistencia.profesor || 'Sistema'
+      };
+    });
+  }
+
+  /**
+   * Estadísticas detalladas por carrera con análisis adicionales
+   */
+  private construirEstadisticasCarreraDetalladas(): any[] {
+    return this.alumnos.map(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      const porcentajeNum = stats.porcentaje || 0;
+      let riesgo = 'Bajo';
+      
+      if (porcentajeNum < 75) riesgo = 'Alto';
+      else if (porcentajeNum < 85) riesgo = 'Medio';
+
+      return {
+        'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+        'DNI': alumno.dni || 'N/A',
+        'Email': alumno.email || 'N/A',
+        'Total Clases': stats.totalClases,
+        'Presentes': stats.presentes,
+        'Ausentes': stats.ausentes,
+        'Tardanzas': stats.tardanzas,
+        'Justificados': stats.justificados,
+        'Porcentaje Asistencia': `${porcentajeNum}%`,
+        'Nivel Riesgo': riesgo,
+        'Por Recuperar': Math.max(0, Math.ceil(stats.totalClases * 0.25) - stats.ausentes)
+      };
+    });
+  }
+
+  /**
+   * Estadísticas detalladas por materia
+   */
+  private construirEstadisticasMateriaDetalladas(materiaId: string): any[] {
+    return this.getAlumnosFiltrados().map(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      const porcentajeNum = stats.porcentaje || 0;
+      let desempeño = 'Excelente';
+      
+      if (porcentajeNum < 60) desempeño = 'Deficiente';
+      else if (porcentajeNum < 75) desempeño = 'Regular';
+      else if (porcentajeNum < 90) desempeño = 'Bueno';
+
+      return {
+        'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+        'DNI': alumno.dni || 'N/A',
+        'Total Clases': stats.totalClases,
+        'Presentes': stats.presentes,
+        'Ausentes': stats.ausentes,
+        'Tardanzas': stats.tardanzas,
+        'Justificados': stats.justificados,
+        'Porcentaje': `${porcentajeNum}%`,
+        'Desempeño': desempeño
+      };
+    });
+  }
+
+  /**
+   * Alertas y riesgos: Alumnos con asistencia por debajo de límite
+   */
+  private construirAlertasRiesgo(): any[] {
+    const umbralRiesgo = 75; // 75% de asistencia
+    const alertas: any[] = [];
+
+    this.alumnos.forEach(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      if (stats.porcentaje < umbralRiesgo && stats.totalClases > 0) {
+        alertas.push({
+          'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+          'DNI': alumno.dni || 'N/A',
+          'Porcentaje Asistencia': `${stats.porcentaje}%`,
+          'Ausentes': stats.ausentes,
+          'Tardanzas': stats.tardanzas,
+          'Recomendación': stats.porcentaje < 60 ? 'URGENTE: Contactar alumno' : 'Seguimiento recomendado',
+          'Notas': `${stats.totalClases} clases, necesita ${Math.ceil(stats.totalClases * 0.75 - stats.presentes)} más presencias`
+        });
+      }
+    });
+
+    return alertas;
+  }
+
+  /**
+   * Alertas por materia
+   */
+  private construirAlertasRiesgoMateria(materiaId: string): any[] {
+    const umbralRiesgo = 75;
+    const alertas: any[] = [];
+
+    this.getAlumnosFiltrados().forEach(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      if (stats.porcentaje < umbralRiesgo && stats.totalClases > 0) {
+        alertas.push({
+          'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+          'DNI': alumno.dni || 'N/A',
+          'Porcentaje': `${stats.porcentaje}%`,
+          'Ausentes': stats.ausentes,
+          'Tardanzas': stats.tardanzas,
+          'Recomendación': stats.porcentaje < 60 ? 'CRÍTICO' : 'Advertencia',
+          'Acciones Sugeridas': `Llamada al padre, reunión con alumno - ${stats.totalClases - stats.presentes} inasistencias`
+        });
+      }
+    });
+
+    return alertas;
+  }
+
+  /**
+   * Comparativa de asistencia: Análisis por rango de fechas y patrones
+   */
+  private construirComparativaAsistencia(): any[] {
+    const comparativa: any[] = [];
+    const materiasSinDuplicados = [...new Set(this.materias.map(m => m.nombre))];
+
+    materiasSinDuplicados.forEach(materiaNombre => {
+      const materia = this.materias.find(m => m.nombre === materiaNombre);
+      if (!materia) return;
+
+      const alumnos = this.getAlumnosFiltrados();
+      const totalAlumnos = alumnos.length;
+      
+      let totalPresentes = 0;
+      let totalAusentes = 0;
+      let totalTardanzas = 0;
+
+      alumnos.forEach(alumno => {
+        const stats = this.getEstadisticasAlumno(alumno.id);
+        totalPresentes += stats.presentes;
+        totalAusentes += stats.ausentes;
+        totalTardanzas += stats.tardanzas;
+      });
+
+      const porcentajePromedio = totalAlumnos > 0 
+        ? Math.round(((totalPresentes / (totalPresentes + totalAusentes + totalTardanzas)) * 100) || 0)
+        : 0;
+
+      comparativa.push({
+        'Materia': materiaNombre,
+        'Total Alumnos': totalAlumnos,
+        'Asistencia Promedio': `${porcentajePromedio}%`,
+        'Tendencia': porcentajePromedio > 85 ? '↑ Excelente' : porcentajePromedio > 75 ? '→ Normal' : '↓ Preocupante'
+      });
+    });
+
+    return comparativa;
+  }
+
+  /**
+   * Comparativa por materia
+   */
+  private construirComparativMateria(materiaId: string): any[] {
+    const comparativa: any[] = [];
+    const alumnos = this.getAlumnosFiltrados();
+    
+    // Agrupar alumnos por rango de asistencia
+    const rangos = {
+      'Excelente (95-100%)': 0,
+      'Muy Bueno (85-94%)': 0,
+      'Bueno (75-84%)': 0,
+      'Regular (60-74%)': 0,
+      'Deficiente (<60%)': 0
+    };
+
+    alumnos.forEach(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      const porc = stats.porcentaje;
+      
+      if (porc >= 95) rangos['Excelente (95-100%)']++;
+      else if (porc >= 85) rangos['Muy Bueno (85-94%)']++;
+      else if (porc >= 75) rangos['Bueno (75-84%)']++;
+      else if (porc >= 60) rangos['Regular (60-74%)']++;
+      else rangos['Deficiente (<60%)']++;
+    });
+
+    Object.entries(rangos).forEach(([rango, cantidad]) => {
+      comparativa.push({
+        'Rango de Asistencia': rango,
+        'Cantidad Alumnos': cantidad,
+        'Porcentaje': alumnos.length > 0 ? `${Math.round((cantidad / alumnos.length) * 100)}%` : '0%'
+      });
+    });
+
+    return comparativa;
+  }
+
+  /**
+   * Resumen general de carrera
+   */
+  private construirResumenCarrera(carreraInfo: any, asistencias: Asistencia[]): any {
+    const totalAlumnos = this.alumnos.length;
+    const asistenciasActuales = asistencias.length;
+    let totalPresentes = 0, totalAusentes = 0, totalTardanzas = 0;
+
+    this.alumnos.forEach(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      totalPresentes += stats.presentes;
+      totalAusentes += stats.ausentes;
+      totalTardanzas += stats.tardanzas;
+    });
+
+    const porcentajePromedio = (totalPresentes + totalAusentes + totalTardanzas) > 0
+      ? Math.round((totalPresentes / (totalPresentes + totalAusentes + totalTardanzas)) * 100)
+      : 0;
+
+    return {
+      'RESUMEN GENERAL': carreraInfo?.nombre || 'Sin Especificar',
+      'Total Alumnos': totalAlumnos,
+      'Total Materias': this.materiasFiltradas?.length || 0,
+      'Registros de Asistencia': asistenciasActuales,
+      'Asistencia Promedio': `${porcentajePromedio}%`,
+      'Fecha Generación': new Date().toLocaleDateString('es-ES'),
+      'Período Análisis': `Desde hoy hasta hoy`,
+      'Estatus General': porcentajePromedio > 85 ? '✓ Óptimo' : porcentajePromedio > 75 ? '~ Aceptable' : '✗ Crítico'
+    };
+  }
+
+  /**
+   * Resumen general de materia
+   */
+  private construirResumenMateria(materiaInfo: any, carreraInfo: any, asistencias: Asistencia[]): any {
+    const totalAlumnos = this.getAlumnosFiltrados().length;
+    let totalPresentes = 0, totalAusentes = 0, totalTardanzas = 0;
+
+    this.getAlumnosFiltrados().forEach(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      totalPresentes += stats.presentes;
+      totalAusentes += stats.ausentes;
+      totalTardanzas += stats.tardanzas;
+    });
+
+    const porcentajePromedio = (totalPresentes + totalAusentes + totalTardanzas) > 0
+      ? Math.round((totalPresentes / (totalPresentes + totalAusentes + totalTardanzas)) * 100)
+      : 0;
+
+    return {
+      'MATERIA': materiaInfo?.nombre || 'Sin Especificar',
+      'Carrera': carreraInfo?.nombre || 'Sin Especificar',
+      'Código Materia': materiaInfo?.codigo || 'N/A',
+      'Total Alumnos': totalAlumnos,
+      'Registros': asistencias.length,
+      'Asistencia Promedio': `${porcentajePromedio}%`,
+      'Fecha Generación': new Date().toLocaleDateString('es-ES'),
+      'Estatus': porcentajePromedio > 80 ? '✓ Bueno' : porcentajePromedio > 70 ? '~ Aceptable' : '✗ Bajo'
+    };
   }
 }
 
