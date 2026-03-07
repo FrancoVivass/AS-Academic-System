@@ -175,6 +175,26 @@ export class AsistenciaComponent implements OnInit {
       }
       
       this.alumnos = todosLosAlumnos;
+      
+      // Enriquecer alumnos con información del curso
+      this.alumnos = this.alumnos.map(alumno => {
+        // Si el alumno no tiene cursor nombre pero tiene cursoId, obtener el nombre del curso
+        if (!alumno.curso && alumno.cursoId) {
+          const cursoInfo = this.cursos.find(c => c.id === alumno.cursoId);
+          if (cursoInfo) {
+            alumno.curso = cursoInfo.nombre;
+          }
+        }
+        // Si aún no tiene curso y tiene cursoIds, usar el primer curso
+        if (!alumno.curso && alumno.cursoIds && alumno.cursoIds.length > 0) {
+          const cursoInfo = this.cursos.find(c => c.id === alumno.cursoIds![0]);
+          if (cursoInfo) {
+            alumno.curso = cursoInfo.nombre;
+          }
+        }
+        return alumno;
+      });
+      
       this.materias = todasLasMaterias;
       
       // Para alumnos, las materias filtradas son las mismas que las materias
