@@ -286,22 +286,6 @@
 
 
 
-<!-- Barra de Cookies -->
-<div class="cookie-banner" *ngIf="!cookiesAccepted">
-  <div class="cookie-content">
-    <div class="cookie-text">
-      <mat-icon>cookie</mat-icon>
-      <div>
-        <h3>Uso de Cookies</h3>
-        <p>Utilizamos cookies para mejorar tu experiencia. Al continuar navegando, aceptas nuestro uso de cookies.</p>
-      </div>
-    </div>
-    <div class="cookie-buttons">
-      <button class="cookie-btn accept" (click)="acceptCookies()">Aceptar</button>
-      <button class="cookie-btn reject" (click)="rejectCookies()">Rechazar</button>
-      <a [routerLink]="['/']" class="cookie-link">Política de Privacidad</a>
-      </div>
-    </div>
-  </div>
+
 
 <app-footer-principal></app-footer-principal>

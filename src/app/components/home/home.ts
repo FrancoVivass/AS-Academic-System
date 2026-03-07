@@ -89,10 +89,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     // Scroll al inicio cuando se carga la página
     window.scrollTo({ top: 0, behavior: 'instant' });
-    
-    // Verificar cookies
-    const cookiesAccepted = localStorage.getItem('cookiesAccepted');
-    this.cookiesAccepted = cookiesAccepted === 'true' || cookiesAccepted === 'false';
   }
 
   ngAfterViewInit(): void {
@@ -166,18 +162,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentScreenshotIndex = (this.currentScreenshotIndex - 1 + this.screenshots.length) % this.screenshots.length;
   }
 
-
-  cookiesAccepted = false;
-
-  acceptCookies(): void {
-    localStorage.setItem('cookiesAccepted', 'true');
-    this.cookiesAccepted = true;
-  }
-
-  rejectCookies(): void {
-    localStorage.setItem('cookiesAccepted', 'false');
-    this.cookiesAccepted = true;
-  }
 
   private initScrollReveal(): void {
     const options = {

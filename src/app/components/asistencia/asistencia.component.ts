@@ -12,6 +12,7 @@ import { DocenteService } from '../../services/docente.service';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { NotificationService } from '../../services/notification.service';
+import { ExcelService } from '../../services/excel.service';
 import { Asistencia } from '../../models/alumno.model';
 import { Alumno } from '../../models/alumno.model';
 import { Materia } from '../../models/materia.model';
@@ -56,6 +57,21 @@ export class AsistenciaComponent implements OnInit {
   mostrarDetalleMateria: string = ''; // Para alumnos: ID de la materia cuyo detalle se está mostrando
   numeroClase: number = 1; // Número de clase actual
 
+  // Opciones de exportación
+  mostrarModalExportacion: boolean = false;
+  opcionesExportacion = {
+    tipo: 'materia', // 'materia' o 'carrera'
+    incluirAlumno: true,
+    incluirDNI: true,
+    incluirMateria: true,
+    incluirFecha: true,
+    incluirEstado: true,
+    incluirObservaciones: false,
+    incluirEstadisticas: true,
+    rango_fecha_inicio: '',
+    rango_fecha_fin: ''
+  };
+
   constructor(
     private alumnoService: AlumnoService,
     private materiaService: MateriaService,
@@ -64,7 +80,8 @@ export class AsistenciaComponent implements OnInit {
     private docenteService: DocenteService,
     private authService: AuthService,
     public permissionsService: PermissionsService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private excelService: ExcelService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -828,6 +845,234 @@ export class AsistenciaComponent implements OnInit {
     // Retorna el mismo número de clase para todos (clases dadas de la materia)
     // No es específico por alumno, sino por materia
     return this.getNumeroClase();
+  }
+
+  /**
+   * Abrir modal de opciones de exportación
+   */
+  abrirModalExportacion(): void {
+    if (!this.carreraSeleccionada) {
+      this.notificationService.showWarning('Por favor seleccione una carrera');
+      return;
+    }
+    // Resetear opciones a valores por defecto
+    this.opcionesExportacion = {
+      tipo: 'materia',
+      incluirAlumno: true,
+      incluirDNI: true,
+      incluirMateria: true,
+      incluirFecha: true,
+      incluirEstado: true,
+      incluirObservaciones: false,
+      incluirEstadisticas: true,
+      rango_fecha_inicio: '',
+      rango_fecha_fin: ''
+    };
+    this.mostrarModalExportacion = true;
+  }
+
+  /**
+   * Cerrar modal de exportación
+   */
+  cerrarModalExportacion(): void {
+    this.mostrarModalExportacion = false;
+  }
+
+  /**
+   * Procesar exportación con opciones seleccionadas
+   */
+  procederConExportacion(): void {
+    if (this.opcionesExportacion.tipo === 'carrera') {
+      this.exportarAsistenciaCarreraCompleta();
+    } else {
+      if (!this.materiaSeleccionada) {
+        this.notificationService.showWarning('Por favor seleccione una materia para exportar');
+        return;
+      }
+      this.exportarAsistenciaMateria();
+    }
+    this.cerrarModalExportacion();
+  }
+
+  /**
+   * Exportar asistencia de una carrera completa
+   */
+  async exportarAsistenciaCarreraCompleta(): Promise<void> {
+    if (!this.carreraSeleccionada) {
+      this.notificationService.showWarning('Por favor seleccione una carrera');
+      return;
+    }
+
+    try {
+      const carreraInfo = this.carreras.find(c => c.id === this.carreraSeleccionada);
+      const nombreArchivo = `asistencia_carrera_${carreraInfo?.nombre}_${new Date().getTime()}`;
+
+      // Obtener todas las asistencias de la carrera
+      const todasLasAsistencias = await this.alumnoService.getAsistenciasByCarrera(this.carreraSeleccionada);
+      
+      // Filtrar por rango de fechas si está especificado
+      let asistenciasFiltradas = todasLasAsistencias;
+      if (this.opcionesExportacion.rango_fecha_inicio && this.opcionesExportacion.rango_fecha_fin) {
+        const fechaInicio = new Date(this.opcionesExportacion.rango_fecha_inicio);
+        const fechaFin = new Date(this.opcionesExportacion.rango_fecha_fin);
+        asistenciasFiltradas = todasLasAsistencias.filter(a => {
+          const fechaAsistencia = new Date(a.fecha);
+          return fechaAsistencia >= fechaInicio && fechaAsistencia <= fechaFin;
+        });
+      }
+
+      // Construir datos según opciones seleccionadas
+      const datosAsistencia = this.construirDatosExportacion(asistenciasFiltradas);
+
+      // Estadísticas por materia y alumno
+      const datosEstadisticas = this.construirEstadisticasCarrera();
+
+      this.excelService.exportarReporteGeneralAsistencia({
+        materias: [{
+          'Carrera': carreraInfo?.nombre || '',
+          'Total Materias': this.materiasFiltradas.length,
+          'Total Alumnos': this.alumnos.length,
+          'Período': new Date().toLocaleDateString('es-ES'),
+          'Tipo Exportación': 'Carrera Completa'
+        }],
+        alumnos: datosAsistencia,
+        estadisticas: datosEstadisticas
+      }, nombreArchivo);
+
+      this.notificationService.showSuccess(`Asistencia de carrera exportada correctamente a Excel`);
+    } catch (error: any) {
+      console.error('Error al exportar asistencia de carrera:', error);
+      this.notificationService.showError('Error al exportar asistencia');
+    }
+  }
+
+  /**
+   * Exportar asistencia de una materia individual
+   */
+  async exportarAsistenciaMateria(): Promise<void> {
+    if (!this.materiaSeleccionada || !this.carreraSeleccionada) {
+      this.notificationService.showWarning('Por favor seleccione una carrera y materia');
+      return;
+    }
+
+    try {
+      const materiaInfo = this.materias.find(m => m.id === this.materiaSeleccionada);
+      const carreraInfo = this.carreras.find(c => c.id === this.carreraSeleccionada);
+      const nombreArchivo = `asistencia_${materiaInfo?.nombre}_${new Date().getTime()}`;
+
+      // Obtener asistencias de la materia
+      let asistenciasMateria = await this.alumnoService.getAsistenciasByMateria(this.materiaSeleccionada);
+
+      // Filtrar por rango de fechas si está especificado
+      if (this.opcionesExportacion.rango_fecha_inicio && this.opcionesExportacion.rango_fecha_fin) {
+        const fechaInicio = new Date(this.opcionesExportacion.rango_fecha_inicio);
+        const fechaFin = new Date(this.opcionesExportacion.rango_fecha_fin);
+        asistenciasMateria = asistenciasMateria.filter(a => {
+          const fechaAsistencia = new Date(a.fecha);
+          return fechaAsistencia >= fechaInicio && fechaAsistencia <= fechaFin;
+        });
+      }
+
+      const datosAsistencia = this.construirDatosExportacion(asistenciasMateria);
+      const datosEstadisticas = this.construirEstadisticasMateria(this.materiaSeleccionada);
+
+      this.excelService.exportarReporteGeneralAsistencia({
+        materias: [{
+          'Materia': materiaInfo?.nombre || '',
+          'Carrera': carreraInfo?.nombre || '',
+          'Código': materiaInfo?.codigo || '',
+          'Total Alumnos': this.getAlumnosFiltrados().length,
+          'Período': new Date().toLocaleDateString('es-ES')
+        }],
+        alumnos: datosAsistencia,
+        estadisticas: datosEstadisticas
+      }, nombreArchivo);
+
+      this.notificationService.showSuccess('Asistencia de materia exportada correctamente a Excel');
+    } catch (error: any) {
+      console.error('Error al exportar asistencia:', error);
+      this.notificationService.showError('Error al exportar asistencia');
+    }
+  }
+
+  /**
+   * Construir datos de exportación según opciones seleccionadas
+   */
+  private construirDatosExportacion(asistencias: Asistencia[]): any[] {
+    return asistencias.map(asistencia => {
+      const alumno = this.alumnos.find(a => a.id === asistencia.alumnoId);
+      const materia = this.materias.find(m => m.id === asistencia.materiaId);
+      const dato: any = {};
+
+      if (this.opcionesExportacion.incluirAlumno) {
+        dato['Alumno'] = alumno ? `${alumno.nombre} ${alumno.apellido}` : 'Desconocido';
+      }
+      if (this.opcionesExportacion.incluirDNI) {
+        dato['DNI'] = alumno?.dni || 'N/A';
+      }
+      if (this.opcionesExportacion.incluirMateria) {
+        dato['Materia'] = materia?.nombre || '';
+      }
+      if (this.opcionesExportacion.incluirFecha) {
+        dato['Fecha'] = asistencia.fecha;
+      }
+      if (this.opcionesExportacion.incluirEstado) {
+        dato['Estado'] = asistencia.estado || 'Sin registrar';
+      }
+      if (this.opcionesExportacion.incluirObservaciones && asistencia.observaciones) {
+        dato['Observaciones'] = asistencia.observaciones;
+      }
+
+      return dato;
+    });
+  }
+
+  /**
+   * Construir estadísticas por carrera completa
+   */
+  private construirEstadisticasCarrera(): any[] {
+    return this.alumnos.map(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      const dato: any = {
+        'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+        'DNI': alumno.dni || 'N/A'
+      };
+
+      if (this.opcionesExportacion.incluirEstadisticas) {
+        dato['Total Clases'] = stats.totalClases;
+        dato['Presentes'] = stats.presentes;
+        dato['Ausentes'] = stats.ausentes;
+        dato['Tardanzas'] = stats.tardanzas;
+        dato['Justificados'] = stats.justificados;
+        dato['Porcentaje'] = `${stats.porcentaje}%`;
+      }
+
+      return dato;
+    });
+  }
+
+  /**
+   * Construir estadísticas por materia
+   */
+  private construirEstadisticasMateria(materiaId: string): any[] {
+    return this.getAlumnosFiltrados().map(alumno => {
+      const stats = this.getEstadisticasAlumno(alumno.id);
+      const dato: any = {
+        'Alumno': `${alumno.nombre} ${alumno.apellido}`,
+        'DNI': alumno.dni || 'N/A'
+      };
+
+      if (this.opcionesExportacion.incluirEstadisticas) {
+        dato['Total Clases'] = stats.totalClases;
+        dato['Presentes'] = stats.presentes;
+        dato['Ausentes'] = stats.ausentes;
+        dato['Tardanzas'] = stats.tardanzas;
+        dato['Justificados'] = stats.justificados;
+        dato['Porcentaje'] = `${stats.porcentaje}%`;
+      }
+
+      return dato;
+    });
   }
 }
 

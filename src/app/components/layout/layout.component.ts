@@ -127,67 +127,43 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
     // Navegación personalizada por rol
     if (this.permissionsService.esAlumno()) {
-      // Alumno: Dashboard, Materias (solo ver), Asistencias (ver), Notas (ver), Calendario, Biblioteca (solo ver), Mensajes
+      // Alumno: Solo ver Asistencias y Notas (NO registrar), Materias (ver)
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
         { label: 'Mis Materias', icon: 'menu_book', route: '/app/materias', visible: true },
-        { label: 'Mis Asistencias', icon: 'check_circle', route: '/app/asistencia', visible: true },
-        { label: 'Mis Notas', icon: 'grade', route: '/app/notas', visible: true },
-        { label: 'Mi Documentación', icon: 'description', route: '/app/documentacion', visible: true },
-        { label: 'Calendario', icon: 'calendar_today', route: '/app/calendario', visible: true },
-        { label: 'Biblioteca', icon: 'library_books', route: '/app/biblioteca', visible: true },
-        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
+        { label: 'Ver Asistencias', icon: 'check_circle', route: '/app/asistencia', visible: true },
+        { label: 'Ver Notas', icon: 'grade', route: '/app/notas', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];
     } else if (this.permissionsService.esProfesor()) {
-      // Profesor: Dashboard, Alumnos (por materias), Materias (asociadas), Asistencias (tomar), Notas (poner), Reportes, Mensajes
+      // Profesor: Solo VER Asistencias y Notas (NO registrar ni cargar)
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
-        { label: 'Mis Alumnos', icon: 'people', route: '/app/alumnos', visible: true },
-        { label: 'Mis Materias', icon: 'menu_book', route: '/app/materias', visible: true },
-        { label: 'Tomar Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
-        { label: 'Cargar Notas', icon: 'grade', route: '/app/notas', visible: true },
-        { label: 'Tareas', icon: 'assignment', route: '/app/tareas', visible: true },
-        { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: true },
-        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
+        { label: 'Ver Asistencias', icon: 'check_circle', route: '/app/asistencia', visible: true },
+        { label: 'Ver Notas', icon: 'grade', route: '/app/notas', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];
     } else if (this.permissionsService.esAdmin()) {
-      // Admin: Todo de administración y más
+      // Admin: Gestión de carreras, alumnos, asistencia (registrar), notas
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
-        { label: 'Usuarios', icon: 'people_outline', route: '/app/usuarios', visible: true },
+        { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: true },
         { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: true },
         { label: 'Docentes', icon: 'person', route: '/app/docentes', visible: true },
-        { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: true },
-        { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: permisos.verCarreras },
-        { label: 'Aulas', icon: 'meeting_room', route: '/app/aulas', visible: permisos.gestionarAulas },
-        { label: 'Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
-        { label: 'Notas', icon: 'grade', route: '/app/notas', visible: true },
-        { label: 'Justificativos', icon: 'description', route: '/app/justificativos', visible: permisos.gestionarJustificativos },
-        { label: 'Calendario', icon: 'calendar_today', route: '/app/calendario', visible: true },
-        { label: 'Biblioteca', icon: 'library_books', route: '/app/biblioteca', visible: true },
-        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
-        { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: true },
-        { label: 'Auditoría', icon: 'history', route: '/app/auditoria', visible: permisos.verAuditoria },
+        { label: 'Registrar Asistencia', icon: 'check_circle', route: '/app/asistencia', visible: true },
+        { label: 'Cargar Notas', icon: 'grade', route: '/app/notas', visible: true },
+        { label: 'Reportes y Estadísticas', icon: 'assessment', route: '/app/reportes', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];
     } else if (this.permissionsService.esCoordinador()) {
-      // Coordinador: Aprobación de correlatividades, notas finales, equivalencias
+      // Coordinador: Acceso limitado a lo básico
       this.navItems = [
         { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', visible: true },
-        { label: 'Alumnos', icon: 'people', route: '/app/alumnos', visible: permisos.verAlumnos },
-        { label: 'Materias', icon: 'menu_book', route: '/app/materias', visible: permisos.verMaterias },
-        { label: 'Carreras', icon: 'school', route: '/app/carreras', visible: permisos.verCarreras },
-        { label: 'Notas Pendientes', icon: 'pending_actions', route: '/app/notas-pendientes', visible: permisos.aprobarNotasFinales },
-        { label: 'Equivalencias', icon: 'swap_horiz', route: '/app/equivalencias', visible: permisos.gestionarEquivalencias },
-        { label: 'Solicitudes', icon: 'assignment', route: '/app/solicitudes', visible: permisos.verSolicitudes },
-        { label: 'Reportes', icon: 'assessment', route: '/app/reportes', visible: permisos.verReportes },
-        { label: 'Análisis', icon: 'analytics', route: '/app/analisis', visible: permisos.analizarRendimiento },
-        { label: 'Mensajes', icon: 'message', route: '/app/mensajes', visible: true },
+        { label: 'Ver Notas', icon: 'grade', route: '/app/notas', visible: true },
+        { label: 'Ver Asistencias', icon: 'check_circle', route: '/app/asistencia', visible: true },
         { label: 'Configuración', icon: 'settings', route: '/app/configuracion', visible: true },
         { label: 'Ayuda', icon: 'help_outline', route: '/app/ayuda', visible: true }
       ];

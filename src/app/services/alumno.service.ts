@@ -633,4 +633,16 @@ export class AlumnoService {
     const asistencias = await this.getAsistencias();
     return asistencias.filter(a => a.materiaId === materiaId && a.fecha === fecha);
   }
+
+  /**
+   * Obtener todas las asistencias de una carrera
+   */
+  async getAsistenciasByCarrera(carreraId: string): Promise<Asistencia[]> {
+    const asistencias = await this.getAsistencias();
+    // Filtrar por materias que pertenecen a la carrera
+    const alumnos = await this.getAlumnos();
+    const alumnosCarrera = alumnos.filter(a => a.carreraId === carreraId).map(a => a.id);
+    
+    return asistencias.filter(a => alumnosCarrera.includes(a.alumnoId));
+  }
 }

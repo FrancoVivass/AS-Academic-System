@@ -30,7 +30,7 @@ export class ComoFuncionaAdminComponent {
       icon: 'person_add',
       details: [
         'Ve a la sección "Docentes"',
-        'Haz clic en "Nuevo Docente (Wizard)"',
+        'Haz clic en "Nuevo Docente"',
         'Completa los datos del docente (nombre, apellido, email, etc.)',
         'Guarda el docente. El sistema creará automáticamente su usuario.'
       ],
@@ -42,7 +42,7 @@ export class ComoFuncionaAdminComponent {
       icon: 'menu_book',
       details: [
         'Ve a la sección "Materias"',
-        'Haz clic en "+ Nueva Materia (Wizard)"',
+        'Haz clic en "+ Nueva Materia"',
         'Completa los datos básicos (nombre, código)',
         'Asigna un profesor (debe estar creado previamente)',
         'Configura horas, créditos y otros parámetros',
@@ -68,7 +68,7 @@ export class ComoFuncionaAdminComponent {
       icon: 'school',
       details: [
         'Ve a la sección "Carreras"',
-        'Haz clic en "Nueva Carrera (Wizard Completo)"',
+        'Haz clic en "Nueva Carrera"',
         'Completa los datos de la carrera (nombre, código, duración)',
         'Asigna las aulas que utilizará la carrera',
         'Crea los cursos (año, división, turno)',

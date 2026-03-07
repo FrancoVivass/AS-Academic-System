@@ -748,6 +748,39 @@ export class AlumnosComponent implements OnInit {
           ...this.alumnoSeleccionado,
           ...formValue
         };
+
+        // Si cambió el cursoId, actualizar inscripciones a materias
+        if (formValue.cursoId && formValue.cursoId !== this.alumnoSeleccionado.cursoId) {
+          const nuevoCurso = await this.cursoService.getCursoById(formValue.cursoId);
+          const cursoAntiguo = this.alumnoSeleccionado.cursoId ? await this.cursoService.getCursoById(this.alumnoSeleccionado.cursoId) : null;
+          
+          // Desinscrибir de materias del curso antiguo
+          if (cursoAntiguo && cursoAntiguo.materias) {
+            for (const materiaId of cursoAntiguo.materias) {
+              this.materiaService.desinscribirAlumno(this.alumnoSeleccionado.id, materiaId);
+            }
+          }
+          
+          // Inscribir en materias del nuevo curso
+          if (nuevoCurso && nuevoCurso.materias) {
+            for (const materiaId of nuevoCurso.materias) {
+              try {
+                const inscripcion = {
+                  id: crypto.randomUUID(),
+                  alumnoId: this.alumnoSeleccionado.id,
+                  materiaId: materiaId,
+                  fechaInscripcion: new Date().toISOString(),
+                  estado: 'activo'
+                };
+                this.materiaService.inscribirAlumno(inscripcion);
+              } catch (error) {
+                console.warn(`Error inscribiendo alumno en materia ${materiaId}:`, error);
+              }
+            }
+            this.notificationService.showSuccess(`Alumno inscrito en ${nuevoCurso.materias.length} materias del nuevo curso`);
+          }
+        }
+
         await this.alumnoService.updateAlumno(alumnoActualizado);
         this.notificationService.showSuccess('Alumno actualizado correctamente');
       } catch (error: any) {
@@ -802,13 +835,22 @@ export class AlumnosComponent implements OnInit {
         if (cursoSeleccionado.materias && cursoSeleccionado.materias.length > 0) {
           for (const materiaId of cursoSeleccionado.materias) {
             try {
-              // Inscribir al alumno en la materia (usando el servicio de materias si tiene el método)
-              // Por ahora, esto se manejará automáticamente cuando se carguen las materias desde los cursos
-              console.log(`Alumno ${nuevoAlumno.id} inscrito en materia ${materiaId} del curso ${formValue.cursoId}`);
+              // Inscribir al alumno en la materia usando el servicio de materias
+              const inscripcion = {
+                id: crypto.randomUUID(),
+                alumnoId: nuevoAlumno.id,
+                materiaId: materiaId,
+                fechaInscripcion: new Date().toISOString(),
+                estado: 'activo'
+              };
+              // Usar el método inscribirAlumno del servicio de materias
+              this.materiaService.inscribirAlumno(inscripcion);
+              console.log(`Alumno ${nuevoAlumno.id} inscrito en materia ${materiaId}`);
             } catch (error) {
               console.warn(`Error inscribiendo alumno en materia ${materiaId}:`, error);
             }
           }
+          this.notificationService.showSuccess(`Alumno inscrito en ${cursoSeleccionado.materias.length} materias del curso`);
         }
         
         // Actualizar cupo del curso
@@ -817,7 +859,7 @@ export class AlumnosComponent implements OnInit {
         
         // El servicio ya crea el usuario, no necesitamos crearlo de nuevo
         const username = `alumno_${formValue.dni}`;
-        this.notificationService.showSuccess(`Alumno creado e inscrito correctamente en el curso. Usuario: ${username}, Contraseña: temp123 (debe cambiarse)`);
+        this.notificationService.showSuccess(`Alumno creado e inscrito correctamente en el curso y sus ${cursoSeleccionado.materias?.length || 0} materias. Usuario: ${username}, Contraseña: temp123 (debe cambiarse)`);
         
         // Cerrar modal y recargar alumnos
         this.cerrarModal();

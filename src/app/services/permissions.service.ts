@@ -273,20 +273,20 @@ export class PermissionsService {
       
       // Notas
       verNotas: true,
-      editarNotas: true,
-      crearNotas: true,
+      editarNotas: false,
+      crearNotas: false,
       eliminarNotas: false,
-      gestionarRecuperatorios: true,
+      gestionarRecuperatorios: false,
       aprobarNotasFinales: false,
       forzarCambioNota: false,
       generarActas: false,
       
       // Asistencias
       verAsistencias: true,
-      editarAsistencias: true,
-      crearAsistencias: true,
+      editarAsistencias: false,
+      crearAsistencias: false,
       eliminarAsistencias: false,
-      cargarAsistenciaRetroactiva: true,
+      cargarAsistenciaRetroactiva: false,
       gestionarJustificativos: false,
       cambiarEstadoMasivo: false,
       

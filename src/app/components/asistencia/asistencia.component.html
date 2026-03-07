@@ -234,6 +234,16 @@
           </button>
         </div>
       </div>
+
+      <!-- Botones de exportación para Admin -->
+      @if (permissionsService.esAdmin()) {
+        <div class="botones-exportacion">
+          <button mat-raised-button color="accent" (click)="abrirModalExportacion()" matTooltip="Exportar asistencia con opciones personalizadas">
+            <mat-icon>download</mat-icon>
+            Exportar Asistencia
+          </button>
+        </div>
+      }
       
       @if (horariosMateria.length > 0) {
         <div class="horarios-info">
@@ -529,5 +539,94 @@
         }
     </div>
     }
+  }
+
+  <!-- Modal de Opciones de Exportación -->
+  @if (mostrarModalExportacion) {
+    <div class="modal-overlay" (click)="cerrarModalExportacion()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Opciones de Exportación</h2>
+          <button class="modal-close-btn" (click)="cerrarModalExportacion()" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tipo de exportación -->
+          <div class="option-group">
+            <h3>Tipo de Exportación</h3>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" [value]="'materia'" [(ngModel)]="opcionesExportacion.tipo" />
+                <span class="radio-label">Por Materia Individual</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" [value]="'carrera'" [(ngModel)]="opcionesExportacion.tipo" />
+                <span class="radio-label">Carrera Completa</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Rango de fechas -->
+          <div class="option-group">
+            <h3>Filtro de Fechas (Opcional)</h3>
+            <div class="date-filter-group">
+              <div class="date-input-wrapper">
+                <label>Desde</label>
+                <input type="date" [(ngModel)]="opcionesExportacion.rango_fecha_inicio" />
+              </div>
+              <div class="date-input-wrapper">
+                <label>Hasta</label>
+                <input type="date" [(ngModel)]="opcionesExportacion.rango_fecha_fin" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Columnas a incluir -->
+          <div class="option-group">
+            <h3>Datos a Incluir</h3>
+            <div class="checkbox-group">
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirAlumno" />
+                <span class="checkbox-label">Nombre del Alumno</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirDNI" />
+                <span class="checkbox-label">DNI</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirMateria" />
+                <span class="checkbox-label">Materia</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirFecha" />
+                <span class="checkbox-label">Fecha de Asistencia</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirEstado" />
+                <span class="checkbox-label">Estado (Presente/Ausente/etc)</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirObservaciones" />
+                <span class="checkbox-label">Observaciones</span>
+              </label>
+              <label class="checkbox-option">
+                <input type="checkbox" [(ngModel)]="opcionesExportacion.incluirEstadisticas" />
+                <span class="checkbox-label">Estadísticas (Totales y Porcentaje)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="cerrarModalExportacion()" type="button">Cancelar</button>
+          <button class="btn-export" (click)="procederConExportacion()" type="button">
+            <mat-icon>download</mat-icon>
+            Exportar
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>
