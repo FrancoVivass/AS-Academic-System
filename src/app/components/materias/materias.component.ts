@@ -104,7 +104,7 @@ export class MateriasComponent implements OnInit {
       horario: [''],
       creditos: [0, [Validators.min(0)]],
       horasSemanales: [0, [Validators.min(0)]],
-      carreraId: [''], // Opcional, se asigna después en la carrera
+      carreraId: ['', Validators.required], // Ahora REQUERIDO
       año: [1, [Validators.min(1)]], // Opcional
       cuatrimestre: [1, [Validators.min(1), Validators.max(2)]], // Opcional
       tipo: ['obligatoria'], // Opcional
@@ -313,8 +313,7 @@ export class MateriasComponent implements OnInit {
   }
 
   abrirModalNuevo(): void {
-    // Abrir wizard inmediatamente
-    this.mostrarWizard = true;
+    // Resetear estado del modal
     this.modoEdicion = false;
     this.materiaSeleccionada = null;
     this.mostrarModal = false;
@@ -347,11 +346,6 @@ export class MateriasComponent implements OnInit {
       }
     }
     
-    // Si viene desde carrera, pre-seleccionar carrera y profesor
-    if (carreraIdPreSeleccionada) {
-      this.wizardData.carreraSeleccionada = this.carreras.find(c => c.id === carreraIdPreSeleccionada) || null;
-    }
-    
     // Resetear formulario con valores por defecto
     this.materiaForm.reset({
       nombre: '',
@@ -371,10 +365,8 @@ export class MateriasComponent implements OnInit {
       correlatividades: []
     });
     
-    // Cargar datos de forma asíncrona después de mostrar el wizard
-    // Esto hace que el wizard aparezca inmediatamente
-    setTimeout(() => {
-      this.loadCarreras();
+    // Cargar datos de forma asíncrona antes de mostrar el wizard
+    this.loadCarreras().then(() => {
       this.loadDocentes();
       this.loadMateriasDisponibles();
       
@@ -385,7 +377,10 @@ export class MateriasComponent implements OnInit {
           this.seleccionarProfesor(profesorIdPreSeleccionado);
         }
       }
-    }, 0);
+      
+      // Mostrar el wizard DESPUÉS de que los datos estén cargados
+      this.mostrarWizard = true;
+    });
   }
   
   cerrarWizard(): void {

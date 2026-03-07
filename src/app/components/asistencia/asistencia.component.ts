@@ -1103,13 +1103,26 @@ export class AsistenciaComponent implements OnInit {
    * Estadísticas detalladas por carrera con análisis adicionales
    */
   private construirEstadisticasCarreraDetalladas(): any[] {
+    const minClasesParaEvaluacion = 10; // Mínimo de clases antes de evaluar riesgo
+    
     return this.alumnos.map(alumno => {
       const stats = this.getEstadisticasAlumno(alumno.id);
       const porcentajeNum = stats.porcentaje || 0;
-      let riesgo = 'Bajo';
+      const totalClases = stats.totalClases;
       
-      if (porcentajeNum < 75) riesgo = 'Alto';
-      else if (porcentajeNum < 85) riesgo = 'Medio';
+      // Determinar riesgo solo si tiene suficientes clases registradas
+      let riesgo = 'Bajo';
+      if (totalClases >= minClasesParaEvaluacion) {
+        // Con datos confiables, usar criterios de riesgo
+        if (porcentajeNum < 50) riesgo = 'Crítico';
+        else if (porcentajeNum < 60) riesgo = 'Alto';
+        else if (porcentajeNum < 75) riesgo = 'Medio';
+        else if (porcentajeNum < 85) riesgo = 'Bajo';
+        else riesgo = 'Excelente';
+      } else {
+        // Con pocas clases, no evaluar riesgo aún
+        riesgo = totalClases > 0 ? 'Sin evaluar' : 'Sin datos';
+      }
 
       return {
         'Alumno': `${alumno.nombre} ${alumno.apellido}`,
@@ -1122,7 +1135,9 @@ export class AsistenciaComponent implements OnInit {
         'Justificados': stats.justificados,
         'Porcentaje Asistencia': `${porcentajeNum}%`,
         'Nivel Riesgo': riesgo,
-        'Por Recuperar': Math.max(0, Math.ceil(stats.totalClases * 0.25) - stats.ausentes)
+        'Por Recuperar': stats.totalClases >= minClasesParaEvaluacion ? 
+          Math.max(0, Math.ceil(stats.totalClases * 0.75) - stats.presentes) : 
+          'Muy poco para evaluar'
       };
     });
   }
@@ -1131,14 +1146,26 @@ export class AsistenciaComponent implements OnInit {
    * Estadísticas detalladas por materia
    */
   private construirEstadisticasMateriaDetalladas(materiaId: string): any[] {
+    const minClasesParaEvaluacion = 8; // Menos clases por materia individual
+    
     return this.getAlumnosFiltrados().map(alumno => {
       const stats = this.getEstadisticasAlumno(alumno.id);
       const porcentajeNum = stats.porcentaje || 0;
-      let desempeño = 'Excelente';
+      const totalClases = stats.totalClases;
       
-      if (porcentajeNum < 60) desempeño = 'Deficiente';
-      else if (porcentajeNum < 75) desempeño = 'Regular';
-      else if (porcentajeNum < 90) desempeño = 'Bueno';
+      // Determinar desempeño solo si tiene suficientes clases registradas
+      let desempeño = 'Excelente';
+      if (totalClases >= minClasesParaEvaluacion) {
+        // Con datos confiables, usar criterios de desempeño
+        if (porcentajeNum < 50) desempeño = 'Muy Deficiente';
+        else if (porcentajeNum < 60) desempeño = 'Deficiente';
+        else if (porcentajeNum < 75) desempeño = 'Regular';
+        else if (porcentajeNum < 90) desempeño = 'Bueno';
+        else desempeño = 'Excelente';
+      } else {
+        // Con pocas clases, no evaluar aún
+        desempeño = totalClases > 0 ? 'Sin evaluar' : 'Sin datos';
+      }
 
       return {
         'Alumno': `${alumno.nombre} ${alumno.apellido}`,
@@ -1158,20 +1185,46 @@ export class AsistenciaComponent implements OnInit {
    * Alertas y riesgos: Alumnos con asistencia por debajo de límite
    */
   private construirAlertasRiesgo(): any[] {
-    const umbralRiesgo = 75; // 75% de asistencia
+    const umbralRiesgo = 75; // 75% de asistencia requerida
+    const minClasesParaRiesgo = 10; // Mínimo de clases para considerar un riesgo real
     const alertas: any[] = [];
 
     this.alumnos.forEach(alumno => {
       const stats = this.getEstadisticasAlumno(alumno.id);
-      if (stats.porcentaje < umbralRiesgo && stats.totalClases > 0) {
+      
+      // Solo marcar como riesgo si tiene suficientes registros
+      if (stats.totalClases >= minClasesParaRiesgo && stats.porcentaje < umbralRiesgo) {
+        // Calcular si realmente está en riesgo crítico (no solo inicial)
+        const ausenciasActuales = stats.ausentes;
+        const presenciasActuales = stats.presentes;
+        const tasaPresencia = stats.porcentaje;
+        
+        // Determinar severidad
+        let nivelAlerta = 'Seguimiento';
+        let recomendacion = 'Seguimiento recomendado';
+        
+        if (tasaPresencia < 50) {
+          nivelAlerta = 'CRÍTICO';
+          recomendacion = 'URGENTE: Contactar alumno e ir tutores immediatamente';
+        } else if (tasaPresencia < 60) {
+          nivelAlerta = 'ALTO';
+          recomendacion = 'URGENTE: Contactar al alumno';
+        } else if (tasaPresencia < 70) {
+          nivelAlerta = 'MEDIO';
+          recomendacion = 'Seguimiento frecuente recomendado';
+        }
+        
         alertas.push({
           'Alumno': `${alumno.nombre} ${alumno.apellido}`,
           'DNI': alumno.dni || 'N/A',
-          'Porcentaje Asistencia': `${stats.porcentaje}%`,
-          'Ausentes': stats.ausentes,
+          'Porcentaje Asistencia': `${tasaPresencia}%`,
+          'Clases Registradas': stats.totalClases,
+          'Presentes': presenciasActuales,
+          'Ausentes': ausenciasActuales,
           'Tardanzas': stats.tardanzas,
-          'Recomendación': stats.porcentaje < 60 ? 'URGENTE: Contactar alumno' : 'Seguimiento recomendado',
-          'Notas': `${stats.totalClases} clases, necesita ${Math.ceil(stats.totalClases * 0.75 - stats.presentes)} más presencias`
+          'Nivel': nivelAlerta,
+          'Recomendación': recomendacion,
+          'Notas': `Necesita ${Math.ceil(stats.totalClases * 0.75 - stats.presentes)} más presencias para alcanzar 75%`
         });
       }
     });
@@ -1184,19 +1237,39 @@ export class AsistenciaComponent implements OnInit {
    */
   private construirAlertasRiesgoMateria(materiaId: string): any[] {
     const umbralRiesgo = 75;
+    const minClasesParaRiesgo = 8; // Menos clases por materia individual
     const alertas: any[] = [];
 
     this.getAlumnosFiltrados().forEach(alumno => {
       const stats = this.getEstadisticasAlumno(alumno.id);
-      if (stats.porcentaje < umbralRiesgo && stats.totalClases > 0) {
+      
+      // Solo marcar como riesgo si tiene suficientes registros EN ESTA MATERIA
+      if (stats.totalClases >= minClasesParaRiesgo && stats.porcentaje < umbralRiesgo) {
+        const tasaPresencia = stats.porcentaje;
+        let nivelAlerta = 'ADVERTENCIA';
+        let accion = 'Seguimiento recomendado';
+        
+        if (tasaPresencia < 50) {
+          nivelAlerta = 'CRÍTICO';
+          accion = 'Contactar inmediatamente: riesgo de reprobación';
+        } else if (tasaPresencia < 60) {
+          nivelAlerta = 'ALTO RIESGO';
+          accion = 'Llamada al padre + reunión urgente con alumno';
+        } else if (tasaPresencia < 70) {
+          nivelAlerta = 'MEDIO RIESGO';
+          accion = 'Conversación con alumno y padre';
+        }
+        
         alertas.push({
           'Alumno': `${alumno.nombre} ${alumno.apellido}`,
           'DNI': alumno.dni || 'N/A',
-          'Porcentaje': `${stats.porcentaje}%`,
+          'Clases Registradas': stats.totalClases,
+          'Porcentaje': `${tasaPresencia}%`,
           'Ausentes': stats.ausentes,
           'Tardanzas': stats.tardanzas,
-          'Recomendación': stats.porcentaje < 60 ? 'CRÍTICO' : 'Advertencia',
-          'Acciones Sugeridas': `Llamada al padre, reunión con alumno - ${stats.totalClases - stats.presentes} inasistencias`
+          'Nivel de Riesgo': nivelAlerta,
+          'Acción Recomendada': accion,
+          'Nota': `${stats.totalClases - stats.presentes} inasistencias registradas`
         });
       }
     });
