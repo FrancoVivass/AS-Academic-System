@@ -109,10 +109,15 @@ export class EmailService {
           code: String(code || '') // Por compatibilidad
         };
       } else if (type === 'verification') {
-        // Para template de código de verificación - SOLO estas variables
+        // Para template de código de verificación
+        // EmailJS "To Email" puede usar to_email, reply_to, user_email o email - enviamos todos
+        const recipientEmail = String(email || '');
         templateParams = {
           to_name: String(nombreUsuario || 'Usuario'),
-          to_email: String(email || ''),
+          to_email: recipientEmail,
+          reply_to: recipientEmail,
+          user_email: recipientEmail,
+          email: recipientEmail,
           code: String(code || '')
         };
       } else {

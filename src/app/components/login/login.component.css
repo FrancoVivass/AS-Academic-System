@@ -16,7 +16,7 @@
 /* Panel Izquierdo - Logo de Institución */
 .login-left-panel {
   flex: 1;
-  background: linear-gradient(135deg, var(--institucion-primary, #2b7bcc) 0%, var(--institucion-secondary, #1e5a9e) 100%);
+  background: var(--institucion-primary);
   display: flex;
   align-items: center;
   justify-content: center;

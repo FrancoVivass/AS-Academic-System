@@ -7,10 +7,11 @@ export const environment = {
     jwtToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1amZxeGZrcHllbHVxZ3R6ZGJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc0NDAwMDAsImV4cCI6MjA1Mjk3NjAwMH0.BFY0BTVl3dZugeRYD4aontyVuWeNw3kTI34yOmGz7Wo'
   },
   emailjs: {
-    publicKey: 'IPcjBSET9_X2QTrBM',
-    serviceId: 'service_vbg0icf',
-    templateId: 'template_37vdhg5', // Template para código de verificación
-    templateIdPassword: 'template_lgd3pxf', // Template para nueva contraseña (usuario y contraseña)
+
+    publicKey: 'dYIKVkc2A_BwY4QCV',
+    serviceId: 'service_hr2es88',
+    templateId: 'template_p0vv2rr', // Template para código de verificación
+    templateIdPassword: 'template_5dwjv69', // Template para nueva contraseña
     logoUrl: 'https://i.imgur.com/YNHMzRs.png' // Logo de AcademicSystem
   }
 };

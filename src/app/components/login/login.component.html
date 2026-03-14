@@ -53,7 +53,7 @@
 
       <!-- Formulario de Login -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field  class="full-width">
           <mat-label>Usuario o Correo electrónico</mat-label>
           <input matInput formControlName="username" placeholder="Usuario o Correo electrónico" autocomplete="username">
           <mat-icon matPrefix>person</mat-icon>
@@ -63,7 +63,7 @@
         </mat-form-field>
 
         <div class="password-field-wrapper">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field  class="full-width">
             <mat-label>Contraseña</mat-label>
             <input 
               matInput 
