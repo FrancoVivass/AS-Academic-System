@@ -798,37 +798,51 @@ export class MateriasComponent implements OnInit {
     this.mostrarInscripciones = true;
     await this.cargarAlumnosInscripcion();
   }
-
+  
   async cargarAlumnosInscripcion(): Promise<void> {
     if (!this.materiaSeleccionada) return;
-    
-    this.alumnosDisponibles = await this.alumnoService.getAlumnos();
-    const inscripciones = this.materiaService.getInscripcionesByMateria(this.materiaSeleccionada.id);
-    const idsInscritos = inscripciones.map(i => i.alumnoId);
-    
-    this.alumnosInscritos = this.alumnosDisponibles.filter(a => idsInscritos.includes(a.id));
-    this.alumnosDisponibles = this.alumnosDisponibles.filter(a => !idsInscritos.includes(a.id));
-  }
+  
+    // Obtener alumnos y cursos directamente desde la base de datos para
+    // reflejar siempre el estado real de inscripciones
+    const [alumnos, cursos] = await Promise.all([
+      this.alumnoService.getAlumnos(),
+      this.cursoService.getCursos()
+    ]);
 
+    // Cursos que tienen asociada la materia seleccionada
+    const cursosConMateria = cursos.filter(curso =>
+      curso.materias && curso.materias.includes(this.materiaSeleccionada!.id)
+    );
+
+    // IDs de alumnos inscritos en esos cursos
+    const idsAlumnosInscritos = new Set<string>();
+    cursosConMateria.forEach(curso => {
+      (curso.alumnos || []).forEach(alumnoId => idsAlumnosInscritos.add(alumnoId));
+    });
+
+    this.alumnosInscritos = alumnos.filter(a => idsAlumnosInscritos.has(a.id));
+    this.alumnosDisponibles = alumnos.filter(a => !idsAlumnosInscritos.has(a.id));
+  }
+  
   async inscribirAlumno(alumnoId: string): Promise<void> {
     if (!this.materiaSeleccionada) return;
-    
-    const inscripcion: AlumnoMateria = {
-      id: crypto.randomUUID(),
-      alumnoId,
-      materiaId: this.materiaSeleccionada.id,
-      fechaInscripcion: new Date().toISOString()
-    };
-    
-    this.materiaService.inscribirAlumno(inscripcion);
-    await this.cargarAlumnosInscripcion();
+  
+    // La inscripción real a una materia se realiza inscribiendo al alumno
+    // en alguno de los cursos que contienen dicha materia. Mantener la lógica
+    // aquí únicamente como informativa evita desincronizar datos con la BD.
+    this.notificationService.showInfo(
+      'Para inscribir un alumno en esta materia, asígnalo a un curso que la tenga configurada desde la sección de Carreras/Cursos.'
+    );
   }
-
+  
   async desinscribirAlumno(alumnoId: string): Promise<void> {
     if (!this.materiaSeleccionada) return;
-    
-    this.materiaService.desinscribirAlumno(alumnoId, this.materiaSeleccionada.id);
-    await this.cargarAlumnosInscripcion();
+  
+    // Análogamente, la desinscripción se gestiona removiendo al alumno
+    // de los cursos correspondientes, no desde una lista paralela.
+    this.notificationService.showInfo(
+      'Para desinscribir un alumno de esta materia, quítalo del curso correspondiente desde la sección de Carreras/Cursos.'
+    );
   }
 
   cerrarModal(): void {

@@ -911,20 +911,75 @@ export class DashboardComponent implements OnInit {
   async getAsistenciasPendientes(): Promise<number> {
     const hoy = new Date().toISOString().split('T')[0];
     const usuario = this.authService.getCurrentUser();
-    const materiasAsignadas = (usuario as any).materiasAsignadas || [];
-    
+    if (!usuario || !this.permissionsService.esProfesor()) {
+      return 0;
+    }
+
+    // Asegurar que tenemos cursos cargados
+    if (this.cursos.length === 0) {
+      this.cursos = await this.cursoService.getCursos();
+    }
+
+    // Obtener docente y determinar sus materias
+    let docente = await this.docenteService.getDocenteById(usuario.id);
+    if (!docente) {
+      const todosLosDocentes = await this.docenteService.getDocentes();
+      docente = todosLosDocentes.find(d =>
+        d.nombre === usuario.nombre && d.apellido === usuario.apellido
+      ) || undefined;
+    }
+
+    const materiasAsignadasIds = docente?.materiasAsignadas || [];
+    let materiasProfesor = await this.materiaService.getMaterias();
+    const nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+
+    if (materiasAsignadasIds.length > 0) {
+      materiasProfesor = materiasProfesor.filter(m => materiasAsignadasIds.includes(m.id));
+    } else {
+      materiasProfesor = materiasProfesor.filter(m =>
+        m.profesor === nombreProfesor || m.profesor?.includes(usuario.nombre)
+      );
+    }
+
+    if (materiasProfesor.length === 0) {
+      return 0;
+    }
+
+    // Obtener todas las asistencias del día de una sola vez
+    const todasLasAsistencias = await this.alumnoService.getAsistencias();
+    const asistenciasDeHoy = todasLasAsistencias.filter(a => a.fecha.startsWith(hoy));
+
     let pendientes = 0;
-    for (const materiaId of materiasAsignadas) {
-      const inscripciones = this.materiaService.getInscripcionesByMateria(materiaId);
-      for (const inscripcion of inscripciones) {
-        const asistencias = await this.alumnoService.getAsistenciasByAlumno(inscripcion.alumnoId);
-        const asistenciasHoy = asistencias.filter(a => a.materiaId === materiaId && a.fecha.startsWith(hoy));
-        if (asistenciasHoy.length === 0) {
+
+    for (const materia of materiasProfesor) {
+      // Cursos que contienen esta materia
+      const cursosConMateria = this.cursos.filter(c => c.materias.includes(materia.id));
+
+      // IDs de alumnos teóricos que deberían tener asistencia hoy en esta materia
+      const idsAlumnosEsperados = new Set<string>();
+      cursosConMateria.forEach(curso => {
+        (curso.alumnos || []).forEach(alumnoId => {
+          if (alumnoId) {
+            idsAlumnosEsperados.add(alumnoId);
+          }
+        });
+      });
+
+      if (idsAlumnosEsperados.size === 0) {
+        continue;
+      }
+
+      // Para cada alumno esperado, verificar si ya tiene alguna asistencia hoy en esta materia
+      idsAlumnosEsperados.forEach(alumnoId => {
+        const tieneAsistenciaHoy = asistenciasDeHoy.some(a =>
+          a.alumnoId === alumnoId && a.materiaId === materia.id
+        );
+        if (!tieneAsistenciaHoy) {
           pendientes++;
         }
-      }
+      });
     }
-    
+
     return pendientes;
   }
 
